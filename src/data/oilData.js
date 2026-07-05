@@ -16,6 +16,8 @@ export const oilData = [
       nature: "未知",
       meridian: "未知",
       constitution: "未知",
+      // 💡 記得在資料庫這裡補上 indications 欄位
+      indications: "失眠多夢、心神不寧、燙傷修復、緩解偏頭痛、平撫焦慮氣息。",
       noteAnalogy: "低音",
       planet: "未知",
       origin: "未知"
