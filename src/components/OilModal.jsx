@@ -27,7 +27,7 @@ export default function OilModal({ item, onClose }) {
           {item.englishName}
         </p>
 
-        {/* 📊 精油 10 項表格 */}
+        {/* 📊 精油 11 項表格（已加入主治功能） */}
         <div className="overflow-hidden border border-[#E5E0D8] rounded-xl mb-8 shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -37,18 +37,20 @@ export default function OilModal({ item, onClose }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">
-              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">植物種類／萃取部位</td><td className="px-4 py-2">{oilTable.typePart}</td></tr>
+              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">植物種類/萃取部位</td><td className="px-4 py-2">{oilTable.typePart}</td></tr>
               <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">萃取方法</td><td className="px-4 py-2">{oilTable.method}</td></tr>
               <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">拉丁學名</td><td className="px-4 py-2 italic">{oilTable.latin}</td></tr>
               <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">科名</td><td className="px-4 py-2">{oilTable.family}</td></tr>
               <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">性味</td><td className="px-4 py-2">{oilTable.nature}</td></tr>
               <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">歸經</td><td className="px-4 py-2">{oilTable.meridian}</td></tr>
-              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">效果及適用症狀</td><td className="px-4 py-2">{oilTable.constitution}</td></tr>
-              <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">類比音符</td><td className="px-4 py-2">{oilTable.noteAnalogy}</td></tr>
+              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">適用體質</td><td className="px-4 py-2">{oilTable.constitution}</td></tr>
+              
               {/* 💡 新增：主治功能 */}
               <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">主治功能</td><td className="px-4 py-2 break-all text-justify">{oilTable.indications}</td></tr>
-              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">主宰星球</td><td className="px-4 py-2">{oilTable.planet}</td></tr>
-              <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">重要產地</td><td className="px-4 py-2">{oilTable.origin}</td></tr>
+              
+              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">類比音符</td><td className="px-4 py-2">{oilTable.noteAnalogy}</td></tr>
+              <tr className="bg-[#FBFBFA]/40"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">主宰星球</td><td className="px-4 py-2">{oilTable.planet}</td></tr>
+              <tr className="bg-white"><td className="px-4 py-2 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">重要產地</td><td className="px-4 py-2">{oilTable.origin}</td></tr>
             </tbody>
           </table>
         </div>
@@ -74,7 +76,7 @@ export default function OilModal({ item, onClose }) {
                 .split(/\\n|\r?\n/)
                 .filter(paragraph => paragraph.trim() !== '')
                 .map((paragraph, index) => (
-                  <p key={index} className="mb-2 last:mb-0 text-[#6B7A6E] leading-relaxed text-justify">
+                  <p key={index} className="mb-２ last:mb-0 text-[#6B7A6E] leading-relaxed text-justify">
                     {paragraph}
                   </p>
                 ))}
@@ -97,7 +99,7 @@ export default function OilModal({ item, onClose }) {
             <p className="text-red-700/90 text-xs leading-relaxed">{oilDetails.caution}</p>
           </div>
 
-          {/* 🩺 深度效能（全面支援多段落分段與自動斷行） */}
+          {/* 🩺 深度效能 */}
           <div className="space-y-4 bg-[#F7F5F0]/60 p-4 rounded-xl border border-[#E5E0D8]/40">
             <span className="font-bold text-[#3A4F3F] block border-b border-[#E5E0D8] pb-1.5 mb-1 text-base">🩺 深度效能</span>
             
