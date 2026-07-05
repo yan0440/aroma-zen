@@ -46,7 +46,7 @@ export default function OilModal({ item, onClose }) {
             {item.constitutionTag}體質
           </span>
           <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#E5EAE6] text-[#4E6654]">
-            {item.chemicalTag}屬性
+            {item.chemicalTag}類
           </span>
         </div>
 
