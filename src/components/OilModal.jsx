@@ -67,13 +67,13 @@ export default function OilModal({ item, onClose }) {
           {/* 💡 【方法二實作】應用歷史與相關神話（支援多段落自動換行與間距） */}
           <div>
             <span className="font-bold text-[#4E6654] block mb-1.5 text-base">📜 應用歷史與相關神話</span>
-            <div className="bg-[#FBFBFA] p- rounded-xl border border-[#E5E0D8]/30 text-[#6B7A6E] leading-relaxed">
-              {/* 💡 終極威力加強版：支援純文字 \n 與所有系統換行 */}
-{(oilDetails.historyMyth || '')
+            {/* 💡 左右改成 px-5 加寬，並加上 break-all 確保字體絕對不會衝出框外 */}
+  <div className="bg-[#FBFBFA] px-5 py-4 rounded-xl border border-[#E5E0D8]/30 text-[#6B7A6E] leading-relaxed break-all">
+    {(oilDetails.historyMyth || '')
   .split(/\\n|\r?\n/) // 👈 關鍵：加上了 \\n，這樣就算資料裡是純文字的 \n 也能完美切開！
   .filter(paragraph => paragraph.trim() !== '')
   .map((paragraph, index) => (
-    <p key={index} className="mb-3 last:mb-0 text-[#6B7A6E] leading-relaxed block">
+    <p key={index} className="mb-4 last:mb-0 text-[#6B7A6E] leading-relaxed text-justify">
       {paragraph}
     </p>
   ))}
