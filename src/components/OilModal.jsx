@@ -10,7 +10,7 @@ export default function OilModal({ item, onClose }) {
         
         <button onClick={onClose} className="absolute top-5 right-5 text-[#A39284] hover:text-[#3A4F3F] text-xl">✕</button>
 
-        {/* 🏷️ 拿掉精油百科，只保留純粹的體質與屬性標籤 */}
+        {/* 🏷️ 頂部獨立的體質與屬性標籤 */}
         <div className="mb-3 flex flex-wrap gap-1.5">
           <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#EAE7E0] text-[#6B7A6E]">
             {item.constitutionTag}體質
@@ -32,8 +32,8 @@ export default function OilModal({ item, onClose }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#F0EDE6] text-[#3A4F3F] font-bold border-b border-[#E5E0D8]">
-                <th className="px-4 py-2.5 w-1/3 border-r border-[#E5E0D8]">指標項目</th>
-                <th className="px-4 py-2.5">記載內容</th>
+                <th className="px-4 py-2.5 w-1/3 border-r border-[#E5E0D8]">精油指標項目</th>
+                <th className="px-4 py-2.5">百科記載內容</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">
@@ -64,9 +64,16 @@ export default function OilModal({ item, onClose }) {
             </div>
           </div>
 
+          {/* 💡 【方法二實作】應用歷史與相關神話（支援多段落自動換行與間距） */}
           <div>
             <span className="font-bold text-[#4E6654] block mb-1.5 text-base">📜 應用歷史與相關神話</span>
-            <p className="text-[#6B7A6E] leading-relaxed bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/30">{oilDetails.historyMyth}</p>
+            <div className="bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/30 text-[#6B7A6E] leading-relaxed">
+              {(oilDetails.historyMyth || '').split('\n').map((paragraph, index) => (
+                <p key={index} className="mb-3 last:mb-0">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -96,7 +103,18 @@ export default function OilModal({ item, onClose }) {
             <div><span className="font-bold block text-xs">🔗 適合與之調和的精油</span><p className="text-[#6B7A6E] text-xs mt-0.5">{oilDetails.blendingOils}</p></div>
             <div className="mt-2"><span className="font-bold block text-xs">🧪 精油配方</span><p className="text-[#3A4F3F] font-medium text-xs mt-0.5">{oilDetails.formulas}</p></div>
             <div className="mt-2"><span className="font-bold block text-xs">🧴 按摩基底油</span><p className="text-[#6B7A6E] text-xs mt-0.5">{oilDetails.carrierOils}</p></div>
-            <div className="mt-2 border-t border-[#E5E0D8] pt-2"><span className="font-bold block text-xs text-[#4E6654]">🚀 使用方法</span><p className="text-[#3A4F3F] text-xs mt-1 leading-relaxed">{oilDetails.usage}</p></div>
+            
+            {/* 💡 【方法二實作】使用方法（通常使用方法也可能很長，同步幫你加上分段功能） */}
+            <div className="mt-2 border-t border-[#E5E0D8] pt-2">
+              <span className="font-bold block text-xs text-[#4E6654] mb-1">🚀 使用方法</span>
+              <div className="text-[#3A4F3F] text-xs leading-relaxed">
+                {(oilDetails.usage || '').split('\n').map((paragraph, index) => (
+                  <p key={index} className="mb-2 last:mb-0">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
