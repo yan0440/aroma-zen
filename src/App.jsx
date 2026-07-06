@@ -25,13 +25,17 @@ export default function App() {
     
     const lines = String(text).split(/\\n|\r?\n/);
 
-    // 🔬 純淨加粗解析器：只加粗，維持原始文字顏色與乾淨感
+    // 🔬 終極加粗解析器：大幅加深顏色與權重，確保中文字體高強度顯性
     const parseBoldSyntax = (str) => {
       const parts = str.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong key={i} className="font-bold text-[#2C3C30]">
+            <strong 
+              key={i} 
+              className="font-black text-stone-950 tracking-normal"
+              style={{ fontWeight: '850' }} // 強制瀏覽器使用超重磅粗體
+            >
               {part.slice(2, -2)}
             </strong>
           );
