@@ -19,29 +19,28 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
-  // 🧠 全域智慧排版引擎：自動識別《書籍》、【標籤】、「詞彙」與 **自訂重點** 並強制加粗
+  // 🧠 全域智慧排版引擎：完整 fail-safe 版本
   const renderFormattedText = (text) => {
     if (!text) return null;
     
     const lines = String(text).split(/\\n|\r?\n/);
 
-    // 🔬 智慧排版引擎：全面支援 螢光筆(==)、粗體(**)、《書籍》、【標籤】（已剔除「」）
+    // 🔬 確保正則表達式完全符合 Rust/Rolldown 編譯器標準
     const parseBoldSyntax = (str) => {
-      // 正則表達式中已移除 「.*?」 的捕捉
       const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
-      
       return parts.map((part, i) => {
-        // 🎨 1. 螢光筆畫重點效果 (==重點內容==)
+        // 1. 螢光筆畫重點 (==重點==)
         if (part.startsWith('==') && part.endsWith('==')) {
           return (
             <mark 
               key={i} 
-              className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm">
+              className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm"
+            >
               {part.slice(2, -2)}
             </mark>
           );
         }
-        // 2. 自訂 **粗體**
+        // 2. 手動 **粗體**
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
             <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
@@ -49,7 +48,7 @@ export default function App() {
             </strong>
           );
         }
-        // 3. 自動識別 《書籍》與【標籤】
+        // 3. 自動識別 《書籍》與 【標籤】
         if (
           (part.startsWith('《') && part.endsWith('》')) ||
           (part.startsWith('【') && part.endsWith('】'))

@@ -4,32 +4,45 @@ export default function AcuModal({ item, onClose }) {
   if (!item) return null;
   const { acuTable, acuDetails } = item;
 
-  // 🧠 全域智慧排版引擎：自動識別《書籍》、【標籤】、「詞彙」與 **自訂重點** 並強制加粗
+  // 🧠 全域智慧彈窗排版引擎：完整 fail-safe 版本
   const renderFormattedText = (text, customClasses = "") => {
     if (!text) return null;
     
     const lines = String(text).split(/\\n|\r?\n/);
 
+    // 🔬 修正雙管管道符號，改為絕對安全的編譯語法
     const parseBoldSyntax = (str) => {
-      // 正則表達式中已移除 「.*?」 的捕捉
       const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
-      
       return parts.map((part, i) => {
+        // 1. 螢光筆畫重點 (==重點==)
         if (part.startsWith('==') && part.endsWith('==')) {
           return (
-            <mark key={i} className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm">
+            <mark 
+              key={i} 
+              className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm"
+            >
               {part.slice(2, -2)}
             </mark>
           );
         }
+        // 2. 手動 **粗體**
         if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part.slice(2, -2)}</strong>;
+          return (
+            <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
+              {part.slice(2, -2)}
+            </strong>
+          );
         }
+        // 3. 自動識別 《書籍》與 【標籤】
         if (
           (part.startsWith('《') && part.endsWith('》')) ||
           (part.startsWith('【') && part.endsWith('】'))
         ) {
-          return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
+          return (
+            <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
+              {part}
+            </strong>
+          );
         }
         return part;
       });
