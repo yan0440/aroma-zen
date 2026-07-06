@@ -25,11 +25,10 @@ export default function App() {
     
     const lines = String(text).split(/\\n|\r?\n/);
 
-    // 🔬 多語意自動加粗解析器（強制瀏覽器內建加粗核心）
-    // 🔬 智慧排版引擎：全面支援 螢光筆(==)、粗體(**)、《書籍》、【標籤】、「詞彙」
+    // 🔬 智慧排版引擎：全面支援 螢光筆(==)、粗體(**)、《書籍》、【標籤】（已剔除「」）
     const parseBoldSyntax = (str) => {
-      // 核心捕捉：加入了 (==.*?==) 螢光筆語法
-      const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】|「.*?」)/g);
+      // 正則表達式中已移除 「.*?」 的捕捉
+      const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
       
       return parts.map((part, i) => {
         // 🎨 1. 螢光筆畫重點效果 (==重點內容==)
@@ -52,10 +51,10 @@ export default function App() {
             </strong>
           );
         }
-        // 3. 自動識別 《書籍》、【標籤】、「詞彙」
+        // 3. 自動識別 《書籍》與【標籤】
         if (
           (part.startsWith('《') && part.endsWith('》')) ||
-          (part.startsWith('【') && part.endsWith('】')) 
+          (part.startsWith('【') && part.endsWith('】'))
         ) {
           return (
             <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>

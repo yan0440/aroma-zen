@@ -11,7 +11,9 @@ export default function AcuModal({ item, onClose }) {
     const lines = String(text).split(/\\n|\r?\n/);
 
     const parseBoldSyntax = (str) => {
-      const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】|「.*?」)/g);
+      // 正則表達式中已移除 「.*?」 的捕捉
+      const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
+      
       return parts.map((part, i) => {
         if (part.startsWith('==') && part.endsWith('==')) {
           return (
@@ -25,7 +27,7 @@ export default function AcuModal({ item, onClose }) {
         }
         if (
           (part.startsWith('《') && part.endsWith('》')) ||
-          (part.startsWith('【') && part.endsWith('】')) 
+          (part.startsWith('【') && part.endsWith('】'))
         ) {
           return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
         }
