@@ -4,7 +4,7 @@ export default function AcuModal({ item, onClose }) {
   if (!item) return null;
   const { acuTable, acuDetails } = item;
 
-  // 🧠 頂級視覺排版引擎：徹底為文字注入雜誌級質感，並物理性根除破格問題
+  // 🧠 頂級視覺排版引擎：處理 \n 換行、多元清單、以及 **關鍵字加粗**
   const renderFormattedText = (text, customClasses = "") => {
     if (!text) return null;
     
@@ -32,14 +32,12 @@ export default function AcuModal({ item, onClose }) {
       .filter(line => line.trim() !== '')
       .map((line, index) => {
         const trimmed = line.trim();
-        // 🔍 智慧偵測：精準分離各式編號、標點或黑點開頭
         const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
         
         if (listMatch) {
           const marker = listMatch[1];
           const content = trimmed.substring(listMatch[0].length);
           return (
-            // 🎯 Flex 雙軌並行：符號歸符號、文字歸文字，從物理上杜絕文字溢出外框！
             <div key={index} className={`flex items-start gap-2.5 mb-2 last:mb-0 text-justify ${customClasses}`}>
               <span className="font-bold text-[#4E6654] shrink-0 select-none font-sans mt-[2px]">{marker}</span>
               <div className="flex-1 break-words leading-relaxed">{parseBoldSyntax(content)}</div>
@@ -59,7 +57,6 @@ export default function AcuModal({ item, onClose }) {
   };
 
   return (
-    // 🎭 全面優化字體抗鋸齒 (antialiased) 與細緻字距 (tracking-wide)
     <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50 antialiased tracking-wide" onClick={onClose}>
       <div className="bg-[#FCFBFA] rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative border border-[#E5E0D8]/40 text-stone-700 text-[13.5px]" onClick={(e) => e.stopPropagation()}>
         
@@ -73,11 +70,11 @@ export default function AcuModal({ item, onClose }) {
           </span>
         </div>
 
-        {/* 👑 標題改用具有典雅東方質感的襯線字體 (font-serif) */}
+        {/* 👑 標題與代碼 */}
         <h2 className="text-3xl font-bold font-serif text-[#2C3C30] tracking-wide mt-1">{item.name}</h2>
         <p className="text-xs italic tracking-widest text-[#A39284] mt-1.5 mb-6 font-mono border-b border-[#E5E0D8]/40 pb-4">INTERNATIONAL CODE: {acuTable.code}</p>
 
-        {/* 📊 穴道專屬 4 項古典表格 */}
+        {/* 📊 穴道專屬古典大表格（已將釋名完美整合進來） */}
         <div className="overflow-hidden border border-[#E5E0D8]/80 rounded-xl mb-8 shadow-[0_4px_16px_rgba(58,79,63,0.01)] bg-white">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -89,29 +86,33 @@ export default function AcuModal({ item, onClose }) {
               </tr>
             </thead>
             <tbody className="text-[#3A4F3F]">
+              {/* 第一層：基礎 4 大核心數據 */}
               <tr className="divide-x divide-[#E5E0D8]/60">
                 <td className="px-4 py-3.5 font-bold font-serif text-base text-[#2C3C30]">{acuTable.name}</td>
                 <td className="px-4 py-3.5 text-[#6B7A6E] font-medium">{acuTable.alias || '—'}</td>
                 <td className="px-4 py-3.5 font-medium">{acuTable.meridian}</td>
                 <td className="px-4 py-3.5 font-mono text-xs text-[#A39284]">{acuTable.code}</td>
               </tr>
+              
+              {/* 第二層 🎯 釋名合體橫列：橫跨 4 欄，完美收納在同一個古典外框內 */}
+              <tr>
+                <td colSpan="4" className="px-4 py-4 bg-[#FBFBFA] border-t border-[#E5E0D8]/70 text-[#5C6B5F]">
+                  <span className="font-bold text-[#4E6654] block mb-2 text-xs tracking-widest font-sans">📖 釋名</span>
+                  <div className="text-[13px] leading-relaxed">
+                    {renderFormattedText(acuDetails.nameExpl)}
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
 
-        {/* 📝 內文區塊全面精緻化 */}
+        {/* 📝 下方其餘詳細內容區塊 */}
         <div className="space-y-6">
+          {/* 🏷️ 類別 */}
           <div className="bg-[#F4F2ED]/40 p-4 rounded-xl border border-[#E5E0D8]/50">
             <span className="font-bold text-[#5C6B5F] block mb-1 text-xs tracking-widest font-sans">🏷️ 類別</span>
             <p className="text-[#2C3C30] font-semibold text-xs">{acuDetails.type}</p>
-          </div>
-
-          {/* 📖 釋名區域（安全包覆、絕不破格） */}
-          <div>
-            <span className="font-bold text-[#4E6654] block mb-2 text-xs tracking-widest font-sans">📖 釋名</span>
-            <div className="text-[#5C6B5F] bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/40 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
-              {renderFormattedText(acuDetails.nameExpl)}
-            </div>
           </div>
 
           {/* 📍 位置 與 💀 解剖 */}
