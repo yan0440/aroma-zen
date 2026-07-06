@@ -19,24 +19,34 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
-  // 🧠 圖卡專用排版引擎：全面支援 \n 換行與純淨 ** 粗體加粗（無額外背景）
+  // 🧠 全域智慧排版引擎：自動識別《書籍》、【標籤】、「詞彙」與 **自訂重點** 並強制加粗
   const renderFormattedText = (text) => {
     if (!text) return null;
     
     const lines = String(text).split(/\\n|\r?\n/);
 
-    // 🔬 終極加粗解析器：大幅加深顏色與權重，確保中文字體高強度顯性
+    // 🔬 多語意自動加粗解析器（強制瀏覽器內建加粗核心）
     const parseBoldSyntax = (str) => {
-      const parts = str.split(/(\*\*.*?\*\*)/g);
+      // 自動捕捉 **...**, 《...》, 【...】, 「...」 四種模式
+      const parts = str.split(/(\*\*.*?\*\*|《.*?》|【.*?】|「.*?」)/g);
       return parts.map((part, i) => {
+        // 1. 手動標註的 **重點**
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong 
-              key={i} 
-              className="font-black text-stone-950 tracking-normal"
-              style={{ fontWeight: '850' }} // 強制瀏覽器使用超重磅粗體
-            >
+            <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
               {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        // 2. 自動識別的 《書籍名》、 【配穴/功效標籤】、 「重點詞彙」
+        if (
+          (part.startsWith('《') && part.endsWith('》')) ||
+          (part.startsWith('【') && part.endsWith('】')) ||
+          (part.startsWith('「') && part.endsWith('」'))
+        ) {
+          return (
+            <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
+              {part}
             </strong>
           );
         }
@@ -48,7 +58,6 @@ export default function App() {
       .filter(line => line.trim() !== '')
       .map((line, index) => {
         const trimmed = line.trim();
-        // 偵測是否為數字清單或符號清單 (如: 1., •, -)
         const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
         
         if (listMatch) {
@@ -56,17 +65,14 @@ export default function App() {
           const content = trimmed.substring(listMatch[0].length);
           return (
             <div key={index} className="flex items-start gap-2 mb-1 last:mb-0 text-justify text-sm text-[#6B7A6E]">
-              <span className="font-bold text-[#4E6654] shrink-0 select-none mt-[1px]">{marker}</span>
+              <span className="shrink-0 select-none mt-[1px]" style={{ fontWeight: 'bold' }}>{marker}</span>
               <div className="flex-1 break-words leading-relaxed">{parseBoldSyntax(content)}</div>
             </div>
           );
         }
         
         return (
-          <p 
-            key={index} 
-            className="text-justify leading-relaxed break-words mb-1 last:mb-0 text-sm text-[#6B7A6E]"
-          >
+          <p key={index} className="text-justify leading-relaxed break-words mb-1 last:mb-0 text-sm text-[#6B7A6E]">
             {parseBoldSyntax(trimmed)}
           </p>
         );

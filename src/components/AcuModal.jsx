@@ -4,24 +4,30 @@ export default function AcuModal({ item, onClose }) {
   if (!item) return null;
   const { acuTable, acuDetails } = item;
 
-  // 🧠 全域智慧排版引擎：全面支援 \n 換行、分點清單、以及純淨 ** 粗體加粗
+  // 🧠 全域智慧排版引擎：自動識別《書籍》、【標籤】、「詞彙」與 **自訂重點** 並強制加粗
   const renderFormattedText = (text, customClasses = "") => {
     if (!text) return null;
     
     const lines = String(text).split(/\\n|\r?\n/);
 
-    // 🔬 終極加粗解析器：大幅加深顏色與權重，確保中文字體高強度顯性
     const parseBoldSyntax = (str) => {
-      const parts = str.split(/(\*\*.*?\*\*)/g);
+      const parts = str.split(/(\*\*.*?\*\*|《.*?》||【.*?】|「.*?」)/g);
       return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong 
-              key={i} 
-              className="font-black text-stone-950 tracking-normal"
-              style={{ fontWeight: '850' }} // 強制瀏覽器使用超重磅粗體
-            >
+            <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
               {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        if (
+          (part.startsWith('《') && part.endsWith('》')) ||
+          (part.startsWith('【') && part.endsWith('】')) ||
+          (part.startsWith('「') && part.endsWith('」'))
+        ) {
+          return (
+            <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>
+              {part}
             </strong>
           );
         }
@@ -33,7 +39,6 @@ export default function AcuModal({ item, onClose }) {
       .filter(line => line.trim() !== '')
       .map((line, index) => {
         const trimmed = line.trim();
-        // 偵測是否為數字清單或符號清單 (如: 1., •, -)
         const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
         
         if (listMatch) {
@@ -41,17 +46,14 @@ export default function AcuModal({ item, onClose }) {
           const content = trimmed.substring(listMatch[0].length);
           return (
             <div key={index} className={`flex items-start gap-2.5 mb-1.5 last:mb-0 text-justify ${customClasses}`}>
-              <span className="font-bold text-[#4E6654] shrink-0 select-none font-sans mt-[1px]">{marker}</span>
+              <span className="shrink-0 select-none mt-[1px]" style={{ fontWeight: 'bold' }}>{marker}</span>
               <div className="flex-1 break-words leading-relaxed">{parseBoldSyntax(content)}</div>
             </div>
           );
         }
         
         return (
-          <p 
-            key={index} 
-            className={`text-justify leading-relaxed break-words mb-1.5 last:mb-0 ${customClasses}`}
-          >
+          <p key={index} className={`text-justify leading-relaxed break-words mb-1.5 last:mb-0 ${customClasses}`}>
             {parseBoldSyntax(trimmed)}
           </p>
         );
