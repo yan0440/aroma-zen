@@ -19,6 +19,56 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
+  // 🧠 圖卡專用排版引擎：全面支援 \n 換行與純淨 ** 粗體加粗（無額外背景）
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    
+    const lines = String(text).split(/\\n|\r?\n/);
+
+    // 🔬 純淨加粗解析器：只加粗，維持原始文字顏色與乾淨感
+    const parseBoldSyntax = (str) => {
+      const parts = str.split(/(\*\*.*?\*\*)/g);
+      return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <strong key={i} className="font-bold text-[#2C3C30]">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      });
+    };
+
+    return lines
+      .filter(line => line.trim() !== '')
+      .map((line, index) => {
+        const trimmed = line.trim();
+        // 偵測是否為數字清單或符號清單 (如: 1., •, -)
+        const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
+        
+        if (listMatch) {
+          const marker = listMatch[1];
+          const content = trimmed.substring(listMatch[0].length);
+          return (
+            <div key={index} className="flex items-start gap-2 mb-1 last:mb-0 text-justify text-sm text-[#6B7A6E]">
+              <span className="font-bold text-[#4E6654] shrink-0 select-none mt-[1px]">{marker}</span>
+              <div className="flex-1 break-words leading-relaxed">{parseBoldSyntax(content)}</div>
+            </div>
+          );
+        }
+        
+        return (
+          <p 
+            key={index} 
+            className="text-justify leading-relaxed break-words mb-1 last:mb-0 text-sm text-[#6B7A6E]"
+          >
+            {parseBoldSyntax(trimmed)}
+          </p>
+        );
+      });
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4 font-sans">
       
@@ -89,9 +139,10 @@ export default function App() {
                     {item.category === "精油" ? item.englishName : item.acuTable.code}
                   </p>
                   
-                  <p className="text-sm text-[#6B7A6E] leading-relaxed mb-4">
-                    {item.description}
-                  </p>
+                  {/* 🎯 關鍵修正：將原本的 {item.description} 改用排版引擎包裹，使其支援換行與純淨粗體 */}
+                  <div className="mb-4">
+                    {renderFormattedText(item.description)}
+                  </div>
                 </div>
 
                 <div className="border-t border-[#F7F5F0] pt-4 flex justify-between items-center text-xs text-[#A39284]">
