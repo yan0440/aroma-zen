@@ -55,8 +55,7 @@ export default function App() {
         // 3. 自動識別 《書籍》、【標籤】、「詞彙」
         if (
           (part.startsWith('《') && part.endsWith('》')) ||
-          (part.startsWith('【') && part.endsWith('】')) ||
-          (part.startsWith('「') && part.endsWith('」'))
+          (part.startsWith('【') && part.endsWith('】')) 
         ) {
           return (
             <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>

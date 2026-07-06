@@ -25,8 +25,7 @@ export default function AcuModal({ item, onClose }) {
         }
         if (
           (part.startsWith('《') && part.endsWith('》')) ||
-          (part.startsWith('【') && part.endsWith('】')) ||
-          (part.startsWith('「') && part.endsWith('」'))
+          (part.startsWith('【') && part.endsWith('】')) 
         ) {
           return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
         }
