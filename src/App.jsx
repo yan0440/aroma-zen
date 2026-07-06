@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { oilData } from './data/oilData';
-import { acuData } from './data/acuData';
+import { oilData } from './data/oilData.js';
+import { acuData } from './data/acuData.js';
 import OilModal from './components/OilModal';
 import AcuModal from './components/AcuModal';
 
