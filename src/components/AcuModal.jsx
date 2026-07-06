@@ -4,22 +4,19 @@ export default function AcuModal({ item, onClose }) {
   if (!item) return null;
   const { acuTable, acuDetails } = item;
 
-  // 🧠 頂級視覺排版引擎：處理 \n 換行、多元清單、以及 **關鍵字加粗**
+  // 🧠 全域智慧排版引擎：全面支援 \n 換行、分點清單、以及純淨 ** 粗體加粗
   const renderFormattedText = (text, customClasses = "") => {
     if (!text) return null;
     
     const lines = String(text).split(/\\n|\r?\n/);
 
-    // 🔬 重點詞彙加粗解析器：套用精緻的草本微襯底
+    // 🔬 純淨加粗解析器：只加粗，不增加任何額外背景與間距
     const parseBoldSyntax = (str) => {
       const parts = str.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong 
-              key={i} 
-              className="font-bold text-[#2C3C30] bg-[#3A4F3F]/5 px-2 py-0.5 rounded-md mx-0.5 inline-block align-baseline font-sans text-[13px] tracking-normal"
-            >
+            <strong key={i} className="font-bold text-[#2C3C30]">
               {part.slice(2, -2)}
             </strong>
           );
@@ -32,14 +29,15 @@ export default function AcuModal({ item, onClose }) {
       .filter(line => line.trim() !== '')
       .map((line, index) => {
         const trimmed = line.trim();
+        // 偵測是否為數字清單或符號清單 (如: 1., •, -)
         const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
         
         if (listMatch) {
           const marker = listMatch[1];
           const content = trimmed.substring(listMatch[0].length);
           return (
-            <div key={index} className={`flex items-start gap-2.5 mb-2 last:mb-0 text-justify ${customClasses}`}>
-              <span className="font-bold text-[#4E6654] shrink-0 select-none font-sans mt-[2px]">{marker}</span>
+            <div key={index} className={`flex items-start gap-2.5 mb-1.5 last:mb-0 text-justify ${customClasses}`}>
+              <span className="font-bold text-[#4E6654] shrink-0 select-none font-sans mt-[1px]">{marker}</span>
               <div className="flex-1 break-words leading-relaxed">{parseBoldSyntax(content)}</div>
             </div>
           );
@@ -48,7 +46,7 @@ export default function AcuModal({ item, onClose }) {
         return (
           <p 
             key={index} 
-            className={`text-justify leading-relaxed break-words mb-2 last:mb-0 ${customClasses}`}
+            className={`text-justify leading-relaxed break-words mb-1.5 last:mb-0 ${customClasses}`}
           >
             {parseBoldSyntax(trimmed)}
           </p>
@@ -74,7 +72,7 @@ export default function AcuModal({ item, onClose }) {
         <h2 className="text-3xl font-bold font-serif text-[#2C3C30] tracking-wide mt-1">{item.name}</h2>
         <p className="text-xs italic tracking-widest text-[#A39284] mt-1.5 mb-6 font-mono border-b border-[#E5E0D8]/40 pb-4">INTERNATIONAL CODE: {acuTable.code}</p>
 
-        {/* 📊 最上方簡介大表格（已改回 table-auto 智慧調配寬度） */}
+        {/* 📊 最上方簡介大表格 */}
         <div className="overflow-hidden border border-[#E5E0D8]/80 rounded-xl mb-8 shadow-[0_4px_16px_rgba(58,79,63,0.01)] bg-white">
           <table className="w-full text-left border-collapse table-auto">
             <thead>
@@ -86,13 +84,20 @@ export default function AcuModal({ item, onClose }) {
               </tr>
             </thead>
             <tbody className="text-[#3A4F3F]">
+              {/* 全欄位皆套用 renderFormattedText，全面支援換行與粗體 */}
               <tr className="divide-x divide-[#E5E0D8]/60 align-top">
                 <td className="px-4 py-3.5 text-[13px] leading-relaxed text-[#2C3C30]">
                   {renderFormattedText(acuDetails.indications || item.indications || "未記載特定主治功能")}
                 </td>
-                <td className="px-4 py-3.5 text-[#6B7A6E] font-medium whitespace-nowrap">{acuTable.alias || '—'}</td>
-                <td className="px-4 py-3.5 font-medium whitespace-nowrap">{acuTable.meridian}</td>
-                <td className="px-4 py-3.5 font-mono text-xs text-[#A39284] whitespace-nowrap">{acuTable.code}</td>
+                <td className="px-4 py-3.5 text-[#6B7A6E] font-medium break-words">
+                  {renderFormattedText(acuTable.alias || '—')}
+                </td>
+                <td className="px-4 py-3.5 font-medium break-words">
+                  {renderFormattedText(acuTable.meridian)}
+                </td>
+                <td className="px-4 py-3.5 font-mono text-xs text-[#A39284] break-words">
+                  {renderFormattedText(acuTable.code)}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -100,7 +105,7 @@ export default function AcuModal({ item, onClose }) {
 
         {/* 📝 下方詳細內容區塊 */}
         <div className="space-y-6">
-          {/* 🏷️ 類別（✨ 字體大小與顏色已完美同步，維持排版一致性） */}
+          {/* 🏷️ 類別 */}
           <div className="bg-[#F4F2ED]/40 p-4 rounded-xl border border-[#E5E0D8]/50">
             <span className="font-bold text-[#5C6B5F] block mb-2 text-xs tracking-widest font-sans">🏷️ 類別</span>
             <div className="text-[#5C6B5F]">
