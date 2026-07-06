@@ -4,6 +4,49 @@ export default function AcuModal({ item, onClose }) {
   if (!item) return null;
   const { acuTable, acuDetails } = item;
 
+  // 🧠 升級版智慧排版引擎：處理 \n 換行、多元清單編號、懸掛縮進、以及 **關鍵字加粗**
+  const renderFormattedText = (text, customClasses = "") => {
+    if (!text) return null;
+    
+    // 1. 支援標準 \n 與字串型態的 \\n 進行換行切割
+    const lines = String(text).split(/\\n|\r?\n/);
+
+    // 2. 關鍵字粗體解析器：將 **文字** 轉換成加粗標籤，並加上精緻的草本微襯底
+    const parseBoldSyntax = (str) => {
+      const parts = str.split(/(\*\*.*?\*\*)/g);
+      return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <strong 
+              key={i} 
+              className="font-bold text-[#2C3C30] bg-[#3A4F3F]/5 px-1.5 py-0.5 rounded mx-0.5 inline-block align-baseline"
+            >
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      });
+    };
+
+    return lines
+      .filter(line => line.trim() !== '')
+      .map((line, index) => {
+        // 🔍 廣義清單開頭偵測：支援 1., 1), 一、, A., ①~⑲, •, -, *, ‣, ▪ 等多種符號
+        const isListItem = /^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])/.test(line.trim());
+        
+        return (
+          <p 
+            key={index} 
+            // 🎯 懸掛縮進：如果是清單項目，第二行自動完美齊頭，絕不卡在符號下方
+            className={`text-justify leading-relaxed break-all mb-1.5 last:mb-0 ${isListItem ? 'pl-6 -indent-6' : ''} ${customClasses}`}
+          >
+            {parseBoldSyntax(line.trim())}
+          </p>
+        );
+      });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative border border-[#E5E0D8]/30 text-sm" onClick={(e) => e.stopPropagation()}>
@@ -48,23 +91,31 @@ export default function AcuModal({ item, onClose }) {
 
           <div>
             <span className="font-bold text-[#4E6654] block mb-1 text-sm">📖 釋名</span>
-            <p className="text-[#6B7A6E] leading-relaxed bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/30">{acuDetails.nameExpl}</p>
+            <div className="text-[#6B7A6E] bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/30">
+              {renderFormattedText(acuDetails.nameExpl)}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/40 flex flex-col">
               <span className="font-bold text-[#4E6654] block mb-1.5 text-xs">📍 位置</span>
-              <p className="text-[#6B7A6E] text-xs leading-relaxed flex-grow">{acuDetails.location}</p>
+              <div className="text-[#6B7A6E] text-xs leading-relaxed flex-grow">
+                {renderFormattedText(acuDetails.location)}
+              </div>
             </div>
             <div className="bg-[#FBFBFA] p-4 rounded-xl border border-[#E5E0D8]/40 flex flex-col">
               <span className="font-bold text-[#4E6654] block mb-1.5 text-xs">💀 解剖</span>
-              <p className="text-[#6B7A6E] text-xs leading-relaxed flex-grow">{acuDetails.anatomy}</p>
+              <div className="text-[#6B7A6E] text-xs leading-relaxed flex-grow">
+                {renderFormattedText(acuDetails.anatomy)}
+              </div>
             </div>
           </div>
 
           <div className="bg-[#F7F5F0] p-4 rounded-xl border border-[#3A4F3F]/10">
             <span className="font-bold text-[#3A4F3F] block mb-1.5 text-sm">🎯 操作</span>
-            <p className="text-[#6B7A6E] text-xs leading-relaxed">{acuDetails.operation}</p>
+            <div className="text-[#6B7A6E] text-xs leading-relaxed">
+              {renderFormattedText(acuDetails.operation)}
+            </div>
           </div>
 
           {/* 功效（分古代、現代） */}
@@ -73,18 +124,24 @@ export default function AcuModal({ item, onClose }) {
             <div className="divide-y divide-[#E5E0D8]">
               <div className="p-4">
                 <span className="font-bold text-[#A39284] text-xs block mb-1">【古代功效記載】</span>
-                <p className="text-[#6B7A6E] text-xs leading-relaxed">{acuDetails.effectAncient}</p>
+                <div className="text-[#6B7A6E] text-xs leading-relaxed">
+                  {renderFormattedText(acuDetails.effectAncient)}
+                </div>
               </div>
               <div className="p-4 bg-[#FBFBFA]">
                 <span className="font-bold text-[#4E6654] text-xs block mb-1">【現代臨床應用】</span>
-                <p className="text-[#3A4F3F] text-xs leading-relaxed font-medium">{acuDetails.effectModern}</p>
+                <div className="text-[#3A4F3F] text-xs leading-relaxed font-medium">
+                  {renderFormattedText(acuDetails.effectModern)}
+                </div>
               </div>
             </div>
           </div>
 
           <div className="bg-[#3A4F3F]/5 p-4 rounded-xl border border-[#3A4F3F]/10">
             <span className="font-bold block text-xs text-[#3A4F3F] mb-1">🔗 配穴</span>
-            <p className="text-[#6B7A6E] text-xs leading-relaxed">{acuDetails.matchingPoints}</p>
+            <div className="text-[#6B7A6E] text-xs leading-relaxed">
+              {renderFormattedText(acuDetails.matchingPoints)}
+            </div>
           </div>
         </div>
 
