@@ -17,7 +17,7 @@ export default function AcupointModal({ item, onClose }) {
       paragraphs = stringText.split(/\\n|\r?\n/).map(p => p.trim());
     }
 
-    // 🔬 粗體語法解析器：將 **文字** 轉換成強化的穴道粗體標籤
+    // 🔬 特定詞彙粗體解析器：將 **文字** 轉換成加粗標籤，並加上精緻的草本微襯底
     const parseBoldSyntax = (str) => {
       const parts = str.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, i) => {
@@ -89,7 +89,7 @@ export default function AcupointModal({ item, onClose }) {
             </thead>
             <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">
               <tr className="bg-white">
-                <td className="px-4 py-3.5 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8] valign-top">📍 精確位置</td>
+                <td className="px-4 py-3.5 font-medium bg-[#FBFBFA] border-r border-[#E5E0D8]">📍 精確位置</td>
                 <td className="px-4 py-3.5 text-xs leading-relaxed">{renderSmartParagraphs(item.location)}</td>
               </tr>
               <tr className="bg-[#FBFBFA]/40">
@@ -104,11 +104,11 @@ export default function AcupointModal({ item, onClose }) {
           </table>
         </div>
 
-        {/* 🩺 功效功能核心區域：主要功效置頂 ➔ 分列古代與現代 */}
+        {/* 🩺 功效功能核心區域：🌟主要功效置頂 ➔ 下分 📜古代 與 🔬現代 */}
         <div className="space-y-4 bg-[#F7F5F0]/70 p-5 rounded-xl border border-[#E5E0D8]/50 mb-6">
           <span className="font-bold text-[#3A4F3F] block border-b border-[#E5E0D8] pb-1.5 mb-2 text-base">🩺 穴位主治與功效</span>
           
-          {/* 1. 主要功效 */}
+          {/* 1. 主要功效置頂 */}
           <div className="mb-4">
             <span className="font-bold text-[#3A4F3F] text-xs bg-[#EAE7E0] inline-block px-2.5 py-0.5 rounded shadow-sm mb-1.5">🌟 主要功效</span>
             <div className="pl-1 text-[#3A4F3F]">
@@ -116,7 +116,7 @@ export default function AcupointModal({ item, onClose }) {
             </div>
           </div>
 
-          {/* 2. 古代與現代對比欄位 */}
+          {/* 2. 古代與現代對比欄位（左右分列） */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-[#E5E0D8]/60 pt-3.5">
             <div>
               <span className="font-bold text-[#4E6654] text-xs block mb-1.5">📜 古代文獻 / 傳統記載：</span>
