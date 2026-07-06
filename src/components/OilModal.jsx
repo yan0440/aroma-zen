@@ -1,16 +1,21 @@
 import React from 'react';
 
+// 🟢 集中管理樣式：未來只需改動這裡，所有段落同步統一
+const UI = {
+  text: "text-[15px] leading-relaxed text-[#6B7A6E]", 
+  title: "text-4xl font-bold text-[#3A4F3F]",
+  sectionLabel: "font-bold text-[#4E6654] block mb-1 text-xs tracking-widest"
+};
+
 export default function OilModal({ item, onClose }) {
   if (!item) return null;
 
-  // 🧠 終極智慧段落引擎：完美支援 \n、阿拉伯數字 (1.)、國字數字 (一、) 的自動切行與完美縮進
+  // 🧠 終極智慧段落引擎
   const renderSmartParagraphs = (text, customClasses = "") => {
     if (!text) return null;
-    
     const stringText = String(text);
-    
     let paragraphs = [];
-    // 💡 升級：加入 [一二三四五六七八九十] 的感應，就算連著寫「一、...二、...」也會自動切開
+    
     if (!stringText.includes('\n') && /(?:\d+|[一二三四五六七八九十]+)[.、)]/.test(stringText)) {
       paragraphs = stringText.split(/(?=(?:\d+|[一二三四五六七八九十]+)[.、)])/).map(p => p.trim());
     } else {
@@ -20,12 +25,11 @@ export default function OilModal({ item, onClose }) {
     return paragraphs
       .filter(p => p !== '')
       .map((paragraph, index) => {
-        // 🔍 偵測開頭是否為 阿拉伯數字、國字數字 或 帶圈數字 ①
         const isNumbered = /^((?:\d+|[一二三四五六七八九十]+)[.、)]|[\u2460-\u2473])/.test(paragraph);
         return (
           <p 
             key={index} 
-            className={`text-justify leading-relaxed break-all ${isNumbered ? 'pl-6 -indent-6' : ''} ${customClasses}`}
+            className={`${UI.text} text-justify break-all ${isNumbered ? 'pl-6 -indent-6' : ''} ${customClasses}`}
           >
             {paragraph}
           </p>
@@ -35,11 +39,10 @@ export default function OilModal({ item, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative border border-[#E5E0D8]/30 text-sm" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative border border-[#E5E0D8]/30" onClick={(e) => e.stopPropagation()}>
         
         <button onClick={onClose} className="absolute top-5 right-5 text-[#A39284] hover:text-[#3A4F3F] text-xl">✕</button>
 
-        {/* 🏷️ 頂部獨立的體質與屬性標籤 */}
         <div className="mb-3 flex flex-wrap gap-1.5">
           <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#EAE7E0] text-[#6B7A6E]">
             {item.constitutionTag}體質
@@ -49,9 +52,7 @@ export default function OilModal({ item, onClose }) {
           </span>
         </div>
 
-        <h2 className="text-3xl font-bold text-[#3A4F3F]">{item.name}</h2>
-        
-        {/* 🔤 英文名字 */}
+        <h2 className={UI.title}>{item.name}</h2>
         <p className="text-base italic text-[#A39284] mt-1 mb-6 font-serif border-b border-[#F7F5F0] pb-4">
           {item.englishName}
         </p>
@@ -85,85 +86,70 @@ export default function OilModal({ item, onClose }) {
         <div className="space-y-5 text-[#3A4F3F]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className="font-bold text-[#4E6654] block mb-1">🔍 氣味</span>
-              {renderSmartParagraphs(item.oilDetails?.scent, "text-[#6B7A6E] text-xs")}
+              <span className={UI.sectionLabel}>🔍 氣味</span>
+              {renderSmartParagraphs(item.oilDetails?.scent)}
             </div>
             <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className="font-bold text-[#4E6654] block mb-1">✨ 外觀</span>
-              {renderSmartParagraphs(item.oilDetails?.appearance, "text-[#6B7A6E] text-xs")}
+              <span className={UI.sectionLabel}>✨ 外觀</span>
+              {renderSmartParagraphs(item.oilDetails?.appearance)}
             </div>
           </div>
 
-          {/* 📜 應用歷史與相關神話 */}
           <div>
             <span className="font-bold text-[#4E6654] block mb-1.5 text-base">📜 應用歷史與相關神話</span>
             <div className="bg-[#FBFBFA] px-5 py-4 rounded-xl border border-[#E5E0D8]/30">
-              {renderSmartParagraphs(item.oilDetails?.historyMyth, "mb-3 last:mb-0 text-[#6B7A6E]")}
+              {renderSmartParagraphs(item.oilDetails?.historyMyth)}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className="font-bold text-[#4E6654] block mb-1">🔬 化學結構</span>
-              {renderSmartParagraphs(item.oilDetails?.chemistry, "text-[#6B7A6E] text-xs")}
+              <span className={UI.sectionLabel}>🔬 化學結構</span>
+              {renderSmartParagraphs(item.oilDetails?.chemistry)}
             </div>
             <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className="font-bold text-[#4E6654] block mb-1">⚖️ 屬性</span>
-              {renderSmartParagraphs(item.oilDetails?.attribute, "text-[#6B7A6E] text-xs")}
+              <span className={UI.sectionLabel}>⚖️ 屬性</span>
+              {renderSmartParagraphs(item.oilDetails?.attribute)}
             </div>
           </div>
 
           <div className="bg-red-50/40 p-4 rounded-xl border border-red-200/40">
             <span className="font-bold text-red-800 block mb-1 text-xs">⚠️ 注意事項</span>
-            {renderSmartParagraphs(item.oilDetails?.caution, "text-red-700/90 text-xs")}
+            {renderSmartParagraphs(item.oilDetails?.caution, "text-red-700/90")}
           </div>
 
-          {/* 🩺 深度效能 */}
           <div className="space-y-4 bg-[#F7F5F0]/60 p-4 rounded-xl border border-[#E5E0D8]/40">
             <span className="font-bold text-[#3A4F3F] block border-b border-[#E5E0D8] pb-1.5 mb-1 text-base">🩺 深度效能</span>
-            
             <div>
-              <span className="font-bold text-[#4E6654] text-xs block mb-1">🧠 心靈療效：</span>
-              <div className="pl-2 border-l-2 border-[#A39284]">
-                {renderSmartParagraphs(item.oilDetails?.mindEffect, "mb-1.5 last:mb-0 text-[#6B7A6E] text-xs")}
-              </div>
+              <span className={UI.sectionLabel}>🧠 心靈療效：</span>
+              <div className="pl-2 border-l-2 border-[#A39284]">{renderSmartParagraphs(item.oilDetails?.mindEffect)}</div>
             </div>
-
             <div>
-              <span className="font-bold text-[#4E6654] text-xs block mb-1">💪 身體療效：</span>
-              <div className="pl-2 border-l-2 border-[#A39284]">
-                {renderSmartParagraphs(item.oilDetails?.bodyEffect, "mb-1.5 last:mb-0 text-[#6B7A6E] text-xs")}
-              </div>
+              <span className={UI.sectionLabel}>💪 身體療效：</span>
+              <div className="pl-2 border-l-2 border-[#A39284]">{renderSmartParagraphs(item.oilDetails?.bodyEffect)}</div>
             </div>
-
             <div>
-              <span className="font-bold text-[#4E6654] text-xs block mb-1">🧴 皮膚療效：</span>
-              <div className="pl-2 border-l-2 border-[#A39284]">
-                {renderSmartParagraphs(item.oilDetails?.skinEffect, "mb-1.5 last:mb-0 text-[#6B7A6E] text-xs")}
-              </div>
+              <span className={UI.sectionLabel}>🧴 皮膚療效：</span>
+              <div className="pl-2 border-l-2 border-[#A39284]">{renderSmartParagraphs(item.oilDetails?.skinEffect)}</div>
             </div>
           </div>
 
           <div className="space-y-3 bg-[#3A4F3F]/5 p-4 rounded-xl border border-[#3A4F3F]/10">
             <div>
               <span className="font-bold block text-xs">🔗 適合與之調和的精油</span>
-              {renderSmartParagraphs(item.oilDetails?.blendingOils, "text-[#6B7A6E] text-xs mt-0.5")}
+              {renderSmartParagraphs(item.oilDetails?.blendingOils)}
             </div>
             <div className="mt-2">
               <span className="font-bold block text-xs">🧪 精油配方</span>
-              {renderSmartParagraphs(item.oilDetails?.formulas, "text-[#3A4F3F] font-medium text-xs mt-0.5")}
+              {renderSmartParagraphs(item.oilDetails?.formulas)}
             </div>
             <div className="mt-2">
               <span className="font-bold block text-xs">🧴 按摩基底油</span>
-              {renderSmartParagraphs(item.oilDetails?.carrierOils, "text-[#6B7A6E] text-xs mt-0.5")}
+              {renderSmartParagraphs(item.oilDetails?.carrierOils)}
             </div>
-            
-            {/* 🚀 使用方法 */}
             <div className="mt-2 border-t border-[#E5E0D8] pt-2">
-              <span className="font-bold block text-xs text-[#4E6654] mb-1.5">🚀 使用方法</span>
-              <div className="px-1">
-                {renderSmartParagraphs(item.oilDetails?.usage, "mb-2 last:mb-0 text-[#3A4F3F] text-xs")}
-              </div>
+              <span className={UI.sectionLabel}>🚀 使用方法</span>
+              <div className="px-1">{renderSmartParagraphs(item.oilDetails?.usage)}</div>
             </div>
           </div>
         </div>

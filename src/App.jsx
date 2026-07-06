@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 // 🟢 請改成這樣：
-import { oilData } from './components/data/oilData.js';
-import { acuData } from './components/data/acuData.js';
+import { oilData } from "/src/data/oilData.js";
+import { acuData } from "/src/data/acuData.js";
 import OilModal from './components/OilModal';
 import AcuModal from './components/AcuModal';
 
