@@ -2,8 +2,8 @@ import React from 'react';
 
 // 🟢 集中管理樣式：未來只需改動這裡，所有段落同步統一
 const UI = {
-  text: "text-[15px] leading-relaxed text-[#6B7A6E]", 
-  title: "text-4xl font-bold text-[#3A4F3F]",
+  text: "text-[14.5px] leading-relaxed text-[#6B7A6E]", 
+  title: "text-4xl font-bold text-[#6B9080]",
   sectionLabel: "font-bold text-[#4E6654] block mb-1 text-xs tracking-widest"
 };
 
@@ -12,30 +12,41 @@ export default function OilModal({ item, onClose }) {
 
   // 🧠 終極智慧段落引擎
   const renderSmartParagraphs = (text, customClasses = "") => {
-    if (!text) return null;
-    const stringText = String(text);
-    let paragraphs = [];
-    
-    if (!stringText.includes('\n') && /(?:\d+|[一二三四五六七八九十]+)[.、)]/.test(stringText)) {
-      paragraphs = stringText.split(/(?=(?:\d+|[一二三四五六七八九十]+)[.、)])/).map(p => p.trim());
-    } else {
-      paragraphs = stringText.split(/\\n|\r?\n/).map(p => p.trim());
-    }
+  if (!text) return null;
+  const stringText = String(text);
+  let paragraphs = [];
+  
+  if (!stringText.includes('\n') && /(?:\d+|[一二三四五六七八九十]+)[.、)]/.test(stringText)) {
+    paragraphs = stringText.split(/(?=(?:\d+|[一二三四五六七八九十]+)[.、)])/).map(p => p.trim());
+  } else {
+    paragraphs = stringText.split(/\\n|\r?\n/).map(p => p.trim());
+  }
 
-    return paragraphs
-      .filter(p => p !== '')
-      .map((paragraph, index) => {
-        const isNumbered = /^((?:\d+|[一二三四五六七八九十]+)[.、)]|[\u2460-\u2473])/.test(paragraph);
+  return paragraphs
+    .filter(p => p !== '')
+    .map((paragraph, index) => {
+      const isNumbered = /^((?:\d+|[一二三四五六七八九十]+)[.、)]|[\u2460-\u2473])/.test(paragraph);
+      
+      // 如果是數字開頭，我們用 flex 來嚴格控制對齊
+      if (isNumbered) {
+        const match = paragraph.match(/^((?:\d+|[一二三四五六七八九十]+)[.、)]|[\u2460-\u2473])/);
+        const marker = match[0];
+        const content = paragraph.substring(match[0].length);
         return (
-          <p 
-            key={index} 
-            className={`${UI.text} text-justify break-all ${isNumbered ? 'pl-6 -indent-6' : ''} ${customClasses}`}
-          >
-            {paragraph}
-          </p>
+          <div key={index} className={`flex items-start ${UI.text} ${customClasses}`}>
+            <span className="shrink-0 font-bold w-6">{marker}</span>
+            <span className="flex-1 break-words text-justify">{content}</span>
+          </div>
         );
-      });
-  };
+      }
+      
+      return (
+        <p key={index} className={`${UI.text} text-justify break-words`}>
+          {paragraph}
+        </p>
+      );
+    });
+};
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>

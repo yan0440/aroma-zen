@@ -2,8 +2,8 @@ import React from 'react';
 
 // 🟢 集中管理樣式：與 OilModal 完全同步
 const UI = {
-  text: "text-[15px] leading-relaxed text-[#6B7A6E]", 
-  title: "text-4xl font-bold text-[#3A4F3F]",
+  text: "text-[14.5px] leading-relaxed text-[#6B7A6E]", 
+  title: "text-4xl font-bold text-[#6B9080]",
   sectionLabel: "font-bold text-[#4E6654] block mb-2 text-xs tracking-widest font-sans"
 };
 
@@ -13,49 +13,33 @@ export default function AcuModal({ item, onClose }) {
 
   // 🧠 全域智慧彈窗排版引擎
   const renderFormattedText = (text, customClasses = "") => {
-    if (!text) return null;
-    
-    const parseBoldSyntax = (str) => {
-      const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
-      return parts.map((part, i) => {
-        if (part.startsWith('==') && part.endsWith('==')) {
-          return <mark key={i} className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm">{part.slice(2, -2)}</mark>;
-        }
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part.slice(2, -2)}</strong>;
-        }
-        if ((part.startsWith('《') && part.endsWith('》')) || (part.startsWith('【') && part.endsWith('】'))) {
-          return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
-        }
-        return part;
-      });
-    };
-
-    const lines = String(text).split(/\\n|\r?\n/);
-    return lines
-      .filter(line => line.trim() !== '')
-      .map((line, index) => {
-        const trimmed = line.trim();
-        const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
-        
-        if (listMatch) {
-          const marker = listMatch[1];
-          const content = trimmed.substring(listMatch[0].length);
-          return (
-            <div key={index} className={`flex items-start gap-2.5 mb-1.5 last:mb-0 ${UI.text} ${customClasses}`}>
-              <span className="shrink-0 select-none mt-[1px]" style={{ fontWeight: 'bold' }}>{marker}</span>
-              <div className="flex-1 break-words">{parseBoldSyntax(content)}</div>
-            </div>
-          );
-        }
-        
+  if (!text) return null;
+  const lines = String(text).split(/\\n|\r?\n/);
+  
+  return lines
+    .filter(line => line.trim() !== '')
+    .map((line, index) => {
+      const trimmed = line.trim();
+      const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
+      
+      if (listMatch) {
+        const marker = listMatch[1];
+        const content = trimmed.substring(listMatch[0].length);
         return (
-          <p key={index} className={`${UI.text} text-justify break-words mb-1.5 last:mb-0 ${customClasses}`}>
-            {parseBoldSyntax(trimmed)}
-          </p>
+          <div key={index} className={`flex items-start ${UI.text} ${customClasses}`}>
+            <span className="shrink-0 font-bold w-6">{marker}</span>
+            <span className="flex-1 break-words text-justify">{parseBoldSyntax(content)}</span>
+          </div>
         );
-      });
-  };
+      }
+      
+      return (
+        <p key={index} className={`${UI.text} text-justify break-words mb-1.5 last:mb-0 ${customClasses}`}>
+          {parseBoldSyntax(trimmed)}
+        </p>
+      );
+    });
+};
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50" onClick={onClose}>
