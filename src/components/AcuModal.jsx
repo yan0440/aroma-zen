@@ -1,46 +1,59 @@
 import React from 'react';
 import { parseBoldSyntax } from "../utils/formatUtils.jsx";
 
-// 🟢 集中管理樣式：與 OilModal 完全同步
+// 🟢 集中管理樣式：未來只需改動這裡，所有段落同步統一
 const UI = {
-  text: "text-[14.5px] leading-relaxed text-[#6B7A6E]", 
+  // 將這裡的 14.5px 改成你想要的數值，例如 15px 或 16px
+  text: "text-[14px] leading-relaxed text-[#6B7A6E]", 
   title: "text-4xl font-bold text-[#6B9080]",
-  sectionLabel: "font-bold text-[#4E6654] block mb-2 text-xs tracking-widest font-sans"
+  sectionLabel: "font-bold text-[#4E6654] block mb-1 text-base tracking-widest"
 };
 
 export default function AcuModal({ item, onClose }) {
   if (!item) return null;
-  const { acuTable, acuDetails } = item;
-
-  // 🧠 全域智慧彈窗排版引擎
-  const renderFormattedText = (text, customClasses = "") => {
-  if (!text) return null;
-  const lines = String(text).split(/\\n|\r?\n/);
   
-  return lines
-    .filter(line => line.trim() !== '')
-    .map((line, index) => {
-      const trimmed = line.trim();
-      const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
-      
-      if (listMatch) {
-        const marker = listMatch[1];
-        const content = trimmed.substring(listMatch[0].length);
+  // 🛡️ 安全鎖：如果 acuDetails 不存在，給它一個預設值，避免讀取屬性時報錯
+  const acuTable = item.acuTable || {};
+  const acuDetails = item.acuDetails || {};
+
+  // 🧠 嚴格對齊版排版引擎：修正 w-6 固定寬度與間距
+  const renderFormattedText = (text, customClasses = "") => {
+    if (!text) return null;
+    const lines = String(text).split(/\\n|\r?\n/);
+    
+    return lines
+      .filter(line => line.trim() !== '')
+      .map((line, index) => {
+        const trimmed = line.trim();
+        const listMatch = trimmed.match(/^((?:\d+|[一二三四五六七八九十A-Za-z]+)[.、)]|[\u2460-\u2473]|[-•*‣▪])\s*/);
+        
+        // 🧠 修正後：更寬的 marker 容器，確保 (一)、(1) 不會被蓋住
+if (listMatch) {
+  const marker = listMatch[1];
+  const content = trimmed.substring(listMatch[0].length);
+  return (
+    <div key={index} className={`flex items-start mb-1.5 ${customClasses}`}>
+      {/* 將 w-6 改為 w-8 (增加寬度)
+         text-right 確保括號不會貼邊
+         pr-1 增加右側與內文的間距
+      */}
+      <span className="shrink-0 font-bold w-3 text-right pr-1 select-none text-[#6B7A6E]">
+        {marker}
+      </span>
+      <div className="flex-1 break-words text-justify">
+        {parseBoldSyntax(content)}
+      </div>
+    </div>
+  );
+}
+        
         return (
-          <div key={index} className={`flex items-start ${UI.text} ${customClasses}`}>
-            <span className="shrink-0 font-bold w-6">{marker}</span>
-            <span className="flex-1 break-words text-justify">{parseBoldSyntax(content)}</span>
-          </div>
+          <p key={index} className={`text-justify break-words mb-1.5 last:mb-0 ${customClasses}`}>
+            {parseBoldSyntax(trimmed)}
+          </p>
         );
-      }
-      
-      return (
-        <p key={index} className={`${UI.text} text-justify break-words mb-1.5 last:mb-0 ${customClasses}`}>
-          {parseBoldSyntax(trimmed)}
-        </p>
-      );
-    });
-};
+      });
+  };
 
  return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -64,8 +77,8 @@ export default function AcuModal({ item, onClose }) {
         <div className="overflow-hidden border border-[#E5E0D8]/80 rounded-xl mb-8 shadow-[0_4px_16px_rgba(58,79,63,0.01)] bg-white">
           <table className="w-full text-left border-collapse table-auto">
             <thead>
-              <tr className="bg-[#F0EDE6]/60 text-[#4E6654] font-bold text-xs tracking-widest border-b border-[#E5E0D8]/70">
-                <th className="px-4 py-3 border-r border-[#E5E0D8]/70">🩺 主治</th>
+              <tr className="bg-[#F0EDE6]/60 text-[#4E6654] font-bold text-[14px] tracking-widest border-b border-[#E5E0D8]/70">
+                <th className="px-4 py-3 border-r border-[#E5E0D8]/70">主治</th>
                 <th className="px-4 py-3 border-r border-[#E5E0D8]/70">別名</th>
                 <th className="px-4 py-3 border-r border-[#E5E0D8]/70">經絡</th>
                 <th className="px-4 py-3">代碼</th>
@@ -112,7 +125,36 @@ export default function AcuModal({ item, onClose }) {
               </div>
              )}
           </div>
-          
+          {/* 🎯 操作 */}
+<div className="bg-[#F5F2EC] p-4 rounded-xl border border-[#3A4F3F]/10">
+  <span className={UI.sectionLabel}>🎯 操作</span>
+  <div className={UI.text}>
+    {renderFormattedText(acuDetails?.operation || "未記載操作說明")}
+  </div>
+</div>
+
+{/* ✨ 功效 */}
+<div className="bg-white border border-[#E5E0D8]/80 rounded-xl overflow-hidden shadow-[0_4px_12px_rgba(58,79,63,0.01)]">
+  <div className="bg-[#F0EDE6]/60 px-4 py-2.5 font-bold text-[15px] tracking-widest text-[#3A4F3F] border-b border-[#E5E0D8]/70">✨ 功效</div>
+  <div className="divide-y divide-[#E5E0D8]/60">
+    <div className="p-4">
+      <span className="font-bold text-[#4E6654] text-[13px] tracking-wider block mb-2">【古代功效記載】</span>
+      <div className={UI.text}>{renderFormattedText(acuDetails?.effectAncient || "未記載")}</div>
+    </div>
+    <div className="p-4 bg-[#FBFBFA]">
+      <span className="font-bold text-[#4E6654] text-[13px] tracking-wider block mb-2">【現代臨床應用】</span>
+      <div className={UI.text}>{renderFormattedText(acuDetails?.effectModern || "未記載")}</div>
+    </div>
+  </div>
+</div>
+
+{/* 🔗 配穴 */}
+<div className="bg-[#3A4F3F]/5 p-4 rounded-xl border border-[#3A4F3F]/10">
+  <span className={UI.sectionLabel}>🔗 配穴</span>
+  <div className={UI.text}>
+    {renderFormattedText(acuDetails?.matchingPoints || "未記載配穴資訊")}
+  </div>
+</div>
           {/* 其他區塊以此類推... */}
         </div>
 
