@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        // 將這裡改成 'fttf'，對應你的 App.jsx
+        'fttf': ['LXGWWenKai', 'sans-serif'], 
+      },
+    },
   },
   plugins: [],
 }

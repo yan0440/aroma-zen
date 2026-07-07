@@ -1,1 +1,14 @@
 @import "tailwindcss";
+@font-face {
+  font-family: 'fttf'; /* 這個名字是 CSS 內部用的 */
+  src: url('/fonts/fttf.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 設定全域預設字體 */
+/* index.css */
+body {
+  font-family: 'fttf', sans-serif !important;
+}

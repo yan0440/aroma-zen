@@ -14,6 +14,7 @@ export const oilData = [
       latin: "阿米香樹屬 Amyris balsamifera",
       family: "芸香科 Rutaceae",
       nature: "溫、辛溫",
+      property: "金／陽",
       meridian: "肺經",
       constitution: "未知",
       // 💡 記得在資料庫這裡補上 indications 欄位

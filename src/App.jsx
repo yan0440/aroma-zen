@@ -68,7 +68,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4 font-sans">
+    // 在 App.jsx 裡，把 font-sans 刪除，只留 font-fttf
+<div className="font-fttf min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4">
       
       <header className="max-w-5xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-[#3A4F3F] mb-3 tracking-wide">本草與芳香數位百科</h1>

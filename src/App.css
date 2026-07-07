@@ -1,4 +1,11 @@
 .counter {
+  @font-face {
+  font-family: 'fttf'; /* 你之後在 Tailwind 設定檔會用到的名字 */
+  src: url('./assets/fonts/fttf.ttf') format('fttf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* 確保字體載入前，網頁能先顯示文字，不造成空白 */
+}
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
