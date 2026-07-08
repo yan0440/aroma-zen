@@ -37,7 +37,7 @@ if (listMatch) {
          text-right 確保括號不會貼邊
          pr-1 增加右側與內文的間距
       */}
-      <span className="shrink-0 font-bold w-3 text-right pr-1 select-none text-[#6B7A6E]">
+      <span className="shrink-0 font-bold w-3.5 text-right pr-1.5 select-none text-[#6B7A6E]">
         {marker}
       </span>
       <div className="flex-1 break-words text-justify">
@@ -87,9 +87,9 @@ if (listMatch) {
             <tbody className="text-[#3A4F3F]">
               <tr className="divide-x divide-[#E5E0D8]/60 align-top">
                 <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuDetails?.indications || "無")}</td>
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.alias || "—")}</td>
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.meridian || "—")}</td>
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.code || "—")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.alias || "無")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.meridian || "無")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.code || "無")}</td>
               </tr>
             </tbody>
           </table>

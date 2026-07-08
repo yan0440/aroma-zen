@@ -1,16 +1,11 @@
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+// tailwind.config.js
+module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // 將這裡改成 'fttf'，對應你的 App.jsx
-        'fttf': ['LXGWWenKai', 'sans-serif'], 
+        // 使用 'sans' 覆蓋預設，並將你的字體放在第一位
+        sans: ['fttf', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },
-  plugins: [],
 }
