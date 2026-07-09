@@ -14,11 +14,17 @@ export default function AcuModal({ item, onClose }) {
   const acuTable = item.acuTable || {};
   const acuDetails = item.acuDetails || {};
 
-  // 🧠 嚴格對齊版排版引擎：處理傳入的文字顯示
+  // 🧠 嚴格對齊版排版引擎：自動套用 formatUtils.jsx 中的關鍵字加粗邏輯
   const renderFormattedText = (text) => {
     if (!text) return null;
-    // 移除自動強制換行邏輯，直接顯示內容
-    return <div className="text-justify break-words">{parseBoldSyntax(text)}</div>;
+    return (
+      <div className="text-justify break-words">
+        {typeof text === 'string' 
+          ? text.split('\n').map((line, i) => <span key={i} className="block">{parseBoldSyntax(line)}</span>)
+          : parseBoldSyntax(text)
+        }
+      </div>
+    );
   };
 
   return (

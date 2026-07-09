@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase'; // 引入你的 Firebase 設定
-import { doc, setDoc } from 'firebase/firestore'; // 引入寫入功能
+import { db } from '../firebase'; 
+import { doc, setDoc } from 'firebase/firestore'; 
 
 export default function AddEntryModal({ onClose, editingItem }) {
   const [formData, setFormData] = useState({ 
@@ -57,7 +57,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
           <input placeholder="通用標籤 (Tag)" value={formData.tag || ''} className="w-full mb-3 p-2 border rounded" onChange={(e) => setFormData({...formData, tag: e.target.value})} />
         )}
         
-        <textarea placeholder="簡介描述" value={formData.description || ''} className="w-full mb-3 p-2 border rounded h-16" onChange={(e) => setFormData({...formData, description: e.target.value})} />
+        <textarea placeholder="簡介描述 (支援 **加粗**、==高亮==、換行)" value={formData.description || ''} className="w-full mb-3 p-2 border rounded h-16" onChange={(e) => setFormData({...formData, description: e.target.value})} />
 
         {/* --- 根據分類動態渲染的欄位 --- */}
         {formData.category === '精油' && (

@@ -8,25 +8,43 @@ const UI = {
   marker: "shrink-0 font-bold w-4 text-[13px] pr-7 select-none text-[#6B7A6E]"
 };
 
-// 輔助函式：處理粗體與標記語法
+// 🟢 同步 App.jsx 的智慧解析邏輯
 const parseBoldSyntax = (str) => {
   if (typeof str !== 'string') return str;
-  const parts = str.split(/(\*\*.*?\*\*|==.*?==)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('==') && part.endsWith('==')) return <mark key={i} className="bg-[#F3E1C5] px-1 rounded">{part.slice(2, -2)}</mark>;
-    if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="text-[#3A4F3F]">{part.slice(2, -2)}</strong>;
-    return part;
-  });
+  const boldKeywords = ['肌肉', '神經', '血管'];
+  const regex = /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
+
+  return str.split('\n').map((line, lineIndex) => (
+    <span key={lineIndex} className="block mb-1">
+      {line.split(regex).map((part, i) => {
+        if (!part) return null;
+        if (part.startsWith('==') && part.endsWith('==')) 
+          return <mark key={i} className="bg-[#F3E1C5] px-1 rounded">{part.slice(2, -2)}</mark>;
+        if ((part.startsWith('**') && part.endsWith('**')) || boldKeywords.includes(part)) 
+          return <strong key={i} className="text-[#3A4F3F]">{part.replace(/\*\*/g, '')}</strong>;
+        if (part.match(/^[【《\(].*[】》\)]$/)) 
+          return <span key={i} className="text-[#6B9080] font-medium">{part}</span>;
+        return part;
+      })}
+    </span>
+  ));
 };
 
 export default function FormulaModal({ item, onClose }) {
   if (!item) return null;
 
-  // 🧠 精簡排版引擎：移除強制分段，確保內容靈活顯示
+  // 🧠 排版引擎：處理傳入的文字顯示
   const renderFormattedText = (text) => {
     if (!text) return <span className="italic text-gray-400">無記載</span>;
     return <div className={`break-words ${UI.text}`}>{parseBoldSyntax(text)}</div>;
   };
+
+  const categoryAlerts = {
+    '中藥': "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。",
+    '方劑': "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。"
+  };
+  
+  const displayAlert = item.alert || categoryAlerts[item.category];
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -39,6 +57,12 @@ export default function FormulaModal({ item, onClose }) {
         </div>
 
         <h2 className={UI.title}>{item.name}</h2>
+
+        {item.intro && (
+          <div className="bg-[#F7F5F0] p-4 rounded-xl border border-[#E5E0D8] mb-6 text-[#6B7A6E] italic text-sm">
+            {item.intro}
+          </div>
+        )}
 
         <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
           <div className="text-sm text-[#6B7A6E] space-y-2">
@@ -64,6 +88,13 @@ export default function FormulaModal({ item, onClose }) {
             </div>
           ))}
         </div>
+
+        {displayAlert && (
+          <div className="mt-8 mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
+            <strong className="block mb-1">⚠️ 重要提醒：</strong>
+            {displayAlert}
+          </div>
+        )}
 
         <div className="mt-8 pt-4 border-t border-[#F7F5F0] text-center">
           <button onClick={onClose} className="px-6 py-2 bg-[#3A4F3F] hover:bg-[#2C3C30] text-white text-xs font-medium rounded-xl transition-all">

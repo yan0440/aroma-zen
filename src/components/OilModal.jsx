@@ -11,12 +11,15 @@ const UI = {
 export default function OilModal({ item, onClose }) {
   if (!item) return null;
 
-  // 🧠 精簡排版引擎：移除自動強制換行，確保文字流暢顯示
+  // 🧠 精簡排版引擎：處理多行渲染與格式解析
   const renderFormattedText = (text, customClasses = "") => {
-    if (!text) return null;
+    if (!text) return <span className="italic text-gray-400">無記載</span>;
     return (
       <div className={`${UI.text} ${customClasses} text-justify break-words`}>
-        {parseBoldSyntax(text)}
+        {typeof text === 'string' 
+          ? text.split('\n').map((line, i) => <span key={i} className="block">{parseBoldSyntax(line)}</span>)
+          : parseBoldSyntax(text)
+        }
       </div>
     );
   };
