@@ -39,6 +39,8 @@ export default function HerbModal({ item, onClose }) {
         
         <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 text-sm text-[#6B7A6E]">
+            {/* 🟢 新增：顯示別名 */}
+            <p className="col-span-2"><strong>別名：</strong> {item.alias || '無記載'}</p>
             <p><strong>科屬：</strong> {item.family || '無記載'}</p>
             <p><strong>類別：</strong> {item.category || '無記載'}</p>
             <p className="col-span-2"><strong>性味歸經：</strong> {item.nature || '無記載'}</p>

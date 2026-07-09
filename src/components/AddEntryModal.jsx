@@ -96,6 +96,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
         {formData.category === '中藥' && (
           <div className="space-y-3 mb-4">
             <div className="grid grid-cols-2 gap-3">
+              <input placeholder="別名" value={formData.alias || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, alias: e.target.value})} />
               <input placeholder="科屬" value={formData.family || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, family: e.target.value})} />
               <input placeholder="性味歸經" value={formData.nature || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, nature: e.target.value})} />
             </div>
