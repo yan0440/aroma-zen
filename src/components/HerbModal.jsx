@@ -70,6 +70,7 @@ export default function HerbModal({ item, onClose }) {
             { label: '用法用量', val: item.dosage },
             { label: '注意禁忌', val: item.contraindication },
             { label: '現代藥理', val: item.pharmacology },
+            { label: '附藥說明', val: item.directions },
             { label: '註', val: item.note }
           ].map((field, i) => (
             <div key={i}>

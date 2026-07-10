@@ -114,6 +114,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
     <textarea placeholder="現代藥理" value={formData.pharmacology || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, pharmacology: e.target.value})} />
     <textarea placeholder="文獻別錄" value={formData.literature || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, literature: e.target.value})} />
     <textarea placeholder="注意禁忌" value={formData.contraindication || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, contraindication: e.target.value})} />
+    <textarea placeholder="附藥說明" value={formData.contraindication || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, directions: e.target.value})} />
     <textarea placeholder="註" value={formData.note || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, note: e.target.value})} />
   </div>
 )}
