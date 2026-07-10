@@ -68,14 +68,47 @@ export default function App() {
   const filteredData = allData.filter(item => {
     if (!item || !item.name) return false;
     const query = searchQuery.toLowerCase();
-    const tags = [item.tag, item.acuTable?.meridian, item.constitutionTag, item.chemicalTag].filter(Boolean).join(' ');
-    const effects = [item.description, item.effect, item.oilDetails?.mindEffect, item.oilDetails?.bodyEffect, item.oilDetails?.skinEffect, item.oilDetails?.indications, item.oilDetails?.precautions, item.oilDetails?.usage].filter(Boolean).join(' ');
-    const attributes = [item.chemicalTag, item.oilDetails?.nature, item.oilDetails?.meridian, item.oilDetails?.fiveElements, item.oilDetails?.family].filter(Boolean).join(' ');
     
-    const searchableText = `${item.name} ${item.englishName} ${tags} ${effects} ${attributes}`.toLowerCase();
+    // 1. 基礎標籤範圍
+    const tags = [item.tag, item.constitutionTag, item.chemicalTag].filter(Boolean).join(' ');
+
+    // 2. 依類別設定搜尋範圍
+    let categorySpecificSearch = '';
+    
+    if (item.category === '精油') {
+      categorySpecificSearch = [
+        item.oilDetails?.mindEffect, 
+        item.oilDetails?.bodyEffect, 
+        item.oilDetails?.skinEffect, 
+        item.oilDetails?.usage,
+        item.oilDetails?.nature
+      ].filter(Boolean).join(' ');
+    } else if (item.category === '穴道') {
+      categorySpecificSearch = [
+        item.acuTable?.function, // 假設您的資料欄位為 function
+        item.acuTable?.combination   // 假設您的資料欄位為配穴
+      ].filter(Boolean).join(' ');
+    } else if (item.category === '中藥') {
+      categorySpecificSearch = [
+        item.effect, 
+        item.indications // 主治
+      ].filter(Boolean).join(' ');
+    } else if (item.category === '方劑') {
+      categorySpecificSearch = [
+        item.effect, 
+        item.indications, // 主治
+        item.syndrome,    // 辨證要點
+        item.modifications, // 加減變化
+        item.modernApp    // 現代應用
+      ].filter(Boolean).join(' ');
+    }
+
+    // 整合所有搜尋範圍 (名稱與英文名永遠包含)
+    const searchableText = `${item.name} ${item.englishName || ''} ${tags} ${categorySpecificSearch}`.toLowerCase();
+    
     return searchableText.includes(query) && (selectedCategory === '全部' || item.category === selectedCategory);
   });
-
+  
   return (
     <div className="font-fttf min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4">
       <header className="max-w-5xl mx-auto text-center mb-12">
