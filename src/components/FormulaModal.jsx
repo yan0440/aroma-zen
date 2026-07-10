@@ -78,7 +78,8 @@ export default function FormulaModal({ item, onClose }) {
             { label: '辨證要點', val: item.syndrome },
             { label: '加減變化', val: item.modifications },
             { label: '注意禁忌', val: item.contraindication },
-            { label: '現代應用', val: item.modernApp }
+            { label: '現代應用', val: item.modernApp },
+            { label: '附方', val: item.prescription }
           ].map((field, i) => (
             <div key={i}>
               <h4 className={UI.sectionLabel}>{field.label}</h4>

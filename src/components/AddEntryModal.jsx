@@ -133,6 +133,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
             <textarea placeholder="加減" value={formData.modifications || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, modifications: e.target.value})} />
             <textarea placeholder="注意禁忌" value={formData.contraindication || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, contraindication: e.target.value})} />
             <textarea placeholder="現代應用" value={formData.modernApp || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, modernApp: e.target.value})} />
+            <textarea placeholder="附方" value={formData.prescription || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, prescription: e.target.value})} />
           </div>
         )}
         </div>
