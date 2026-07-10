@@ -91,8 +91,14 @@ export default function AddEntryModal({ onClose, editingItem }) {
               <input placeholder="經絡" value={formData.acuTable?.meridian || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, meridian: e.target.value }})} />
               <input placeholder="別名" value={formData.acuTable?.alias || ''} className="col-span-2 p-2 border rounded" onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, alias: e.target.value }})} />
             </div>
+            <textarea placeholder="類別" value={formData.acuDetails?.type || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, type: e.target.value }})} />
+            <textarea placeholder="釋名" value={formData.acuDetails?.nameExpl || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, nameExpl: e.target.value }})} />
             <textarea placeholder="位置" value={formData.acuDetails?.location || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, location: e.target.value }})} />
-            <textarea placeholder="主治" value={formData.acuDetails?.indications || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, indications: e.target.value }})} />
+            <textarea placeholder="解剖" value={formData.acuDetails?.anatomy || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, anatomy: e.target.value }})} />
+            <textarea placeholder="操作" value={formData.acuDetails?.operation || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, operation: e.target.value }})} />
+            <textarea placeholder="古代功效" value={formData.acuDetails?.effectAncient || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, effectAncient: e.target.value }})} />
+            <textarea placeholder="現代功效" value={formData.acuDetails?.effectModern || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, effectModern: e.target.value }})} />
+            <textarea placeholder="配穴" value={formData.acuDetails?.matchingPoints || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, matchingPoints: e.target.value }})} />
           </div>
         )}
 
