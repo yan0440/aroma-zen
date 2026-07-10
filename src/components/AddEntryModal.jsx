@@ -45,6 +45,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
         </div>
         
         <div className="space-y-6">
+          {/* 1. 分類與名稱放在第一排 */}
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className={labelClass}>分類</label>
@@ -56,11 +57,17 @@ export default function AddEntryModal({ onClose, editingItem }) {
               <label className={labelClass}>名稱</label>
               <input placeholder="輸入名稱" value={formData.name || ''} className={inputClass} onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
-            {/* 名稱下方，標籤上方的位置 */}
-          <div>
-            <label className={labelClass}>簡介描述</label>
-            <textarea placeholder="簡介描述" value={formData.description || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, description: e.target.value})} />
           </div>
+          
+          {/* 2. 簡介描述：獨立出來，佔滿全寬 (w-full) */}
+          <div className="w-full">
+            <label className={labelClass}>簡介描述</label>
+            <textarea 
+              placeholder="簡介描述" 
+              value={formData.description || ''} 
+              className={textareaClass} 
+              onChange={(e) => setFormData({...formData, description: e.target.value})} 
+            />
           </div>
             {formData.category !== '穴道' && (
   <div className="mb-4">
