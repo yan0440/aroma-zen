@@ -96,7 +96,7 @@ export const oilData = [
       nature: "辛、甘、苦、溫",
       property: "土／陽",
       meridian: "入心、肝、脾經",
-      constitution: "\n1.活血、行氣、祛風\n2.促進消化，改善脹氣\n3.養肝\n4.通經，幫助子宮收縮\n5.增加血液循環\n6.用於婦女月經不調、經閉、痛經、產後瘀滯腹痛等",
+      constitution: "1.活血、行氣、祛風\n2.促進消化，改善脹氣\n3.養肝\n4.通經，幫助子宮收縮\n5.增加血液循環\n6.用於婦女月經不調、經閉、痛經、產後瘀滯腹痛等",
       // 💡 記得在資料庫這裡補上 indications 欄位
       indications: "未知",
       noteAnalogy: "高～中音",

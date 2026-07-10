@@ -14,18 +14,48 @@ export default function AcuModal({ item, onClose }) {
   const acuTable = item.acuTable || {};
   const acuDetails = item.acuDetails || {};
 
-  // 🧠 嚴格對齊版排版引擎：自動套用 formatUtils.jsx 中的關鍵字加粗邏輯
-  const renderFormattedText = (text) => {
-    if (!text) return null;
-    return (
-      <div className="text-justify break-words">
-        {typeof text === 'string' 
-          ? text.split('\n').map((line, i) => <span key={i} className="block">{parseBoldSyntax(line)}</span>)
-          : parseBoldSyntax(text)
+  const renderFormattedText = (text, customClasses = "") => {
+  if (!text) return <span className="italic text-gray-400">無記載</span>;
+
+  // 1. 將內容按換行分割，並過濾掉空行
+  const lines = typeof text === 'string' ? text.split('\n').filter(line => line.trim() !== '') : [text];
+
+  return (
+    <div className={`${UI.text} ${customClasses} text-justify break-words`}>
+      {lines.map((line, i) => {
+        const trimmed = typeof line === 'string' ? line.trim() : line;
+        
+        // 2. 綜合偵測邏輯：偵測阿拉伯數字 (1.) 或中文數字 (一、或一.)
+        const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
+        const isIndented = trimmed.startsWith('●');
+
+        // 3. Grid 排版結構 (維持對齊且穩定)
+        if (isNumbered) {
+          // 抓取編號結束點 (無論是 . 或 、)
+          const splitIndex = trimmed.search(/[.、]/) + 1;
+          return (
+            <div key={i} className="grid grid-cols-[auto_1fr] gap-x-2 mb-1">
+              <span className="font-bold shrink-0">{trimmed.substring(0, splitIndex)}</span>
+              <span>{parseBoldSyntax(trimmed.substring(splitIndex).trim())}</span>
+            </div>
+          );
         }
-      </div>
-    );
-  };
+
+        if (isIndented) {
+          return (
+            <div key={i} className="grid grid-cols-[1.5rem_1fr] mb-1">
+              <span className="text-[#A39284]">●</span>
+              <span>{parseBoldSyntax(trimmed.replace('●', '').trim())}</span>
+            </div>
+          );
+        }
+
+        // 4. 普通段落
+        return <div key={i} className="mb-1">{parseBoldSyntax(trimmed)}</div>;
+      })}
+    </div>
+  );
+};
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50" onClick={onClose}>
