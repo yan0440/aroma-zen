@@ -1,60 +1,50 @@
 import React from 'react';
+import { parseBoldSyntax } from "../utils/formatUtils.jsx";
 
-// 🟢 集中管理樣式：與其他 Modal 保持同步
 const UI = {
   text: "text-[15px] leading-8 text-[#6B7A6E]", 
   title: "text-4xl font-bold text-[#6B9080] mb-4",
   sectionLabel: "font-bold text-[#4E6654] block border-b border-[#E5E0D8] pb-1 mb-2 text-sm tracking-widest",
-  marker: "shrink-0 font-bold w-4 text-[13px] pr-7 select-none text-[#6B7A6E]"
-};
-
-// 🟢 同步 App.jsx 的智慧解析邏輯
-// 修改 parseBoldSyntax 函式，加入 ● 轉縮排的邏輯
-const parseBoldSyntax = (str) => {
-  if (typeof str !== 'string') return str;
-  const boldKeywords = ['肌肉', '神經', '血管'];
-  const regex = /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
-
-  return str.split('\n').map((line, lineIndex) => {
-    const isIndented = line.trim().startsWith('●');
-    
-    // 偵測數字格式，例如 1. 10. 等
-    const isNumbered = /^\d+\./.test(line.trim()); 
-    
-    // 處理數字後方自動加入空隙
-    const cleanLine = isIndented ? line.replace('●', '').trim() : 
-                      isNumbered ? line.replace(/^(\d+\.)/, '$1\u00A0\u00A0') : line; // 這裡加入兩個不換行空格
-
-    return (
-      <span 
-        key={lineIndex} 
-        className={`block mb-2 ${isIndented ? 'ml-6' : ''} ${isNumbered ? 'pl-8 -indent-5' : ''}`}
-      >
-        {cleanLine.split(regex).map((part, i) => {
-          if (!part) return null;
-          // ... (保留你原有的粗體、標記邏輯)
-          return part;
-        })}
-      </span>
-    );
-  });
 };
 
 export default function FormulaModal({ item, onClose }) {
   if (!item) return null;
 
-  // 🧠 排版引擎：處理傳入的文字顯示
   const renderFormattedText = (text) => {
     if (!text) return <span className="italic text-gray-400">無記載</span>;
-    return <div className={`break-words ${UI.text}`}>{parseBoldSyntax(text)}</div>;
+    const lines = typeof text === 'string' ? text.split('\n').filter(l => l.trim() !== '') : [text];
+    return (
+      <div className={UI.text}>
+        {lines.map((line, i) => {
+          const trimmed = typeof line === 'string' ? line.trim() : line;
+          const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
+          const isIndented = trimmed.startsWith('●');
+
+          if (isNumbered) {
+            const splitIndex = trimmed.search(/[.、]/) + 1;
+            return (
+              <div key={i} className="grid grid-cols-[auto_1fr] gap-x-2 mb-1">
+                <span className="font-bold shrink-0">{trimmed.substring(0, splitIndex)}</span>
+                <span>{parseBoldSyntax(trimmed.substring(splitIndex).trim())}</span>
+              </div>
+            );
+          }
+          if (isIndented) {
+            return (
+              <div key={i} className="grid grid-cols-[1.5rem_1fr] mb-1">
+                <span className="text-[#A39284]">●</span>
+                <span>{parseBoldSyntax(trimmed.replace('●', '').trim())}</span>
+              </div>
+            );
+          }
+          return <div key={i} className="mb-1">{parseBoldSyntax(trimmed)}</div>;
+        })}
+      </div>
+    );
   };
 
-  const categoryAlerts = {
-    '中藥': "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。",
-    '方劑': "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。"
-  };
-  
-  const displayAlert = item.alert || categoryAlerts[item.category];
+  const introText = item.intro || item.description || item.summary;
+  const alertContent = item.alert || (['中藥', '方劑'].includes(item.category) ? "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。" : "");
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -68,12 +58,7 @@ export default function FormulaModal({ item, onClose }) {
 
         <h2 className={UI.title}>{item.name}</h2>
 
-        {item.intro && (
-          <div className="bg-[#F7F5F0] p-4 rounded-xl border border-[#E5E0D8] mb-6 text-[#6B7A6E] italic text-sm">
-            {item.intro}
-          </div>
-        )}
-
+        {/* 2. 類別資訊框 */}
         <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 text-sm text-[#6B7A6E]">
             <p><strong>類別：</strong> {item.tag || item.category || '無記載'}</p>
@@ -82,6 +67,7 @@ export default function FormulaModal({ item, onClose }) {
           </div>
         </div>
 
+        {/* 3. 主要內容 */}
         <div className="space-y-6 text-[#3A4F3F]">
           {[
             { label: '製法用量', val: item.preparation },
@@ -100,10 +86,11 @@ export default function FormulaModal({ item, onClose }) {
           ))}
         </div>
 
-        {displayAlert && (
-          <div className="mt-8 mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
+        {/* 紅色提醒區塊已移至最底部 */}
+        {alertContent && (
+          <div className="mt-10 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
             <strong className="block mb-1">⚠️ 重要提醒：</strong>
-            {displayAlert}
+            {alertContent}
           </div>
         )}
 
