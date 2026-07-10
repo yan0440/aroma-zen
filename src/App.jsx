@@ -74,7 +74,15 @@ export default function App() {
   const filteredData = allData.filter(item => {
     if (!item || !item.name) return false;
     const query = searchQuery.toLowerCase();
-    const matchesSearch = item.name.toLowerCase().includes(query) || (item.tag && item.tag.toLowerCase().includes(query)) || (item.englishName && item.englishName.toLowerCase().includes(query));
+    
+    // 定義搜尋範圍：標籤、療效、主治、功效、屬性
+    const tags = [item.tag, item.acuTable?.meridian, item.constitutionTag, item.chemicalTag].filter(Boolean).join(' ');
+    const effects = [item.description, item.oilDetails?.mindEffect, item.oilDetails?.bodyEffect, item.oilDetails?.skinEffect, item.oilDetails?.indications, item.oilDetails?.precautions, item.oilDetails?.usage].filter(Boolean).join(' ');
+    const attributes = [item.chemicalTag, item.oilDetails?.nature, item.oilDetails?.meridian, item.oilDetails?.fiveElements, item.oilDetails?.family].filter(Boolean).join(' ');
+    
+    const searchableText = `${item.name} ${item.englishName} ${tags} ${effects} ${attributes}`.toLowerCase();
+
+    const matchesSearch = searchableText.includes(query);
     const matchesCategory = selectedCategory === '全部' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
