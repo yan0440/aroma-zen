@@ -87,11 +87,11 @@ export default function AddEntryModal({ onClose, editingItem }) {
           <div className="space-y-3 mb-4 p-4 bg-gray-50 rounded-xl">
             <h3 className="font-bold text-[#3A4F3F] text-sm">穴道核心表格資訊</h3>
             <div className="grid grid-cols-2 gap-2">
-              <input placeholder="主治" value={formData.acuTable?.indications || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, indications: e.target.value }})} />
               <input placeholder="國際代碼" value={formData.acuTable?.code || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, code: e.target.value }})} />
               <input placeholder="經絡" value={formData.acuTable?.meridian || ''} className="p-2 border rounded" onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, meridian: e.target.value }})} />
               <input placeholder="別名" value={formData.acuTable?.alias || ''} className="col-span-2 p-2 border rounded" onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, alias: e.target.value }})} />
             </div>
+            <textarea placeholder="主治" value={formData.acuDetails?.indications || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, indications: e.target.value }})} />
             <textarea placeholder="類別" value={formData.acuDetails?.type || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, type: e.target.value }})} />
             <textarea placeholder="釋名" value={formData.acuDetails?.nameExpl || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, nameExpl: e.target.value }})} />
             <textarea placeholder="位置" value={formData.acuDetails?.location || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, location: e.target.value }})} />
