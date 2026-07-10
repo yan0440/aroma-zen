@@ -56,11 +56,18 @@ export default function AddEntryModal({ onClose, editingItem }) {
               <label className={labelClass}>名稱</label>
               <input placeholder="輸入名稱" value={formData.name || ''} className={inputClass} onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
+            {/* 名稱下方，標籤上方的位置 */}
+          <div>
+            <label className={labelClass}>簡介描述</label>
+            <textarea placeholder="簡介描述" value={formData.description || ''} className="w-full p-2 border rounded h-16" onChange={(e) => setFormData({...formData, description: e.target.value})} />
+          </div>
           </div>
             {formData.category !== '穴道' && (
   <div className="mb-4">
             <label className={labelClass}>核心標籤</label><input placeholder="例如：解表、清熱" value={formData.tag || ''} className={inputClass} onChange={(e) => setFormData({...formData, tag: e.target.value})} />
+            
           </div>
+          
 )}
           {formData.category === '精油' && (
           <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">
