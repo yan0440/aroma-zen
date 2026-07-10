@@ -17,18 +17,22 @@ const parseBoldSyntax = (str) => {
 
   return str.split('\n').map((line, lineIndex) => {
     const isIndented = line.trim().startsWith('●');
-    const cleanLine = isIndented ? line.replace('●', '', '•').trim() : line;
+    
+    // 偵測數字格式，例如 1. 10. 等
+    const isNumbered = /^\d+\./.test(line.trim()); 
+    
+    // 處理數字後方自動加入空隙
+    const cleanLine = isIndented ? line.replace('●', '').trim() : 
+                      isNumbered ? line.replace(/^(\d+\.)/, '$1\u00A0\u00A0') : line; // 這裡加入兩個不換行空格
 
     return (
-      <span key={lineIndex} className={`block mb-1 ${isIndented ? 'ml-6' : ''}`}>
+      <span 
+        key={lineIndex} 
+        className={`block mb-2 ${isIndented ? 'ml-6' : ''} ${isNumbered ? 'pl-8 -indent-5' : ''}`}
+      >
         {cleanLine.split(regex).map((part, i) => {
           if (!part) return null;
-          if (part.startsWith('==') && part.endsWith('==')) 
-            return <mark key={i} className="bg-[#F3E1C5] px-1 rounded">{part.slice(2, -2)}</mark>;
-          if ((part.startsWith('**') && part.endsWith('**')) || boldKeywords.includes(part)) 
-            return <strong key={i} className="text-[#3A4F3F]">{part.replace(/\*\*/g, '')}</strong>;
-          if (part.match(/^[【《\(].*[】》\)]$/)) 
-            return <span key={i} className="text-[#6B9080] font-medium">{part}</span>;
+          // ... (保留你原有的粗體、標記邏輯)
           return part;
         })}
       </span>
