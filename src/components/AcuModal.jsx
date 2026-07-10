@@ -168,19 +168,39 @@ export default function AcuModal({ item, onClose }) {
             </div>
           </div>
 
-          {/* 🔗 配穴 */}
+          {/* 🔗 配穴區塊修正 */}
           <div className="bg-[#3A4F3F]/5 p-4 rounded-xl border border-[#3A4F3F]/10">
             <span className={UI.sectionLabel}>🔗 配穴</span>
-            <div className={UI.text}>{renderFormattedText(acuDetails?.matchingPoints || "未記載配穴資訊")}</div>
+            <div className={UI.text}>
+              {acuDetails?.matchingPoints ? (
+                acuDetails.matchingPoints.split('\n').map((line, i) => {
+                  const colonIndex = line.indexOf('：');
+                  if (colonIndex !== -1) {
+                    const disease = line.substring(0, colonIndex);
+                    const points = line.substring(colonIndex);
+                    return (
+                      <div key={i} className="mb-1">
+                        <strong className="text-[#3A4F3F] !font-bold">{disease}</strong>
+                        <span>{points}</span>
+                      </div>
+                    );
+                  }
+                  return <div key={i} className="mb-1">{line}</div>;
+                })
+              ) : (
+                <span className="italic text-gray-400">未記載配穴資訊</span>
+              )}
+            </div>
           </div>
-        </div>
+        </div> {/* 這是對應 space-y-6 的閉合 */}
 
+        {/* 底部按鈕 */}
         <div className="mt-8 pt-4 border-t border-[#E5E0D8]/30 text-center">
           <button onClick={onClose} className="px-6 py-2 bg-[#3A4F3F] hover:bg-[#2C3C30] text-white text-xs font-semibold rounded-xl transition-all shadow-md">
             關閉並返回列表
           </button>
         </div>
-      </div>
-    </div>
+      </div> {/* 這是對應 modal 主內容 div 的閉合 */}
+    </div> // 這是對應 fixed 遮罩 div 的閉合
   );
-}
+} // 這是對應 export default function AcuModal 的閉合
