@@ -1,6 +1,9 @@
 import React from 'react';
 import { parseBoldSyntax } from "../utils/formatUtils.jsx";
 
+
+const inputClass = "w-full px-4 py-3 bg-[#FCFBFA] border border-[#E5E0D8]/60 rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all duration-300";
+const textareaClass = `${inputClass} h-24`;
 // 🟢 集中管理樣式：調整此處即可全域同步
 const UI = {
   text: "text-[14px] leading-relaxed text-[#6B7A6E]", 
