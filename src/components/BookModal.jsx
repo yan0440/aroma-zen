@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 export default function BookModal({ item, onClose }) {
   // 記錄當前使用者點選了哪一個子篇章的內容
   const [selectedContent, setSelectedContent] = useState(null);
+  
+  // 用於控制臨時修改篇章別名的輸入框狀態
+  const [aliasInput, setAliasInput] = useState('');
 
   if (!item) return null;
 
@@ -86,6 +89,20 @@ export default function BookModal({ item, onClose }) {
   // 取得書籍細節與目錄架構
   const { author, chapters } = item.bookDetails || { author: '經典文獻', chapters: [] };
 
+  // 輔助函式：從原始標題中抽取出真正的主標題文字（過濾掉括號別名）
+  const getRawTitle = (fullTitle) => {
+    if (!fullTitle) return '未命名';
+    const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
+    return match ? match[1].trim() : fullTitle;
+  };
+
+  // 輔助函式：從原始標題中抽取出原本帶有的別名文字
+  const getRawAlias = (fullTitle) => {
+    if (!fullTitle) return '';
+    const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
+    return match ? match[2].trim() : '';
+  };
+
   // 專門為左側目錄與右側標題設計的「標題與別名自動拆解渲染器」
   const renderTitleWithAlias = (fullTitle, isMainHeading = false) => {
     if (!fullTitle) return '未命名';
@@ -154,7 +171,6 @@ export default function BookModal({ item, onClose }) {
           
           {/* 左側欄：動態目錄樹 */}
           <div className="w-80 border-r border-[#E5E0D8]/60 bg-white overflow-y-auto p-4 space-y-4">
-            {/* 🟢 左側欄小標題：加大至 text-base */}
             <h4 className="text-base font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄與分類架構</h4>
             
             {(!chapters || chapters.length === 0) && (
@@ -163,7 +179,7 @@ export default function BookModal({ item, onClose }) {
 
             {chapters?.map((ch) => (
               <div key={ch.id} className="space-y-1.5">
-                {/* 📁 大目錄標題（如：素問）：已加大至 text-base */}
+                {/* 📁 大目錄標題（如：素問） */}
                 <div 
                   className="text-base text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl flex items-center gap-2"
                   style={{ fontWeight: 800 }}
@@ -173,29 +189,37 @@ export default function BookModal({ item, onClose }) {
 
                 {/* 子篇章節點 */}
                 <div className="pl-4 space-y-1 border-l border-[#6B9080]/20 ml-2">
-                  {ch.children?.map((child) => (
-                    <button
-                      key={child.id}
-                      onClick={() => {
-                        if (child.type === 'content') {
-                          setSelectedContent(child);
-                        }
-                      }}
-                      /* 🟢 這裡已將原本的 text-xs 修正加大至 text-base (16px) */
-                      className={`w-full text-left text-base p-2.5 rounded-lg transition-all flex items-start gap-2 ${
-                        child.type === 'folder' 
-                          ? 'text-[#A39284] font-medium cursor-default' 
-                          : selectedContent?.id === child.id
-                            ? 'bg-[#3A4F3F] text-white font-bold shadow-sm'
-                            : 'text-[#6B7A6E] hover:bg-[#F7F5F0] hover:text-[#3A4F3F]'
-                      }`}
-                    >
-                      <span className="mt-0.5">{child.type === 'folder' ? '📂' : '📄'}</span>
-                      <div className="flex-1 min-w-0">
-                        {renderTitleWithAlias(child.title, false)}
-                      </div>
-                    </button>
-                  ))}
+                  {ch.children?.map((child) => {
+                    // 核心邏輯：如果這個項目是目前選中的項目，且使用者有在右側輸入框輸入別名，則左側目錄也即時動態融合渲染
+                    const displayTitle = selectedContent?.id === child.id 
+                      ? (aliasInput ? `${getRawTitle(child.title)}(別名：${aliasInput})` : getRawTitle(child.title))
+                      : child.title;
+
+                    return (
+                      <button
+                        key={child.id}
+                        onClick={() => {
+                          if (child.type === 'content') {
+                            setSelectedContent(child);
+                            // 點選時，自動把該篇章原有的別名填入輸入框中
+                            setAliasInput(getRawAlias(child.title));
+                          }
+                        }}
+                        className={`w-full text-left text-base p-2.5 rounded-lg transition-all flex items-start gap-2 ${
+                          child.type === 'folder' 
+                            ? 'text-[#A39284] font-medium cursor-default' 
+                            : selectedContent?.id === child.id
+                              ? 'bg-[#3A4F3F] text-white font-bold shadow-sm'
+                              : 'text-[#6B7A6E] hover:bg-[#F7F5F0] hover:text-[#3A4F3F]'
+                        }`}
+                      >
+                        <span className="mt-0.5">{child.type === 'folder' ? '📂' : '📄'}</span>
+                        <div className="flex-1 min-w-0">
+                          {renderTitleWithAlias(displayTitle, false)}
+                        </div>
+                      </button>
+                    );
+                  })}
                   {(!ch.children || ch.children.length === 0) && (
                     <span className="text-base text-[#A39284] italic pl-2 block">無子項目</span>
                   )}
@@ -208,15 +232,36 @@ export default function BookModal({ item, onClose }) {
           <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-[#FCFBFA]">
             {selectedContent ? (
               <div className="space-y-6 max-w-2xl mx-auto animate-in fade-in duration-300">
-                {/* 當前閱讀篇章標題 */}
-                <div className="border-b border-[#E5E0D8]/60 pb-4">
-                  <span className="text-xs font-bold text-[#6B9080] tracking-wider block mb-1">CURRENT VIEWING</span>
-                  <div className="mt-1">
-                    {renderTitleWithAlias(selectedContent.title, true)}
+                
+                {/* 🟢 頂部複合區塊：將「當前標題顯示」與「別名輸入框」並排合併在一起 */}
+                <div className="border-b border-[#E5E0D8]/60 pb-5 space-y-4">
+                  <div>
+                    <span className="text-xs font-bold text-[#6B9080] tracking-wider block mb-1">CURRENT VIEWING</span>
+                    <div className="mt-1">
+                      {/* 右側標題也即時動態融合輸入框內容 */}
+                      {renderTitleWithAlias(
+                        aliasInput ? `${getRawTitle(selectedContent.title)}(別名：${aliasInput})` : getRawTitle(selectedContent.title), 
+                        true
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 🟢 直接在項目篇章標題下方加入與之呼應的別名設定框 */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-[#F6F4F0] p-3.5 rounded-xl border border-[#E5E0D8]/70">
+                    <div className="whitespace-nowrap text-xs font-bold text-[#3A4F3F]">
+                      🏷️ 項目別名設定：
+                    </div>
+                    <input
+                      type="text"
+                      className="flex-1 px-3 py-1.5 text-sm bg-white border border-[#E5E0D8] rounded-lg text-[#3A4F3F] focus:outline-none focus:border-[#6B9080] focus:ring-1 focus:ring-[#6B9080] transition-all shadow-sm"
+                      placeholder="請輸入別名（例如：養生總綱、內經第一篇），多個可用頓號隔開"
+                      value={aliasInput}
+                      onChange={(e) => setAliasInput(e.target.value)}
+                    />
                   </div>
                 </div>
                 
-                {/* 經文 / 症狀主體內容：維持 text-base */}
+                {/* 經文 / 症狀主體內容 */}
                 <div className="text-base text-[#3A4F3F] leading-loose tracking-wide bg-[#FBF9F6] p-6 md:p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-inner">
                   {selectedContent.text ? (
                     parseModalSyntax(selectedContent.text)
@@ -236,7 +281,7 @@ export default function BookModal({ item, onClose }) {
                   </div>
                 </div>
 
-                {/* 書籍簡介區塊：同步加大為 text-base */}
+                {/* 書籍簡介區塊 */}
                 {item.description && (
                   <div className="w-full text-left bg-[#FBF9F6] p-6 md:p-8 rounded-2xl border border-[#E5E0D8]/50 shadow-inner space-y-3">
                     <strong className="text-base text-[#3A4F3F] flex items-center gap-2 border-b border-[#E5E0D8]/40 pb-2" style={{ fontWeight: 800 }}>
