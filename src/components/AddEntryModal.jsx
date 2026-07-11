@@ -97,7 +97,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
         />
       </div>
       <div className="flex items-end">
-        {/* 🟢 獨立新增「大目錄」（如：素問、靈樞）的按鈕 */}
+        {/* 獨立新增「主目錄」（如：素問、靈樞、內科症狀、外科症狀）的按鈕 */}
         <button
           type="button"
           onClick={() => {
@@ -105,7 +105,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
             const newChapter = {
               id: `ch_${Date.now()}`,
               title: '',
-              type: 'folder', // 代表目錄
+              type: 'folder',
               children: []
             };
             setFormData({
@@ -115,7 +115,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
           }}
           className="w-full py-3 bg-[#6B9080] text-white rounded-xl font-bold hover:bg-[#5A7B6D] transition-colors shadow-sm"
         >
-          ＋ 新增主目錄（如：素問、靈樞）
+          ＋ 新增主目錄（如：素問、內科症狀）
         </button>
       </div>
     </div>
@@ -134,7 +134,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
           <div className="flex gap-2 items-center">
             <span className="text-xs font-bold text-[#6B9080]">主目錄 {index + 1}:</span>
             <input
-              placeholder="輸入目錄名稱（如：素問）"
+              placeholder="輸入目錄名稱（如：素問、內科症狀）"
               value={chapter.title}
               className={`${inputClass} !py-2 bg-white`}
               onChange={(e) => {
@@ -173,7 +173,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
                     <option value="folder">📁 子目錄</option>
                   </select>
                   <input
-                    placeholder={child.type === 'folder' ? "子目錄名稱（如：卷一）" : "篇章名稱（如：上古天真論）"}
+                    placeholder={child.type === 'folder' ? "子目錄名稱（如：卷一）" : "項目/篇章名稱（如：上古天真論、發熱）"}
                     value={child.title}
                     className="w-full text-sm p-1.5 border-b border-[#E5E0D8] outline-none"
                     onChange={(e) => {
@@ -195,23 +195,42 @@ export default function AddEntryModal({ onClose, editingItem }) {
                   </button>
                 </div>
 
-                {/* 如果是終端內文，顯示大文字框填寫大量經文，且支援 \n 換行 */}
+                {/* 如果是終端內文，顯示快速模板工具列與大文字框 */}
                 {child.type === 'content' && (
-                  <textarea
-                    placeholder="在此輸入本篇章的詳細經典經文內容（支援換行...）"
-                    value={child.text || ''}
-                    className="w-full p-2 bg-[#FCFBFA] text-xs border border-[#E5E0D8] rounded-lg h-32 resize-y outline-none focus:border-[#3A4F3F]"
-                    onChange={(e) => {
-                      const updated = [...formData.bookDetails.chapters];
-                      updated[index].children[childIdx].text = e.target.value;
-                      setFormData({ ...formData, bookDetails: { ...formData.bookDetails, chapters: updated } });
-                    }}
-                  />
+                  <div className="space-y-2">
+                    {/* 症狀鑑別快速工具列 */}
+                    <div className="flex gap-2 items-center bg-[#F0EDE6]/60 p-2 rounded-lg">
+                      <span className="text-[11px] font-bold text-[#6B9080]">症狀快速模板：</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const template = "【概念】\n\n\n【辨證分析】\n\n\n【文獻別錄】\n\n\n【現代研究】\n\n\n【診斷辨證分析】\n\n";
+                          const updated = [...formData.bookDetails.chapters];
+                          updated[index].children[childIdx].text = template + (child.text || '');
+                          setFormData({ ...formData, bookDetails: { ...formData.bookDetails, chapters: updated } });
+                        }}
+                        className="text-[10px] bg-white text-[#3A4F3F] border border-[#E5E0D8] px-2 py-1 rounded hover:bg-[#3A4F3F] hover:text-white transition-colors"
+                      >
+                        ＋ 插入 概念/辨證/文獻 框架
+                      </button>
+                    </div>
+
+                    <textarea
+                      placeholder="在此輸入詳細經文，或是點擊上方按鈕插入症狀鑑別的【概念、辨證分析、現代研究】等完整內容（支援換行...）"
+                      value={child.text || ''}
+                      className="w-full p-3 bg-[#FCFBFA] text-xs border border-[#E5E0D8] rounded-xl h-48 resize-y outline-none focus:border-[#3A4F3F] font-sans leading-relaxed"
+                      onChange={(e) => {
+                        const updated = [...formData.bookDetails.chapters];
+                        updated[index].children[childIdx].text = e.target.value;
+                        setFormData({ ...formData, bookDetails: { ...formData.bookDetails, chapters: updated } });
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             ))}
 
-            {/* 🟢 獨立新增「子節點」按鈕 */}
+            {/* 獨立新增「子節點」按鈕 */}
             <button
               type="button"
               onClick={() => {
