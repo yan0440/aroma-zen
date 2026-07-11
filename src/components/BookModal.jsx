@@ -136,7 +136,7 @@ export default function BookModal({ item, onClose }) {
             <span className="text-[11px] font-bold text-[#6B9080] uppercase tracking-widest block mb-0.5">
               {item.category} 百科閱讀器
             </span>
-            <h2 className="text-2xl text-[#3A4F3F] flex items-center gap-3" style={{ fontWeight: 500 }}>
+            <h2 className="text-2xl text-[#3A4F3F] flex items-center gap-3" style={{ fontWeight: 900 }}>
               {item.name}
               {author && <span className="text-xs font-normal text-[#A39284] bg-[#F7F5F0] px-2.5 py-1 rounded-full">{author}</span>}
             </h2>
@@ -154,17 +154,18 @@ export default function BookModal({ item, onClose }) {
           
           {/* 左側欄：動態目錄樹 */}
           <div className="w-80 border-r border-[#E5E0D8]/60 bg-white overflow-y-auto p-4 space-y-4">
-            <h4 className="text-xs font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄與分類架構</h4>
+            {/* 🟢 左側欄小標題：加大至 text-base */}
+            <h4 className="text-base font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄與分類架構</h4>
             
             {(!chapters || chapters.length === 0) && (
-              <p className="text-sm text-[#A39284] italic p-2">此項目尚未建立目錄架構。</p>
+              <p className="text-base text-[#A39284] italic p-2">此項目尚未建立目錄架構。</p>
             )}
 
             {chapters?.map((ch) => (
               <div key={ch.id} className="space-y-1.5">
-                {/* 大目錄標題 */}
+                {/* 📁 大目錄標題（如：素問）：已加大至 text-base */}
                 <div 
-                  className="text-sm text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl flex items-center gap-2"
+                  className="text-base text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl flex items-center gap-2"
                   style={{ fontWeight: 800 }}
                 >
                   📁 {ch.title || '未命名分類'}
@@ -180,7 +181,8 @@ export default function BookModal({ item, onClose }) {
                           setSelectedContent(child);
                         }
                       }}
-                      className={`w-full text-left text-xs p-2.5 rounded-lg transition-all flex items-start gap-2 ${
+                      /* 🟢 這裡已將原本的 text-xs 修正加大至 text-base (16px) */
+                      className={`w-full text-left text-base p-2.5 rounded-lg transition-all flex items-start gap-2 ${
                         child.type === 'folder' 
                           ? 'text-[#A39284] font-medium cursor-default' 
                           : selectedContent?.id === child.id
@@ -195,7 +197,7 @@ export default function BookModal({ item, onClose }) {
                     </button>
                   ))}
                   {(!ch.children || ch.children.length === 0) && (
-                    <span className="text-[11px] text-[#A39284] italic pl-2 block">無子項目</span>
+                    <span className="text-base text-[#A39284] italic pl-2 block">無子項目</span>
                   )}
                 </div>
               </div>
@@ -214,8 +216,8 @@ export default function BookModal({ item, onClose }) {
                   </div>
                 </div>
                 
-                {/* 經文 / 症狀主體內容 */}
-                <div className="text-sm text-[#3A4F3F] leading-loose tracking-wide bg-[#FBF9F6] p-6 md:p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-inner">
+                {/* 經文 / 症狀主體內容：維持 text-base */}
+                <div className="text-base text-[#3A4F3F] leading-loose tracking-wide bg-[#FBF9F6] p-6 md:p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-inner">
                   {selectedContent.text ? (
                     parseModalSyntax(selectedContent.text)
                   ) : (
@@ -229,18 +231,18 @@ export default function BookModal({ item, onClose }) {
                 <div className="flex items-center gap-3 border-b border-[#E5E0D8]/60 pb-4">
                   <span className="text-xl">📖</span>
                   <div className="text-left">
-                    <h4 className="text-sm font-bold text-[#3A4F3F]">歡迎閱讀百科導覽</h4>
-                    <p className="text-xs text-[#A39284]">請從左側目錄點選想要深入閱讀的細節科別、症狀或文獻章節</p>
+                    <h4 className="text-base font-bold text-[#3A4F3F]">歡迎閱讀百科導覽</h4>
+                    <p className="text-sm text-[#A39284]">請從左側目錄點選想要深入閱讀的細節科別、症狀或文獻章節</p>
                   </div>
                 </div>
 
-                {/* 書籍簡介區塊 */}
+                {/* 書籍簡介區塊：同步加大為 text-base */}
                 {item.description && (
                   <div className="w-full text-left bg-[#FBF9F6] p-6 md:p-8 rounded-2xl border border-[#E5E0D8]/50 shadow-inner space-y-3">
                     <strong className="text-base text-[#3A4F3F] flex items-center gap-2 border-b border-[#E5E0D8]/40 pb-2" style={{ fontWeight: 800 }}>
                       ✨ 本書概要與導論
                     </strong>
-                    <div className="text-sm text-[#6B7A6E] leading-relaxed tracking-wide">
+                    <div className="text-base text-[#6B7A6E] leading-relaxed tracking-wide">
                       {parseModalSyntax(item.description)}
                     </div>
                   </div>
