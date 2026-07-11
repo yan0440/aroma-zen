@@ -49,7 +49,6 @@ export default function AddEntryModal({ onClose, editingItem }) {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className={labelClass}>分類</label>
-              // 在 select 標籤中
 <select className={inputClass} value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
   <option value="書籍">書籍</option>
   <option value="精油">精油</option>
@@ -100,13 +99,19 @@ export default function AddEntryModal({ onClose, editingItem }) {
             <input placeholder="主宰星球" value={formData.oilDetails?.planet || ''} className={inputClass} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, planet: e.target.value }})} />
             <input placeholder="重要產地" value={formData.oilTable?.origin || ''} className="col-span-2 p-3 bg-gray-50 border border-gray-200 rounded-xl" onChange={(e) => setFormData({...formData, oilTable: { ...formData.oilTable, origin: e.target.value }})} />
             <input placeholder="屬性" value={formData.chemicalTag || ''} className="col-span-2 p-3 bg-gray-50 border border-gray-200 rounded-xl" onChange={(e) => setFormData({...formData, chemicalTag: e.target.value})} />
-            <textarea placeholder="外觀描述" value={formData.oilDetails?.appearance || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, appearance: e.target.value }})} />
-            <textarea placeholder="應用歷史與相關神話" value={formData.oilDetails?.history || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, history: e.target.value }})} />
-            <textarea placeholder="注意事項" value={formData.oilDetails?.precautions || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, precautions: e.target.value }})} />
-            <textarea placeholder="適合與之調和的精油" value={formData.oilDetails?.blending || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, blending: e.target.value }})} />
-            <textarea placeholder="精油配方" value={formData.oilDetails?.formula || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, formula: e.target.value }})} />
-            <textarea placeholder="按摩基底油" value={formData.oilDetails?.carrierOil || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, carrierOil: e.target.value }})} />
-            <textarea placeholder="使用方法" value={formData.oilDetails?.usage || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, usage: e.target.value }})} />
+            <textarea placeholder="🔍 氣味" value={formData.oilDetails?.scent || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, scent: e.target.value }})} />
+            <textarea placeholder="✨ 外觀描述" value={formData.oilDetails?.appearance || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, appearance: e.target.value }})} />
+            <textarea placeholder="📜 應用歷史與相關神話" value={formData.oilDetails?.history || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, history: e.target.value }})} />
+            <textarea placeholder="🔬 化學結構" value={formData.oilDetails?.chemistry || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, chemistry: e.target.value }})} />
+            <textarea placeholder="⚖️ 屬性" value={formData.oilDetails?.attribute || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, attribute: e.target.value }})} />
+            <textarea placeholder="⚠️ 注意事項" value={formData.oilDetails?.precautions || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, precautions: e.target.value }})} />
+            <textarea placeholder="🧠 心靈療效" value={formData.oilDetails?.mindEffect || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, mindEffect: e.target.value }})} />
+            <textarea placeholder="💪 身體療效" value={formData.oilDetails?.bodyEffect || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, bodyEffect: e.target.value }})} />
+            <textarea placeholder="🧴 皮膚療效" value={formData.oilDetails?.skinEffect || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, skinEffect: e.target.value }})} />
+            <textarea placeholder="🔗 適合與之調和的精油" value={formData.oilDetails?.blending || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, blending: e.target.value }})} />
+            <textarea placeholder="🧪 精油配方" value={formData.oilDetails?.formula || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, formula: e.target.value }})} />
+            <textarea placeholder="🧴 按摩基底油" value={formData.oilDetails?.carrierOil || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, carrierOil: e.target.value }})} />
+            <textarea placeholder="🚀 使用方法" value={formData.oilDetails?.usage || ''} className={`${inputClass} col-span-2 h-16`} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, usage: e.target.value }})} />
           </div>
         )}
 
@@ -118,14 +123,14 @@ export default function AddEntryModal({ onClose, editingItem }) {
     </div>
     <input placeholder="別名" value={formData.acuTable?.alias || ''} className={inputClass} onChange={(e) => setFormData({...formData, acuTable: { ...formData.acuTable, alias: e.target.value }})} />
     <textarea placeholder="主治" value={formData.acuDetails?.indications || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, indications: e.target.value }})} />
-    <textarea placeholder="類別" value={formData.acuDetails?.type || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, type: e.target.value }})} />
-    <textarea placeholder="釋名" value={formData.acuDetails?.nameExpl || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, nameExpl: e.target.value }})} />
-    <textarea placeholder="位置" value={formData.acuDetails?.location || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, location: e.target.value }})} />
-    <textarea placeholder="解剖" value={formData.acuDetails?.anatomy || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, anatomy: e.target.value }})} />
-    <textarea placeholder="操作" value={formData.acuDetails?.operation || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, operation: e.target.value }})} />
+    <textarea placeholder="🏷️ 類別" value={formData.acuDetails?.type || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, type: e.target.value }})} />
+    <textarea placeholder="📖 釋名" value={formData.acuDetails?.nameExpl || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, nameExpl: e.target.value }})} />
+    <textarea placeholder="📍 位置" value={formData.acuDetails?.location || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, location: e.target.value }})} />
+    <textarea placeholder="💀 解剖" value={formData.acuDetails?.anatomy || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, anatomy: e.target.value }})} />
+    <textarea placeholder="🎯 操作" value={formData.acuDetails?.operation || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, operation: e.target.value }})} />
     <textarea placeholder="古代功效" value={formData.acuDetails?.effectAncient || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, effectAncient: e.target.value }})} />
     <textarea placeholder="現代功效" value={formData.acuDetails?.effectModern || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, effectModern: e.target.value }})} />
-    <textarea placeholder="配穴" value={formData.acuDetails?.matchingPoints || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, matchingPoints: e.target.value }})} />
+    <textarea placeholder="🔗 配穴" value={formData.acuDetails?.matchingPoints || ''} className={textareaClass} onChange={(e) => setFormData({...formData, acuDetails: { ...formData.acuDetails, matchingPoints: e.target.value }})} />
   </div>
 )}
 

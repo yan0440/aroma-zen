@@ -8,7 +8,7 @@ export const oilData = [
     chemicalTag: "未知",
     description: "阿米香樹的木材內蘊含豐富的油份，木材燃燒時宛如蠟燭一般，因此阿米香樹得了個別名叫蠟燭樹，而阿米香樹常被劈來做柴火也就不足為奇了。",
     oilTable: {
-      alias:"西印度檀香、蠟燭樹",
+      alias: "西印度檀香、蠟燭樹",
       typePart: "樹／木材",
       method: "蒸餾法",
       latin: "阿米香樹屬 Amyris balsamifera",
@@ -48,7 +48,7 @@ export const oilData = [
     chemicalTag: "單萜烯",
     description: "它用來強化組織結構。它賦予淋巴系統活力，藉排汗的功能加速淨化作用，尤其在長期臥病之後，可幫助身體釋放毒素。。",
     oilTable: {
-      alias:"未知",
+      alias: "未知",
       typePart: "藥草／種子或根",
       method: "蒸餾法",
       latin: "當歸屬 Angelica archangelica",
@@ -77,7 +77,7 @@ export const oilData = [
       formulas: "歐白芷7滴＋快樂鼠尾草5滴＋大高良薑5滴＋佛手柑3滴＋百里酚百里香3滴＋茉莉2滴。",
       carrierOils: "芝麻油、聖約翰草漫泡油、甜杏仁油、杏桃仁油、乳薊油、山茶油擇其一，用20ml。",
       usage: "1.依照配方指示調油後，用於全身按摩。\n2.將此配方純精油滴入浴缸中（可添加乳化劑），泡澡約15～20分鐘。"
-      }
+    }
   },
   {
     id: "oil-3",
@@ -88,7 +88,7 @@ export const oilData = [
     chemicalTag: "酚甲醚",
     description: "希臘人發現它對於消化系統具有鎮靜作用，到了現代，洋茴香則被用於酒類和果汁中，如Pernod和苦艾酒。印度人嚼洋茴香的種子使口氣清新，曾為牙膏和嗽口水的成份之一。",
     oilTable: {
-      alias:"茴芹、大茴香",
+      alias: "茴芹、大茴香",
       typePart: "藥草／種子",
       method: "蒸餾法",
       latin: "茴芹屬 Pimpinella anisum",

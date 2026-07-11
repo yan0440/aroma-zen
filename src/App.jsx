@@ -142,7 +142,7 @@ export default function App() {
       {selectedCategory} 說明與提醒
     </h3>
     {/* 🟢 修正點：加上 whitespace-pre-line，讓 \n 真正變成換行 */}
-    <div className="bg-white p-6 rounded-xl border border-[#E5E0D8] text-[#6B7A6E] text-sm whitespace-pre-line">
+    <div className="bg-white p-5 rounded-xl border border-[#E5E0D8] text-[#6B7A6E] text-sm whitespace-pre-line">
       {categoryInfo[selectedCategory].desc}
     </div>
     <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
