@@ -49,9 +49,14 @@ export default function AddEntryModal({ onClose, editingItem }) {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className={labelClass}>分類</label>
-              <select className={inputClass} value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
-                <option>精油</option><option>穴道</option><option>中藥</option><option>方劑</option>
-              </select>
+              // 在 select 標籤中
+<select className={inputClass} value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+  <option value="書籍">書籍</option>
+  <option value="精油">精油</option>
+  <option value="穴道">穴道</option>
+  <option value="中藥">中藥</option>
+  <option value="方劑">方劑</option>
+</select>
             </div>
             <div>
               <label className={labelClass}>名稱</label>
@@ -75,6 +80,13 @@ export default function AddEntryModal({ onClose, editingItem }) {
             
           </div>
           
+)}
+          {formData.category === '書籍' && (
+  <div className="space-y-4 animate-in fade-in duration-500">
+    <input placeholder="作者" value={formData.author || ''} className={inputClass} onChange={(e) => setFormData({...formData, author: e.target.value})} />
+    <input placeholder="ISBN" value={formData.isbn || ''} className={inputClass} onChange={(e) => setFormData({...formData, isbn: e.target.value})} />
+    <textarea placeholder="書本內容簡介" value={formData.description || ''} className={textareaClass} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+  </div>
 )}
           {formData.category === '精油' && (
           <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">

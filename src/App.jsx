@@ -3,10 +3,12 @@ import { oilData } from "./data/oilData.js";
 import { acuData } from "./data/acuData.js";
 import { herbData } from "./data/herbData.js";
 import { formulaData } from "./data/formulaData.js";
+import { bookData } from "./data/bookData.js"; // 確保您有此檔案
 import OilModal from './components/OilModal';
 import AcuModal from './components/AcuModal';
 import HerbModal from './components/HerbModal';
 import FormulaModal from './components/FormulaModal';
+import BookModal from './components/BookModal'; // 確保您有此組件
 import AddEntryModal from './components/AddEntryModal';
 import { db } from './firebase'; 
 import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
@@ -14,7 +16,8 @@ import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 export default function App() {
   const [dbData, setDbData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('全部');
+  const [selectedCategory, setSelectedCategory] = useState('書籍');
+  const categoryOptions = ['書籍', '精油', '穴道', '中藥', '方劑'];
   const [activeItem, setActiveItem] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -62,7 +65,7 @@ export default function App() {
 
   const startEdit = (e, item) => { e.stopPropagation(); setEditingItem(item); setIsAddModalOpen(true); };
 
-  const staticData = [...(oilData || []), ...(acuData || []), ...(herbData || []), ...(formulaData || [])];
+  const staticData = [...(oilData || []), ...(acuData || []), ...(herbData || []), ...(formulaData || []), ...(bookData || [])];
   const allData = [...staticData, ...dbData];
   
   const filteredData = allData.filter(item => {
@@ -75,7 +78,9 @@ export default function App() {
     // 2. 依類別設定搜尋範圍
     let categorySpecificSearch = '';
     
-    if (item.category === '精油') {
+    if (item.category === '書籍') {
+      categorySpecificSearch = [item.name, item.description].filter(Boolean).join(' ');
+    } else if (item.category === '精油') {
       categorySpecificSearch = [
         item.oilDetails?.mindEffect, 
         item.oilDetails?.bodyEffect, 
@@ -85,28 +90,29 @@ export default function App() {
       ].filter(Boolean).join(' ');
     } else if (item.category === '穴道') {
       categorySpecificSearch = [
-        item.acuTable?.function, // 假設您的資料欄位為 function
-        item.acuTable?.combination   // 假設您的資料欄位為配穴
+        item.acuTable?.function, 
+        item.acuTable?.combination
       ].filter(Boolean).join(' ');
     } else if (item.category === '中藥') {
       categorySpecificSearch = [
         item.effect, 
-        item.indications // 主治
+        item.indications
       ].filter(Boolean).join(' ');
     } else if (item.category === '方劑') {
       categorySpecificSearch = [
         item.effect, 
-        item.indications, // 主治
-        item.syndrome,    // 辨證要點
-        item.modifications, // 加減變化
-        item.modernApp    // 現代應用
+        item.indications,
+        item.syndrome,
+        item.modifications,
+        item.modernApp
       ].filter(Boolean).join(' ');
     }
 
-    // 整合所有搜尋範圍 (名稱與英文名永遠包含)
+    // 整合所有搜尋範圍
     const searchableText = `${item.name} ${item.englishName || ''} ${tags} ${categorySpecificSearch}`.toLowerCase();
     
-    return searchableText.includes(query) && (selectedCategory === '全部' || item.category === selectedCategory);
+    // 3. 過濾邏輯
+    return searchableText.includes(query) && item.category === selectedCategory;
   });
   
   return (
@@ -120,7 +126,7 @@ export default function App() {
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
           <input type="text" placeholder="搜尋名稱、英文、經絡或功效標籤..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full md:w-96 px-4 py-2.5 rounded-xl border border-[#E5E0D8] bg-white focus:outline-none focus:ring-2 focus:ring-[#3A4F3F]/20" />
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 items-center">
-            {['全部', '精油', '穴道', '中藥', '方劑'].map((cat) => (
+            {['書籍', '精油', '穴道', '中藥', '方劑'].map((cat) => (
               <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${selectedCategory === cat ? 'bg-[#3A4F3F] text-white' : 'bg-white text-[#3A4F3F] border border-[#E5E0D8]'}`}>{cat}</button>
             ))}
             <button onClick={() => { setEditingItem(null); setIsAddModalOpen(true); }} className="bg-[#6B9080] text-white px-5 py-2 rounded-xl text-sm font-medium">+ 新增</button>
@@ -128,23 +134,22 @@ export default function App() {
         </div>
       </div>
 
-      {/* 分類頁面介紹區塊 */}
-      {categoryInfo[selectedCategory] && (
-        <div className="max-w-5xl mx-auto mb-8 space-y-4">
-          {/* 🟢 這裡新增專屬標題 */}
-          <h3 className="font-bold text-[#3A4F3F] text-sm tracking-widest border-b border-[#E5E0D8] pb-2 mb-2">
-            {selectedCategory} 說明與提醒
-          </h3>
-
-          <div className="bg-white p-6 rounded-xl border border-[#E5E0D8] italic text-[#6B7A6E] text-sm">
-            {categoryInfo[selectedCategory].desc}
-          </div>
-          <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
-            <strong className="block mb-1">⚠️ 重要提醒：</strong>
-            {categoryInfo[selectedCategory].alert}
-          </div>
-        </div>
-      )}
+      {/* 分類頁面介紹區塊 (如果是書籍則不顯示) */}
+{/* 分類頁面介紹區塊 (如果是書籍則不顯示) */}
+{categoryInfo[selectedCategory] && selectedCategory !== '書籍' && (
+  <div className="max-w-5xl mx-auto mb-8 space-y-4">
+    <h3 className="font-bold text-[#3A4F3F] text-sm tracking-widest border-b border-[#E5E0D8] pb-2 mb-2">
+      {selectedCategory} 說明與提醒
+    </h3>
+    {/* 🟢 修正點：加上 whitespace-pre-line，讓 \n 真正變成換行 */}
+    <div className="bg-white p-6 rounded-xl border border-[#E5E0D8] text-[#6B7A6E] text-sm whitespace-pre-line">
+      {categoryInfo[selectedCategory].desc}
+    </div>
+    <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
+      <strong className="block mb-1">⚠️ 重要提醒：</strong>{categoryInfo[selectedCategory].alert}
+    </div>
+  </div>
+)}
 
       {isAddModalOpen && <AddEntryModal onClose={() => { setIsAddModalOpen(false); setEditingItem(null); }} editingItem={editingItem} />}
 
@@ -159,25 +164,25 @@ export default function App() {
                 </div>
                 
                 {/* 🟢 補回標籤顯示區塊 */}
-                <div>
-                  <div className="flex flex-wrap gap-1.5 items-start mb-3">
-                    <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
-                    {(item.tag || item.acuTable?.meridian) && (
-                      <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#EAE7E0] text-[#6B7A6E]">
-                        {item.tag || item.acuTable?.meridian}
-                      </span>
-                    )}
-                    {item.category === "精油" && (
-                      <>
-                        {item.constitutionTag && <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#EAE7E0] text-[#6B7A6E]">{item.constitutionTag}</span>}
-                        {item.chemicalTag && <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5EAE6] text-[#4E6654]">{item.chemicalTag}</span>}
-                      </>
-                    )}
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284]">{item.name}</h3>
+<div>
+  <div className="flex flex-wrap gap-1.5 items-start mb-3">
+  {/* 顯示主分類 */}
+  <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">
+    {item.category}
+  </span>
+  
+  {/* 顯示核心標籤 (自動過濾空值) */}
+  {[item.tag, item.constitutionTag, item.chemicalTag].filter(Boolean).map((tag, idx) => (
+    <span key={idx} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">
+      {tag}
+    </span>
+  ))}
+  </div>
+  <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284]">{item.name}</h3>
                   <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
-                  <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect)}</div>
+{/* 修正：確保中藥與方劑的 effect 欄位也能傳入函數解析換行 */}
+<div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect || '')}
+</div>
                 </div>
               </div>
             ))}
@@ -189,6 +194,7 @@ export default function App() {
       {activeItem?.category === "穴道" && <AcuModal item={activeItem} onClose={() => setActiveItem(null)} />}
       {activeItem?.category === "中藥" && <HerbModal item={activeItem} onClose={() => setActiveItem(null)} />}
       {activeItem?.category === "方劑" && <FormulaModal item={activeItem} onClose={() => setActiveItem(null)} />}
+      {activeItem?.category === "書籍" && <BookModal item={activeItem} onClose={() => setActiveItem(null)} />}
     </div>
   );
 }
