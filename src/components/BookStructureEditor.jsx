@@ -102,9 +102,9 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
 
                       {/* 1. 項目主名稱輸入框：改為 flex-2 或 flex-1，確保與別名平分秋色，絕對不被推擠 */}
                       <input
-                        placeholder={child.type === 'folder' ? "子目錄名稱（如：卷一）" : "項目/篇章名稱（如：上古天真論、發熱）"}
+                        placeholder={child.type === 'folder' ? "子目錄名稱（如：卷一）" : "篇名，如：上古天真論"}
                         value={pureTitle}
-                        className="flex-[2] text-sm px-1.5 border-b border-[#E5E0D8] outline-none h-8 min-w-0"
+                        className="flex-1  text-sm px-1.5 border-b border-[#E5E0D8] outline-none h-8 min-w-0"
                         onChange={(e) => {
                           const newPureTitle = e.target.value;
                           const updated = [...formData.bookDetails.chapters];
@@ -119,7 +119,7 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
                       {child.type === 'content' && (
                         <div className="flex-1 flex items-center border-b border-[#E5E0D8] h-8 px-1 min-w-0">
                           <input
-                            placeholder="（別名，如：不欲食、無飢餓感）"
+                            placeholder="別名，如：無飢餓感"
                             value={aliasText}
                             className="w-full text-sm bg-transparent outline-none text-[#6B9080] placeholder-[#A39284]/50 h-full"
                             onChange={(e) => {

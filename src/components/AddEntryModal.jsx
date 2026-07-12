@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore'; 
 import BookStructureEditor from './BookStructureEditor';
 
+
 export default function AddEntryModal({ onClose, editingItem }) {
   const [formData, setFormData] = useState({ 
     category: '精油', name: '', tag: '', description: '', 
@@ -34,7 +35,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
   };
 
   const inputClass = "w-full px-4 py-3 bg-[#FCFBFA] border border-[#E5E0D8]/60 rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all duration-300";
-  const labelClass = "text-[11px] font-bold text-[#A39284] uppercase tracking-widest mb-1.5 block";
+  const labelClass = "text-[11px] font-fttf text-[#A39284] uppercase tracking-widest mb-1.5 block";
   const textareaClass = `${inputClass} h-24`;
 
   return (
@@ -42,7 +43,7 @@ export default function AddEntryModal({ onClose, editingItem }) {
       <div className="bg-[#FCFBFA] p-8 rounded-3xl w-full max-w-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] max-h-[90vh] overflow-y-auto border border-[#E5E0D8]/50" onClick={(e) => e.stopPropagation()}>
         
         <div className="flex justify-between items-center mb-8 pb-4 border-b border-[#E5E0D8]/40">
-          <h2 className="text-3xl font-bold text-[#3A4F3F]">新增百科資料</h2>
+          <h2 className="text-3xl font-fttf text-[#3A4F3F]">新增百科資料</h2>
           <button onClick={onClose} className="text-[#A39284] hover:text-[#3A4F3F] text-2xl transition-colors">✕</button>
         </div>
         
@@ -181,8 +182,8 @@ export default function AddEntryModal({ onClose, editingItem }) {
         </div>
         
         <div className="flex justify-end gap-4 mt-10 pt-6 border-t border-[#E5E0D8]/40">
-          <button onClick={onClose} className="px-8 py-3 text-[#A39284] font-bold hover:text-[#3A4F3F] transition-colors">取消</button>
-          <button onClick={handleSave} className="px-10 py-3 bg-[#3A4F3F] text-white rounded-2xl font-bold hover:bg-[#2C3C30] shadow-xl shadow-[#3A4F3F]/20 transition-all">儲存資料</button>
+          <button onClick={onClose} className="px-8 py-3 text-[#A39284] font-fttf hover:text-[#3A4F3F] transition-colors">取消</button>
+          <button onClick={handleSave} className="px-10 py-3 bg-[#3A4F3F] text-white rounded-2xl font-fttf hover:bg-[#2C3C30] shadow-xl shadow-[#3A4F3F]/20 transition-all">儲存資料</button>
         </div>
       </div>
     </div>
