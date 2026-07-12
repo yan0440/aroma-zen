@@ -30,9 +30,9 @@ export default function BookModal({ item, onClose }) {
               if (part.startsWith('==') && part.endsWith('==')) 
                 return <mark key={idx} className="bg-[#F3E1C5] px-1 rounded">{part.slice(2, -2)}</mark>;
               if (part.startsWith('**') && part.endsWith('**')) 
-                return <strong key={idx} className="text-[#3A4F3F]" style={{ fontWeight: 900 }}>{part.replace(/\*\*/g, '')}</strong>;
+                return <strong key={idx} className="text-[#AAB8AB]" style={{ fontWeight: 700 }}>{part.replace(/\*\*/g, '')}</strong>;
               if (part.startsWith('《') && part.endsWith('》'))
-                return <span key={idx} className="text-[#6B9080]" style={{ fontWeight: 900 }}>{part}</span>;
+                return <span key={idx} className="text-[#AAB8AB]" style={{ fontWeight: 700 }}>{part}</span>;
               if (part.startsWith('【') && part.endsWith('】')) {
                 const hasAlias = part.match(/\(([^)]+)\)/);
                 return (
