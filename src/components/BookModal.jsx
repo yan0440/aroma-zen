@@ -148,13 +148,19 @@ export default function BookModal({ item, onClose }) {
                 {/* 子篇章節點 */}
                 <div className="pl-4 space-y-1 border-l border-[#6B9080]/20 ml-2">
                   {ch.children?.map((child) => (
-                    <button key={child.id} onClick={() => child.type === 'content' && setSelectedContent(child)} 
-                      className={`w-full text-left text-base p-2.5 rounded-lg flex items-start gap-2 ${selectedContent?.id === child.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'}`}>
-                      <span>{child.type === 'folder' ? '📂' : '📄'}</span>
-                      <span className="truncate font-black">{getRawTitle(child.title)}</span>
-                    </button>
-                  ))}
-                </div>
+  <button 
+    key={child.id} 
+    onClick={() => child.type === 'content' && setSelectedContent(child)} 
+    // 關鍵修改處：針對 content 類型的項目，額外增加 pl-8 或 pl-10
+    className={`w-full text-left text-base p-2.5 rounded-lg flex items-start gap-2 
+      ${child.type === 'content' ? 'pl-10' : 'pl-4'} 
+      ${selectedContent?.id === child.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'}`}
+  >
+    <span>{child.type === 'folder' ? '📂' : '📄'}</span>
+    <span className="truncate font-black">{getRawTitle(child.title)}</span>
+  </button>
+))}
+</div>
               </div>
             ))}
           </div>
