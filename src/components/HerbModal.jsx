@@ -35,13 +35,18 @@ export default function HerbModal({ item, onClose }) {
           }
 
           if (isIndented) {
-            return (
-              <div key={i} className="grid grid-cols-[1.5rem_1fr] mb-1">
-                <span className="text-[#A39284]">●</span>
-                <span>{parseBoldSyntax(trimmed.replace('●', '').trim())}</span>
-              </div>
-            );
-          }
+  return (
+    // 1. 使用 flex 代替 grid，更容易處理垂直置中
+    // 2. 增加 pl-8 確保整體縮排深度
+    <div key={i} className="flex items-baseline pl-4 mb-1">
+      {/* 移除 translate-y，改用自適應的 inline-block */}
+      <span className="text-[#A39284] mr-3 inline-block shrink-0">●</span>
+      <span className="leading-relaxed text-left flex-1">
+        {parseBoldSyntax(trimmed.replace('●', '').trim())}
+      </span>
+    </div>
+  );
+}
 
           return <div key={i} className="mb-1">{parseBoldSyntax(trimmed)}</div>;
         })}
@@ -60,7 +65,7 @@ export default function HerbModal({ item, onClose }) {
 
         <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-[#6B7A6E]">
-            <p><strong>別名：</strong> {item.alias || '無記載'}</p>
+            <p><strong>別名：</strong> {item.alias || '無別名'}</p>
             <p><strong>類別：</strong> {item.tag || item.category || '無記載'}</p>
             <p className="col-span-2"><strong>科屬：</strong> {item.family || '無記載'}</p>
             <p><strong>性味：</strong> {item.nature || '無記載'}</p>

@@ -53,12 +53,12 @@ export default function BookModal({ item, onClose }) {
           // 在你的 parseModalSyntax 函式中找到這一段進行修改
 if (isIndented) {
   return (
-    <div key={i} className="flex items-baseline pl-6 mb-2">
+    <div key={i} className="flex items-baseline pl-0 mb-1">
       {/* 1. shrink-0: 確保圓點不變形
          2. translate-y-[1px]: 微調垂直位置，根據您的感受，
             若覺得圓點太低，請調成 translate-y-[-1px] 往上移
       */}
-      <span className="text-[#A39284] mr-1 inline-block shrink-0 translate-y-[-2px]">●</span>
+      <span className="text-[#A39284] mr-1.5 inline-block shrink-0 translate-y-[-2px]">●</span>
       <span className="leading-relaxed text-left flex-1">
         {processInlineSyntax(trimmed.replace('●', '').trim())}
       </span>

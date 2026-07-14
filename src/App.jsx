@@ -3,12 +3,12 @@ import { oilData } from "./data/oilData.js";
 import { acuData } from "./data/acuData.js";
 import { herbData } from "./data/herbData.js";
 import { formulaData } from "./data/formulaData.js";
-import { bookData } from "./data/bookData.js"; // 確保您有此檔案
+import { bookData } from "./data/bookData.js";
 import OilModal from './components/OilModal';
 import AcuModal from './components/AcuModal';
 import HerbModal from './components/HerbModal';
 import FormulaModal from './components/FormulaModal';
-import BookModal from './components/BookModal'; // 確保您有此組件
+import BookModal from './components/BookModal';
 import AddEntryModal from './components/AddEntryModal';
 import { db } from './firebase'; 
 import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
@@ -17,7 +17,6 @@ export default function App() {
   const [dbData, setDbData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('書籍');
-  const categoryOptions = ['書籍', '精油', '穴道', '中藥', '方劑'];
   const [activeItem, setActiveItem] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -40,11 +39,6 @@ export default function App() {
         })}
       </span>
     ));
-  };
-
-  const categoryInfo = {
-    '中藥': { desc: "藥是方的基礎。古云「用藥如用兵」，組方用藥即如同調兵遣將。一味藥又如同程式的基本指令、文章的字詞片語，惟有瞭解每道指令、隻字片語的特性與精確意義，方能寫出耐用的程式、漂亮的文章。中醫的用藥亦同，每味藥皆有其個性、寒熱溫涼、作用範圍(歸經)，非清楚瞭解每一味藥的特性，則無法開出精實、漂亮、有效的處方。", alert: "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。" },
-    '方劑': { desc: "中國從漢朝至今，累積了不少名方，典籍記載的方數更是以萬計算。「方」者，方向、指引；引申為參考的依據、範例。唐代被尊稱為藥王的孫思邈嘗云：「學方三年，便謂天下無病不治；用方三年，方知天下無方可用。」何以「無方可用」？因為臨床上少有患者會依照固有成方的結構生病，疾病不但因人而異，且亦隨著時代、環境的變遷而有不同。\n學方者，學其組方的精神；用方者，但視臨症變化。中醫組方、用方完全視患者目前的態(state)量身訂做，而非單憑症狀、一視同仁。臨症變化萬千，豈只百方千方萬方可應付？中醫治證候，少直接針對症狀。若不視證候加減其藥味、藥量，但執原方用之，則有失中醫辨證論治的精神，其不效可期。\n本資料庫中，藥物的劑量有克、原典劑量並列者，須注意原典每單位的實際重量視其所在朝代而有不同，例如東漢的一兩約是15.6gm，1漢升約200毫升。再者，臨床方藥的劑量本須視患者的年紀、體量、與當時的病況、甚至氣候靈活調變，本資料庫的劑量僅供參考。", alert: "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。" }
   };
 
   useEffect(() => {
@@ -71,47 +65,16 @@ export default function App() {
   const filteredData = allData.filter(item => {
     if (!item || !item.name) return false;
     const query = searchQuery.toLowerCase();
+    const tags = [item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).join(' ');
     
-    // 1. 基礎標籤範圍
-    const tags = [item.tag, item.constitutionTag, item.chemicalTag].filter(Boolean).join(' ');
-
-    // 2. 依類別設定搜尋範圍
     let categorySpecificSearch = '';
-    
-    if (item.category === '書籍') {
-      categorySpecificSearch = [item.name, item.description].filter(Boolean).join(' ');
-    } else if (item.category === '精油') {
-      categorySpecificSearch = [
-        item.oilDetails?.mindEffect, 
-        item.oilDetails?.bodyEffect, 
-        item.oilDetails?.skinEffect, 
-        item.oilDetails?.usage,
-        item.oilDetails?.nature
-      ].filter(Boolean).join(' ');
-    } else if (item.category === '穴道') {
-      categorySpecificSearch = [
-        item.acuTable?.function, 
-        item.acuTable?.combination
-      ].filter(Boolean).join(' ');
-    } else if (item.category === '中藥') {
-      categorySpecificSearch = [
-        item.effect, 
-        item.indications
-      ].filter(Boolean).join(' ');
-    } else if (item.category === '方劑') {
-      categorySpecificSearch = [
-        item.effect, 
-        item.indications,
-        item.syndrome,
-        item.modifications,
-        item.modernApp
-      ].filter(Boolean).join(' ');
-    }
+    if (item.category === '書籍') categorySpecificSearch = [item.name, item.description].filter(Boolean).join(' ');
+    else if (item.category === '精油') categorySpecificSearch = [item.oilDetails?.mindEffect, item.oilDetails?.bodyEffect, item.oilDetails?.skinEffect, item.oilDetails?.usage, item.oilDetails?.nature].filter(Boolean).join(' ');
+    else if (item.category === '穴道') categorySpecificSearch = [item.acuTable?.function, item.acuTable?.combination].filter(Boolean).join(' ');
+    else if (item.category === '中藥') categorySpecificSearch = [item.effect, item.indications].filter(Boolean).join(' ');
+    else if (item.category === '方劑') categorySpecificSearch = [item.effect, item.indications, item.syndrome, item.modifications, item.modernApp].filter(Boolean).join(' ');
 
-    // 整合所有搜尋範圍
     const searchableText = `${item.name} ${item.englishName || ''} ${tags} ${categorySpecificSearch}`.toLowerCase();
-    
-    // 3. 過濾邏輯
     return searchableText.includes(query) && item.category === selectedCategory;
   });
   
@@ -134,23 +97,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* 分類頁面介紹區塊 (如果是書籍則不顯示) */}
-{/* 分類頁面介紹區塊 (如果是書籍則不顯示) */}
-{categoryInfo[selectedCategory] && selectedCategory !== '書籍' && (
-  <div className="max-w-5xl mx-auto mb-8 space-y-4">
-    <h3 className="font-bold text-[#3A4F3F] text-sm tracking-widest border-b border-[#E5E0D8] pb-2 mb-2">
-      {selectedCategory} 說明與提醒
-    </h3>
-    {/* 🟢 修正點：加上 whitespace-pre-line，讓 \n 真正變成換行 */}
-    <div className="bg-white p-5 rounded-xl border border-[#E5E0D8] text-[#6B7A6E] text-sm whitespace-pre-line">
-      {categoryInfo[selectedCategory].desc}
-    </div>
-    <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
-      <strong className="block mb-1">⚠️ 重要提醒：</strong>{categoryInfo[selectedCategory].alert}
-    </div>
-  </div>
-)}
-
       {isAddModalOpen && <AddEntryModal onClose={() => { setIsAddModalOpen(false); setEditingItem(null); }} editingItem={editingItem} />}
 
       <main className="max-w-5xl mx-auto">
@@ -158,31 +104,24 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {filteredData.map((item) => (
               <div key={item.id} onClick={() => setActiveItem(item)} className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all cursor-pointer relative border border-[#E5E0D8]/40">
+                {/* 🟢 管理按鈕補回 */}
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); startEdit(e, item); }} className="text-[11px] text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-bold">編輯</button>
-                  <button onClick={(e) => { e.stopPropagation(); deleteEntry(e, item.id); }} className="text-[11px] text-red-600 bg-red-50 px-3 py-1 rounded-full font-bold">刪除</button>
+                  <button onClick={(e) => startEdit(e, item)} className="text-[11px] text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-bold">編輯</button>
+                  <button onClick={(e) => deleteEntry(e, item.id)} className="text-[11px] text-red-600 bg-red-50 px-3 py-1 rounded-full font-bold">刪除</button>
                 </div>
                 
-                {/* 🟢 補回標籤顯示區塊 */}
-<div>
-  <div className="flex flex-wrap gap-1.5 items-start mb-3">
-  {/* 顯示主分類 */}
-  <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">
-    {item.category}
-  </span>
-  
-  {/* 顯示核心標籤 (自動過濾空值) */}
-  {[item.tag, item.constitutionTag, item.chemicalTag].filter(Boolean).map((tag, idx) => (
-    <span key={idx} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">
-      {tag}
-    </span>
-  ))}
-  </div>
-  <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284]">{item.name}</h3>
-                  <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
-{/* 修正：確保中藥與方劑的 effect 欄位也能傳入函數解析換行 */}
-<div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect || '')}
-</div>
+                <div>
+                  <div className="flex flex-wrap gap-1.5 items-start mb-3">
+                    <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
+                    {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
+                      <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
+                    ))}
+                  </div>
+                  <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
+                  <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">
+                    {item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}
+                  </p>
+                  <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect || '')}</div>
                 </div>
               </div>
             ))}
