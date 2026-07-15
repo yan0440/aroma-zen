@@ -9,17 +9,16 @@ import AcuModal from './components/AcuModal';
 import HerbModal from './components/HerbModal';
 import FormulaModal from './components/FormulaModal';
 import BookModal from './components/BookModal';
-import AddEntryModal from './components/AddEntryModal';
+import AdminPage from './components/AdminPage';
 import { db } from './firebase'; 
-import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 export default function App() {
   const [dbData, setDbData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('書籍');
   const [activeItem, setActiveItem] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   const parseBoldSyntax = (str) => {
     if (typeof str !== 'string') return str;
@@ -49,16 +48,6 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  const deleteEntry = async (e, id) => {
-    e.stopPropagation();
-    const password = prompt("請輸入管理員密碼：");
-    if (password === "0423") {
-      try { await deleteDoc(doc(db, "entries", String(id))); alert("刪除成功"); } catch (error) { alert("刪除失敗"); }
-    } else if (password !== null) { alert("密碼錯誤"); }
-  };
-
-  const startEdit = (e, item) => { e.stopPropagation(); setEditingItem(item); setIsAddModalOpen(true); };
-
   const staticData = [...(oilData || []), ...(acuData || []), ...(herbData || []), ...(formulaData || []), ...(bookData || [])];
   const allData = [...staticData, ...dbData];
   
@@ -78,8 +67,14 @@ export default function App() {
     return searchableText.includes(query) && item.category === selectedCategory;
   });
   
+  if (isAdminMode) {
+    return <AdminPage allData={allData} onBack={() => setIsAdminMode(false)} />;
+  }
+
   return (
     <div className="font-fttf min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4">
+      <button onClick={() => setIsAdminMode(true)} className="fixed top-2 left-2 text-[10px] text-[#A39284]/30 hover:text-[#3A4F3F] transition-colors">Admin</button>
+
       <header className="max-w-5xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-[#3A4F3F] mb-3 tracking-wide">本草與芳香數位百科</h1>
         <p className="text-[#A39284] tracking-wide">結合東方經絡與西方芳療的健康數位誌</p>
@@ -92,37 +87,24 @@ export default function App() {
             {['書籍', '精油', '穴道', '中藥', '方劑'].map((cat) => (
               <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${selectedCategory === cat ? 'bg-[#3A4F3F] text-white' : 'bg-white text-[#3A4F3F] border border-[#E5E0D8]'}`}>{cat}</button>
             ))}
-            <button onClick={() => { setEditingItem(null); setIsAddModalOpen(true); }} className="bg-[#6B9080] text-white px-5 py-2 rounded-xl text-sm font-medium">+ 新增</button>
           </div>
         </div>
       </div>
-
-      {isAddModalOpen && <AddEntryModal onClose={() => { setIsAddModalOpen(false); setEditingItem(null); }} editingItem={editingItem} />}
 
       <main className="max-w-5xl mx-auto">
         {filteredData.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {filteredData.map((item) => (
               <div key={item.id} onClick={() => setActiveItem(item)} className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all cursor-pointer relative border border-[#E5E0D8]/40">
-                {/* 🟢 管理按鈕補回 */}
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => startEdit(e, item)} className="text-[11px] text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-bold">編輯</button>
-                  <button onClick={(e) => deleteEntry(e, item.id)} className="text-[11px] text-red-600 bg-red-50 px-3 py-1 rounded-full font-bold">刪除</button>
+                <div className="flex flex-wrap gap-1.5 items-start mb-3">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
+                  {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
+                    <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
+                  ))}
                 </div>
-                
-                <div>
-                  <div className="flex flex-wrap gap-1.5 items-start mb-3">
-                    <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
-                    {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
-                      <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
-                    ))}
-                  </div>
-                  <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
-                  <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">
-                    {item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}
-                  </p>
-                  <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect || '')}</div>
-                </div>
+                <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
+                <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
+                <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect || '')}</div>
               </div>
             ))}
           </div>
