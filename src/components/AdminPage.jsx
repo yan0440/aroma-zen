@@ -12,12 +12,11 @@ export default function AdminPage({ allData, onBack }) {
   // 版本號狀態
   const [version, setVersion] = useState("v1.2.7");
 
-  // 若要使用動態 Git 版本，請取消下面 useEffect 的註解
   useEffect(() => {
     fetch('/version.json')
       .then(res => res.json())
       .then(data => setVersion(data.version))
-      .catch(() => setVersion("v1.2.6"));
+      .catch(() => setVersion("v1.2.7"));
   }, []);
 
   // 分類篩選狀態
@@ -87,8 +86,24 @@ export default function AdminPage({ allData, onBack }) {
                   <span className="font-semibold text-[#3A4F3F]">{item.name}</span>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => { setEditingItem(item); setIsAddModalOpen(true); }} className="px-4 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition">編輯</button>
-                  <button onClick={async () => { if(confirm('確定刪除「' + item.name + '」？')) await deleteDoc(doc(db, "entries", item.id)); }} className="px-4 py-1.5 text-xs font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">刪除</button>
+                  <button 
+                    onClick={() => window.open(`/entry/${item.id}`, '_blank')} 
+                    className="px-3 py-1.5 text-xs font-medium text-[#A39284] hover:text-[#3A4F3F] transition"
+                  >
+                    檢視
+                  </button>
+                  <button 
+                    onClick={() => { setEditingItem(item); setIsAddModalOpen(true); }} 
+                    className="px-3 py-1.5 text-xs font-medium text-[#6B9080] hover:bg-[#6B9080]/10 rounded-lg transition"
+                  >
+                    編輯
+                  </button>
+                  <button 
+                    onClick={async () => { if(confirm('確定刪除「' + item.name + '」？')) await deleteDoc(doc(db, "entries", item.id)); }} 
+                    className="px-3 py-1.5 text-xs font-medium text-[#D4A373] hover:bg-[#D4A373]/10 rounded-lg transition"
+                  >
+                    刪除
+                  </button>
                 </div>
               </div>
             ))
