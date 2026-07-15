@@ -30,7 +30,7 @@ export default function AdminPage({ allData, onBack }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F7F5F0]">
         <div className="bg-white p-8 rounded-3xl shadow-xl border border-[#E5E0D8] w-full max-w-sm text-center">
-          <h2 className="text-xl font-bold text-[#3A4F3F] mb-6 tracking-widest">DEVELOPER ACCESS</h2>
+          <h2 className="text-xl font-bold text-[#3A4F3F] mb-6 tracking-widest">開發者專區</h2>
           <form onSubmit={(e) => { e.preventDefault(); if(password === "0423") setIsAuth(true); else alert("密碼錯誤"); }} className="flex flex-col gap-4">
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#E5E0D8] outline-none focus:ring-2 focus:ring-[#3A4F3F]/20" placeholder="輸入密碼" />
             <button type="submit" className="w-full bg-[#3A4F3F] text-white py-3 rounded-xl font-bold">進入專區</button>

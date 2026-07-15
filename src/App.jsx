@@ -73,7 +73,7 @@ export default function App() {
 
   return (
     <div className="font-fttf min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4">
-      <button onClick={() => setIsAdminMode(true)} className="fixed top-2 left-2 text-[10px] text-[#A39284]/30 hover:text-[#3A4F3F] transition-colors">Admin</button>
+      <button onClick={() => setIsAdminMode(true)} className="fixed top-2 left-2 text-[10px] text-[#A39284]/30 hover:text-[#3A4F3F] transition-colors">開發者專區</button>
 
       <header className="max-w-5xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-[#3A4F3F] mb-3 tracking-wide">本草與芳香數位百科</h1>
