@@ -92,24 +92,30 @@ export default function App() {
       </div>
 
       <main className="max-w-5xl mx-auto">
-        {filteredData.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredData.map((item) => (
-              <div key={item.id} onClick={() => setActiveItem(item)} className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all cursor-pointer relative border border-[#E5E0D8]/40">
-                <div className="flex flex-wrap gap-1.5 items-start mb-3">
-                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
-                  {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
-                    <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
-                  ))}
-                </div>
-                <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
-                <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
-                <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">{parseBoldSyntax(item.description || item.effect || '')}</div>
-              </div>
+  {filteredData.length > 0 ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {filteredData.map((item) => (
+        <div 
+          key={item.id} 
+          onClick={() => setActiveItem(item)} 
+          className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all cursor-pointer relative border border-[#E5E0D8]/40"
+        >
+          <div className="flex flex-wrap gap-1.5 items-start mb-3">
+            <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
+            {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
+              <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
             ))}
           </div>
-        ) : <div className="text-center py-20 text-[#A39284]">沒有資料。</div>}
-      </main>
+          <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
+          <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
+          <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">
+            {parseBoldSyntax(item.description || item.effect || '')}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : <div className="text-center py-20 text-[#A39284]">沒有資料。</div>}
+</main>
 
       {activeItem?.category === "精油" && <OilModal item={activeItem} onClose={() => setActiveItem(null)} />}
       {activeItem?.category === "穴道" && <AcuModal item={activeItem} onClose={() => setActiveItem(null)} />}

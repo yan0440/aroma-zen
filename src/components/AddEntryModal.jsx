@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase'; 
 import { doc, setDoc } from 'firebase/firestore'; 
 import BookStructureEditor from './BookStructureEditor';
+// 修改後 (正確)
+import PreviewRenderer from "./PreviewRenderer";
 
 export default function AddEntryModal({ onClose, editingItem, isViewOnly = false }) {
   const [formData, setFormData] = useState({ 

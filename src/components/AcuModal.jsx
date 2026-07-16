@@ -1,5 +1,7 @@
 import React from 'react';
 import { parseBoldSyntax } from "../utils/formatUtils.jsx";
+// 修改後 (正確)
+import PreviewRenderer from "./PreviewRenderer";
 
 const UI = {
   text: "text-[14px] leading-relaxed text-[#6B7A6E]", 

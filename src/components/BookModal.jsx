@@ -5,7 +5,7 @@ export default function BookModal({ item, onClose }) {
 
   if (!item) return null;
 
-  // 1. 核心解析器：負責渲染內文排版
+  // 核心解析器：維持您原本的邏輯，僅限制文字大小與行高
   const parseModalSyntax = (str) => {
     if (typeof str !== 'string') return null;
     const lines = str.split('\n').filter(line => line.trim() !== '');
@@ -23,7 +23,7 @@ export default function BookModal({ item, onClose }) {
         if (part.startsWith('【') && part.endsWith('】')) {
           const hasAlias = part.match(/\(([^)]+)\)/);
           return (
-            <span key={idx} className="flex flex-wrap items-center gap-2 text-base font-bold text-[#3A4F3F] border-l-4 border-[#6B9080] pl-2 mt-2 mb-2 bg-[#F0EDE6]/40 py-1.5 rounded-r-lg w-full">
+            <span key={idx} className="flex flex-wrap items-center gap-2 text-sm font-bold text-[#3A4F3F] border-l-4 border-[#6B9080] pl-2 mt-2 mb-2 bg-[#F0EDE6]/40 py-1.5 rounded-r-lg w-full">
               <span>【{part.replace(/\([^)]+\)/, '').replace(/[【】]/g, '')}】</span>
               {hasAlias && <span className="text-xs font-medium bg-[#6B9080]/10 text-[#6B9080] px-2 py-0.5 rounded-md border border-[#6B9080]/20">{hasAlias[1]}</span>}
             </span>
@@ -34,7 +34,7 @@ export default function BookModal({ item, onClose }) {
     };
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-3 text-sm leading-relaxed text-[#3A4F3F]">
         {lines.map((line, i) => {
           const trimmed = line.trim();
           const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
@@ -49,23 +49,16 @@ export default function BookModal({ item, onClose }) {
               </div>
             );
           }
-
-          // 在你的 parseModalSyntax 函式中找到這一段進行修改
-if (isIndented) {
-  return (
-    <div key={i} className="flex items-baseline pl-0 mb-1">
-      {/* 1. shrink-0: 確保圓點不變形
-         2. translate-y-[1px]: 微調垂直位置，根據您的感受，
-            若覺得圓點太低，請調成 translate-y-[-1px] 往上移
-      */}
-      <span className="text-[#A39284] mr-1.5 inline-block shrink-0 translate-y-[-2px]">●</span>
-      <span className="leading-relaxed text-left flex-1">
-        {processInlineSyntax(trimmed.replace('●', '').trim())}
-      </span>
-    </div>
-  );
-}
-
+          if (isIndented) {
+            return (
+              <div key={i} className="flex items-baseline pl-0 mb-1">
+                <span className="text-[#A39284] mr-2 inline-block shrink-0 translate-y-[-1px]">●</span>
+                <span className="leading-relaxed text-left flex-1">
+                  {processInlineSyntax(trimmed.replace('●', '').trim())}
+                </span>
+              </div>
+            );
+          }
           return <div key={i}>{processInlineSyntax(trimmed)}</div>;
         })}
       </div>
@@ -73,28 +66,21 @@ if (isIndented) {
   };
 
   const getRawTitle = (fullTitle) => {
-    if (!fullTitle) return '未命名';
     const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
     return match ? match[1].trim() : fullTitle;
   };
 
   const renderTitleWithAlias = (fullTitle) => {
-    if (!fullTitle) return '未命名';
     const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
-    if (match) {
-      return (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full">
-          <span className="text-2xl md:text-3xl text-[#3A4F3F] font-black">{match[1].trim()}</span>
-          <span className="text-xs bg-[#6B9080]/10 text-[#6B9080] font-medium px-2 py-1 rounded border border-[#6B9080]/20 whitespace-nowrap shrink-0">
-            別名：{match[2].trim()}
-          </span>
-        </div>
-      );
-    }
-    return <span className="text-2xl md:text-3xl text-[#3A4F3F] block font-black">{fullTitle}</span>;
+    return match ? (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full">
+        <span className="text-2xl font-black text-[#3A4F3F]">{match[1].trim()}</span>
+        <span className="text-xs bg-[#6B9080]/10 text-[#6B9080] font-medium px-2 py-1 rounded border border-[#6B9080]/20">別名：{match[2].trim()}</span>
+      </div>
+    ) : <span className="text-2xl font-black text-[#3A4F3F]">{fullTitle}</span>;
   };
 
-  const { author, chapters } = item.bookDetails || { author: '經典文獻', chapters: [] };
+  const { chapters } = item.bookDetails || { chapters: [] };
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -102,21 +88,21 @@ if (isIndented) {
         <div className="flex justify-between items-center px-8 py-5 border-b border-[#E5E0D8]/50 bg-white">
           <div>
             <span className="text-[11px] font-bold text-[#6B9080] uppercase tracking-widest block mb-0.5">{item.category} 百科閱讀器</span>
-            <h2 className="text-2xl text-[#3A4F3F] flex items-center gap-3 font-black">{item.name}</h2>
+            <h2 className="text-xl font-black text-[#3A4F3F]">{item.name}</h2>
           </div>
-          <button onClick={onClose} className="text-[#A39284] hover:text-red-500 text-xl w-8 h-8 rounded-full transition-all">✕</button>
+          <button onClick={onClose} className="text-[#A39284] hover:text-red-500 text-xl rounded-full transition-all">✕</button>
         </div>
 
         <div className="flex flex-1 overflow-hidden bg-[#FBF9F6]">
-          <div className="w-80 border-r border-[#E5E0D8]/60 bg-white overflow-y-auto p-4 space-y-4">
-            <h4 className="text-base font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄</h4>
+          <div className="w-80 border-r border-[#E5E0D8]/60 bg-white overflow-y-auto p-4 space-y-4 text-sm">
+            <h4 className="text-[11px] font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄架構</h4>
             {chapters?.map((ch) => (
-              <div key={ch.id} className="space-y-1.5">
-                <div className="text-base text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl font-extrabold">📁 {ch.title}</div>
-                <div className="pl-2 space-y-1 border-l border-[#6B9080]/20 ml-4">
+              <div key={ch.id} className="space-y-1">
+                <div className="text-sm text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl font-extrabold">📁 {ch.title}</div>
+                <div className="pl-4 space-y-1 border-l border-[#6B9080]/20 ml-3">
                   {ch.children?.map((child) => (
                     <button key={child.id} onClick={() => child.type === 'content' && setSelectedContent(child)} 
-                      className={`w-full text-left p-2.5 rounded-lg flex items-start gap-2 ${child.type === 'content' ? 'pl-8' : 'pl-2'} ${selectedContent?.id === child.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'}`}>
+                      className={`w-full text-left p-2 rounded-lg flex items-start gap-2 ${selectedContent?.id === child.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'}`}>
                       <span>{child.type === 'folder' ? '📂' : '📄'}</span>
                       <span className="truncate font-black">{getRawTitle(child.title)}</span>
                     </button>
@@ -129,10 +115,8 @@ if (isIndented) {
           <div className="flex-1 overflow-y-auto p-12 bg-[#FCFBFA]">
             {selectedContent ? (
               <div className="space-y-6 max-w-2xl mx-auto">
-                <div className="border-b border-[#E5E0D8]/60 pb-5">
-                  {renderTitleWithAlias(selectedContent.title)}
-                </div>
-                <div className="text-base leading-loose bg-[#FBF9F6] p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-inner">
+                <div className="border-b border-[#E5E0D8]/60 pb-5">{renderTitleWithAlias(selectedContent.title)}</div>
+                <div className="bg-[#FBF9F6] p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-inner">
                   {selectedContent.text ? parseModalSyntax(selectedContent.text) : <span className="text-[#A39284] italic">尚無內容。</span>}
                 </div>
               </div>
