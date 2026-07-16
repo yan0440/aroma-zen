@@ -97,6 +97,10 @@ export default function AddEntryModal({ onClose, editingItem, isViewOnly = false
           {formData.category === '精油' && (
           <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">
             <input placeholder="別名" value={formData.alias || ''} className={inputClass} onChange={(e) => setFormData({...formData, alias: e.target.value})} />
+            <input placeholder="植物種類／萃取部位" value={formData.typePart || ''} className={inputClass} onChange={(e) => setFormData({...formData, typePart: e.target.value})} />
+            <input placeholder="萃取方法" value={formData.method || ''} className={inputClass} onChange={(e) => setFormData({...formData, method: e.target.value})} />
+            <input placeholder="外文名" value={formData.englishName || ''} className={inputClass} onChange={(e) => setFormData({...formData, englishName: e.target.value})} />
+            <input placeholder="學名" value={formData.latin || ''} className={inputClass} onChange={(e) => setFormData({...formData, latin: e.target.value})} />
             <input placeholder="科名" value={formData.family || ''} className={inputClass} onChange={(e) => setFormData({...formData, family: e.target.value})} />
             <input placeholder="性味" value={formData.oilDetails?.nature || ''} className={inputClass} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, nature: e.target.value }})} />
             <input placeholder="五行/陰陽" value={formData.oilDetails?.fiveElements || ''} className={inputClass} onChange={(e) => setFormData({...formData, oilDetails: { ...formData.oilDetails, fiveElements: e.target.value }})} />
