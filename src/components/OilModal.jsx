@@ -41,11 +41,10 @@ export default function OilModal({ item, onClose }) {
                 { label: '性味(四氣／五味)', val: item.nature || item.oilDetails?.nature || item.oilTable?.nature },
                 { label: '五行／陰陽屬性', val: item.property || item.oilDetails?.property || item.oilTable?.property },
                 { label: '歸經', val: item.meridian || item.oilDetails?.meridian || item.oilTable?.meridian },
-                { label: '適用體質', val: item.constitution || item.oilDetails?.constitution || item.oilTable?.constitution },
                 { label: '主治', val: item.indications || item.oilDetails?.indications || item.oilTable?.indications },
                 { label: '類比音符', val: item.noteAnalogy || item.oilDetails?.noteAnalogy || item.oilTable?.noteAnalogy },
                 { label: '主宰星球', val: item.planet || item.oilDetails?.planet || item.oilTable?.planet },
-                { label: '主要產地', val: item.origin || item.oilDetails?.origin || item.oilTable?.origin }
+                { label: '重要產地', val: item.origin || item.oilDetails?.origin || item.oilTable?.origin }
               ].map((row, i) => (
                 <tr key={i} className="text-center bg-[#FBFBFA]/40">
                   <td className="px-4 py-2 font-bold bg-[#FBFBFA] border-r border-[#E5E0D8]">{row.label}</td>

@@ -205,7 +205,6 @@ export function FormulaContent({ item, renderFormattedText }) {
             { label: '拉丁學名', keys: ['latin'] },
             { label: '科名', keys: ['family'] },
             { label: '歸經', keys: ['meridian'] },
-            { label: '適用體質', keys: ['constitution'] },
             { label: '主治', keys: ['indications'] },
             { label: '類比音符', keys: ['noteAnalogy'] },
             { label: '星球', keys: ['planet'] },

@@ -1,6 +1,5 @@
 import React from 'react';
 import { parseBoldSyntax } from "../utils/formatUtils.jsx";
-import PreviewRenderer from "./PreviewRenderer";
 
 const UI = {
   text: "text-[15px] leading-8 text-[#6B7A6E]", 
@@ -11,7 +10,6 @@ const UI = {
 export default function FormulaModal({ item, onClose }) {
   if (!item) return null;
 
-  // 將渲染邏輯定義在組件內部，確保可以直接使用外部匯入的 parseBoldSyntax
   const renderFormattedText = (text) => {
     if (!text) return <span className="italic text-gray-400">無記載</span>;
     const lines = typeof text === 'string' ? text.split('\n').filter(l => l.trim() !== '') : [text];
@@ -46,7 +44,7 @@ export default function FormulaModal({ item, onClose }) {
     );
   };
 
-  const alertContent = item.alert || (['中藥', '方劑'].includes(item.category) ? "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。" : "");
+  const alertContent = item.alert || (['中藥', '方劑', '穴道'].includes(item.category) ? "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非專業人士請勿擅自處方服藥。" : "");
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -58,14 +56,32 @@ export default function FormulaModal({ item, onClose }) {
           <button onClick={onClose} className="text-[#A39284] hover:text-[#3A4F3F] text-xl transition-colors">✕</button>
         </div>
 
+        {/* 標籤區 */}
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {item.category && (
+            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+              item.category === '中藥' ? 'bg-[#E5EAE6] text-[#4E6654]' :
+              item.category === '穴道' ? 'bg-[#EAE7E0] text-[#6B7A6E]' :
+              item.category === '方劑' ? 'bg-[#F3E1C5] text-[#2C3C30]' :
+              'bg-gray-100 text-gray-600'
+            }`}>
+              {item.category}
+            </span>
+          )}
+          {item.tag && item.tag !== item.category && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#F7F5F0] text-[#6B7A6E]">
+              {item.tag}
+            </span>
+          )}
+        </div>
+
         <h2 className={UI.title}>{item.name}</h2>
 
-        {/* 類別資訊框 */}
         <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 text-sm text-[#6B7A6E]">
-            <p><strong>類別：</strong> {item.tag || item.category || '無類別'}</p>
-            <p><strong>來源：</strong> {item.source || '無來源'}</p>
-            <p className="col-span-2"><strong>功效：</strong> {item.effect || '無'}</p>
+            <p><strong>類別：</strong> {item.tag || item.category || '無記載'}</p>
+            <p><strong>來源：</strong> {item.source || '無記載'}</p>
+            <p className="col-span-2"><strong>功效：</strong> {item.effect || '無記載'}</p>
           </div>
         </div>
 
