@@ -31,7 +31,7 @@ export const acuData = [
     description: "巨骨下，俠氣戶旁二寸陷中，動脈應手，舉臂取之，去胸中行各六寸。素注：針七分。銅人：針三分，灸五壯。\n主傷寒四肢熱不已，欬逆，喘不得息，胸脇短氣，氣上沖心，胸中煩滿，脇徹背痛，喉痺，肩痛，臂不舉，癭氣。",
     acuTable: {
       name: "雲門",
-      alias: " ",
+      alias: "無別名",
       meridian: "手太陰肺經",
       code: "LU2"
     },
@@ -56,7 +56,7 @@ export const acuData = [
     description: "腋下三寸，肘腕上五寸，動脈中，用鼻尖點墨，到處是穴。禁灸，針四分，留七呼。\n主暴痺，口鼻衂血，中風邪，泣出，喜忘，飛尸惡疰，鬼語，喘息，寒熱瘧，目眩，遠視䀮䀮，癭氣。",
     acuTable: {
       name: "天府",
-      alias: " ",
+      alias: "無別名",
       meridian: "手太陰肺經",
       code: "LU3"
     },

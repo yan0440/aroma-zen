@@ -83,10 +83,10 @@ export default function AcuModal({ item, onClose }) {
             </thead>
             <tbody className="text-[#3A4F3F]">
               <tr className="divide-x divide-[#E5E0D8]/60 align-top">
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuDetails?.indications || "無")}</td>
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.alias || "無")}</td>
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.meridian || "無")}</td>
-                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.code || "無")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuDetails?.indications || "無主治")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.alias || "無別名")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.meridian || "無經絡分類")}</td>
+                <td className={`px-4 py-3.5 ${UI.text}`}>{renderFormattedText(acuTable?.code || "無代碼")}</td>
               </tr>
             </tbody>
           </table>

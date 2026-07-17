@@ -63,9 +63,9 @@ export default function FormulaModal({ item, onClose }) {
         {/* 類別資訊框 */}
         <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 text-sm text-[#6B7A6E]">
-            <p><strong>類別：</strong> {item.tag || item.category || '無記載'}</p>
-            <p><strong>來源：</strong> {item.source || '無記載'}</p>
-            <p className="col-span-2"><strong>功效：</strong> {item.effect || '無記載'}</p>
+            <p><strong>類別：</strong> {item.tag || item.category || '無類別'}</p>
+            <p><strong>來源：</strong> {item.source || '無來源'}</p>
+            <p className="col-span-2"><strong>功效：</strong> {item.effect || '無'}</p>
           </div>
         </div>
 
