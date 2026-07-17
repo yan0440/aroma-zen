@@ -198,19 +198,18 @@ export function FormulaContent({ item, renderFormattedText }) {
         <table className="w-full text-[15px] border-collapse">
           <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">{[
             { label: '別名', keys: ['alias'] },
-            { label: '性味(四氣／五味)', keys: ['natur'] },
+            { label: '性味(四氣／五味)', keys: ['nature'] },
             { label: '五行／陰陽屬性', keys: ['property'] },
             { label: '植物種類', keys: ['typePart', 'plantPart'] },
             { label: '萃取方法', keys: ['method', 'extraction'] },
             { label: '拉丁學名', keys: ['latin'] },
             { label: '科名', keys: ['family'] },
-            { label: '五行', keys: ['fiveElements'] },
             { label: '歸經', keys: ['meridian'] },
-            { label: '體質', keys: ['constitution'] },
+            { label: '適用體質', keys: ['constitution'] },
             { label: '主治', keys: ['indications'] },
             { label: '類比音符', keys: ['noteAnalogy'] },
             { label: '星球', keys: ['planet'] },
-            { label: '產地', keys: ['origin'] }
+            { label: '主要產地', keys: ['origin'] }
           ].map((row, i) => (
             <tr key={i} className="text-center bg-[#FBFBFA]/40">
               <td className="px-4 py-2 font-bold bg-[#FBFBFA] border-r border-[#E5E0D8]">{row.label}</td>
@@ -273,7 +272,8 @@ export function FormulaContent({ item, renderFormattedText }) {
           {[
             { label: '🔗 適合與之調和的精油', k: ['blendingOils'] },
             { label: '🧪 精油配方', k: ['formulas'] },
-            { label: '🧴 按摩基底油', k: ['carrierOil'] }
+            { label: '🧴 按摩基底油', k: ['carrierOil'] },
+            { label: '🚀 使用方法', k: ['usage'] }
           ].map((field, i) => (
             <div key={i}>
               <span className="font-bold text-[#4E6654] block border-b border-[#E5E0D8] pb-1 mb-2 text-sm tracking-widest">{field.label}</span>
