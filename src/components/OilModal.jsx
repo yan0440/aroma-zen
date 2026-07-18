@@ -1,6 +1,6 @@
 import React from 'react';
 
-// --- 格式化函數 (直接定義在檔案內，確保可被組件使用) ---
+// --- 強化版格式化函數 ---
 const parseBoldSyntax = (str) => {
   if (!str) return str;
   const lineStartRegex = /^(肌肉|神經|血管)([：:])/;
@@ -28,29 +28,52 @@ const parseBoldSyntax = (str) => {
   });
 };
 
-const renderFormattedText = (text, customClasses = "") => {
-  if (!text) return <span className="italic text-gray-400">無記載</span>;
-  const lines = typeof text === 'string' ? text.split('\n').filter(line => line.trim() !== '') : [text];
-  
-  return (
-    <div className={`text-[15px] leading-8 text-[#6B7A6E] ${customClasses}`}>
-      {lines.map((line, i) => (
-        <div key={i} className="mb-1">
-          {typeof line === 'string' ? parseBoldSyntax(line) : line}
-        </div>
-      ))}
-    </div>
-  );
-};
-
 const UI = {
   text: "text-[15px] leading-8 text-[#6B7A6E]", 
-  title: "text-4xl font-bold text-[#6B9080]",
-  sectionLabel: "font-bold text-[#4E6654] block border-b border-[#E5E0D8] pb-1 mb-2 text-sm tracking-widest"
+  title: "text-4xl font-bold text-[#6B9080] mb-2",
+  sectionLabel: "font-bold text-[#4E6654] block border-b border-[#E5E0D8] pb-1 mb-2 text-sm tracking-widest",
 };
 
 export default function OilModal({ item, onClose }) {
   if (!item) return null;
+  console.log("當前檢視的 item 資料結構:", item);
+
+  // --- 整合數字縮排與圓點列表的渲染函數 ---
+  const renderFormattedText = (text) => {
+    if (!text) return <span className="italic text-gray-400">無記載</span>;
+    const lines = typeof text === 'string' ? text.split('\n').filter(line => line.trim() !== '') : [text];
+    
+    return (
+      <div className={UI.text}>
+        {lines.map((line, i) => {
+          const trimmed = typeof line === 'string' ? line.trim() : line;
+          
+          // 偵測數字條列 (例如 1. 或 一、) 與 圓點條列 (●)
+          const isNumbered = typeof trimmed === 'string' && /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
+          const isIndented = typeof trimmed === 'string' && trimmed.startsWith('●');
+
+          if (isNumbered) {
+            const splitIndex = trimmed.search(/[.、]/) + 1;
+            return (
+              <div key={i} className="grid grid-cols-[auto_1fr] gap-x-2 mb-1">
+                <span className="font-bold shrink-0">{trimmed.substring(0, splitIndex)}</span>
+                <span>{parseBoldSyntax(trimmed.substring(splitIndex).trim())}</span>
+              </div>
+            );
+          }
+          if (isIndented) {
+            return (
+              <div key={i} className="grid grid-cols-[1.5rem_1fr] mb-1">
+                <span className="text-[#A39284]">●</span>
+                <span>{parseBoldSyntax(trimmed.replace('●', '').trim())}</span>
+              </div>
+            );
+          }
+          return <div key={i} className="mb-1">{parseBoldSyntax(trimmed)}</div>;
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="w-full h-auto py-8">
@@ -74,7 +97,7 @@ export default function OilModal({ item, onClose }) {
                 <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">
                   {[
                     { label: '別名', val: item.alias || item.oilDetails?.alias },
-                    { label: '部位', val: item.typePart || item.oilDetails?.typePart },
+                    { label: '植物種類／萃取部位', val: item.typePart || item.oilDetails?.typePart },
                     { label: '方法', val: item.method || item.oilDetails?.method },
                     { label: '學名', val: item.latin || item.oilDetails?.latin },
                     { label: '科名', val: item.family || item.oilDetails?.family },
