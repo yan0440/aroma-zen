@@ -14,10 +14,22 @@ export default function FormulaModal({ item, onClose }) {
     if (!text) return <span className="italic text-gray-400">無記載</span>;
     const lines = typeof text === 'string' ? text.split('\n').filter(l => l.trim() !== '') : [text];
     
+    
     return (
       <div className={UI.text}>
         {lines.map((line, i) => {
           const trimmed = typeof line === 'string' ? line.trim() : line;
+          const isTable = typeof trimmed === 'string' && trimmed.includes('|');
+      if (isTable) {
+        return (
+          <div key={i} className="my-2 overflow-x-auto">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {trimmed}
+            </ReactMarkdown>
+          </div>
+        );
+      }
+
           const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
           const isIndented = trimmed.startsWith('●');
 

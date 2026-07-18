@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase'; 
 import { doc, setDoc } from 'firebase/firestore'; 
 import BookStructureEditor from './BookStructureEditor';
-// 修改後 (正確)
 import PreviewRenderer from "./PreviewRenderer";
 
-export default function AddEntryModal({ onClose, editingItem, isViewOnly = false }) {
+export default function AddEntryPage({ onClose, editingItem, isViewOnly = false }) {
   const [formData, setFormData] = useState({ 
     category: '精油', name: '', tag: '', description: '', 
     englishName: '', constitutionTag: '', chemicalTag: '', 
@@ -15,14 +14,55 @@ export default function AddEntryModal({ onClose, editingItem, isViewOnly = false
     bookDetails: { author: '', chapters: [] } 
   });
 
+  // 1. 編輯時的資料還原：將物件結構轉回陣列供 UI 使用
   useEffect(() => {
-    if (editingItem) setFormData(editingItem);
+    if (editingItem) {
+      const convertObjectsToArrays = (obj) => {
+        if (obj !== null && typeof obj === 'object') {
+          // 如果 key 都是數字字串，則視為陣列還原
+          const keys = Object.keys(obj);
+          const isArrayLike = keys.length > 0 && keys.every(key => !isNaN(key));
+          
+          if (isArrayLike) {
+            return keys.sort((a, b) => Number(a) - Number(b)).map(key => convertObjectsToArrays(obj[key]));
+          } else {
+            const newObj = {};
+            for (const key in obj) {
+              newObj[key] = convertObjectsToArrays(obj[key]);
+            }
+            return newObj;
+          }
+        }
+        return obj;
+      };
+      setFormData(convertObjectsToArrays(editingItem));
+    }
   }, [editingItem]);
 
+  // 2. 儲存時的資料轉換：將陣列轉為物件以繞過 Firebase 限制
   const handleSave = async () => {
     if (!formData.name) return alert("請至少填寫名稱！");
+    
+    const convertArraysToObjects = (obj) => {
+      if (Array.isArray(obj)) {
+        const newObj = {};
+        obj.forEach((item, index) => {
+          newObj[index.toString()] = convertArraysToObjects(item);
+        });
+        return newObj;
+      } else if (obj !== null && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+          newObj[key] = convertArraysToObjects(obj[key]);
+        }
+        return newObj;
+      }
+      return obj;
+    };
+
+    const cleanData = convertArraysToObjects(formData);
     const entryId = editingItem ? String(editingItem.id) : Date.now().toString();
-    const newEntry = { ...formData, id: entryId };
+    const newEntry = { ...cleanData, id: entryId };
 
     try {
       await setDoc(doc(db, "entries", entryId), newEntry);
@@ -30,27 +70,36 @@ export default function AddEntryModal({ onClose, editingItem, isViewOnly = false
       onClose();
     } catch (error) {
       console.error("寫入資料失敗: ", error);
-      alert("儲存失敗，請檢查網路連線");
+      alert("儲存失敗，請檢查控制台錯誤訊息。");
     }
   };
 
-  const inputClass = `w-full px-4 py-3 bg-[#FCFBFA] border border-[#E5E0D8]/60 rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all duration-300 ${isViewOnly ? 'opacity-70 cursor-not-allowed' : ''}`;
-  const labelClass = "text-[11px] font-fttf text-[#A39284] uppercase tracking-widest mb-1.5 block";
+  const inputClass = `w-full px-4 py-3 bg-white border border-[#E5E0D8] rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all ${isViewOnly ? 'opacity-70 cursor-not-allowed' : ''}`;
+  const labelClass = "text-[11px] font-bold text-[#A39284] uppercase tracking-widest mb-1.5 block";
   const textareaClass = `${inputClass} h-24`;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#FCFBFA] p-8 rounded-3xl w-full max-w-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] max-h-[90vh] overflow-y-auto border border-[#E5E0D8]/50" onClick={(e) => e.stopPropagation()}>
-        
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-[#E5E0D8]/40">
-          <h2 className="text-3xl font-fttf text-[#3A4F3F]">
-  {isViewOnly ? `檢視：${formData.name || '百科資料'}` : (editingItem ? "編輯百科資料" : "新增百科資料")}
-</h2>
-          <button onClick={onClose} className="text-[#A39284] hover:text-[#3A4F3F] text-2xl transition-colors">✕</button>
+    <div className="min-h-screen bg-[#FBF9F6] p-4 md:p-12">
+      <div className="max-w-4xl mx-auto flex justify-between items-center mb-10 pb-6 border-b border-[#E5E0D8]">
+        <h2 className="text-3xl font-black text-[#3A4F3F]">
+          {isViewOnly ? `檢視：${formData.name || '百科資料'}` : (editingItem ? "編輯百科資料" : "新增百科資料")}
+        </h2>
+        <div className="flex gap-4">
+          <button onClick={onClose} className="px-6 py-2 text-[#A39284] font-bold hover:text-[#3A4F3F] transition-colors">
+            {isViewOnly ? "關閉" : "取消"}
+          </button>
+          {!isViewOnly && (
+            <button onClick={handleSave} className="px-8 py-2 bg-[#3A4F3F] text-white rounded-full font-bold hover:bg-[#2C3C30] shadow-lg transition-all">
+              儲存資料
+            </button>
+          )}
         </div>
-        
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+      </div>
+
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="bg-white p-8 rounded-3xl border border-[#E5E0D8]/60 shadow-sm">
+          {/* 表單內容 (維持你原有的欄位) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className={labelClass}>分類</label>
               <select disabled={isViewOnly} className={inputClass} value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
@@ -67,31 +116,28 @@ export default function AddEntryModal({ onClose, editingItem, isViewOnly = false
             </div>
           </div>
           
-          <div className="w-full">
+          <div className="w-full mb-6">
             <label className={labelClass}>簡介描述</label>
-            <textarea 
-              disabled={isViewOnly}
-              placeholder="簡介描述" 
-              value={formData.description || ''} 
-              className={textareaClass} 
-              onChange={(e) => setFormData({...formData, description: e.target.value})} 
-            />
+            <textarea disabled={isViewOnly} placeholder="簡介描述" value={formData.description || ''} className={textareaClass} onChange={(e) => setFormData({...formData, description: e.target.value})} />
           </div>
 
           {!['穴道', '精油'].includes(formData.category) && (
-  <div className="mb-4"><label className={labelClass}>核心標籤</label>
-    <input disabled={isViewOnly} placeholder="例如：解表、清熱" value={formData.tag || ''} className={inputClass} onChange={(e) => setFormData({...formData, tag: e.target.value})} />
-</div>
-)}
-          {formData.category === '書籍' && (
-            <BookStructureEditor 
-              formData={formData}
-              setFormData={setFormData}
-              labelClass={labelClass}
-              inputClass={inputClass}
-              disabled={isViewOnly}
-            />
+            <div className="mb-6">
+              <label className={labelClass}>核心標籤</label>
+              <input disabled={isViewOnly} placeholder="例如：解表、清熱" value={formData.tag || ''} className={inputClass} onChange={(e) => setFormData({...formData, tag: e.target.value})} />
+            </div>
           )}
+
+          {formData.category === '書籍' && (
+  <BookStructureEditor 
+    formData={formData}
+    setFormData={setFormData}
+    labelClass={labelClass}
+    inputClass={inputClass}
+    // 確保這裡有傳遞這個屬性，你的編輯器元件內要記得接收它
+    disabled={isViewOnly}
+  />
+)}
           {formData.category === '精油' && (
   <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-500">
             <input placeholder="適用中醫體質標籤" value={formData.constitutionTag || ''} className="col-span-2 p-3 bg-gray-50 border border-gray-200 rounded-xl" onChange={(e) => setFormData({...formData, constitutionTag: e.target.value})} />

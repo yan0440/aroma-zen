@@ -71,6 +71,19 @@ export default function App() {
     return <AdminPage allData={allData} onBack={() => setIsAdminMode(false)} />;
   }
 
+  // --- 修改重點：當有 activeItem 時，完全渲染 Modal，不渲染下方頁面 ---
+  if (activeItem) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#FCFBFA]">
+        {activeItem.category === "精油" && <OilModal item={activeItem} onClose={() => setActiveItem(null)} />}
+        {activeItem.category === "穴道" && <AcuModal item={activeItem} onClose={() => setActiveItem(null)} />}
+        {activeItem.category === "中藥" && <HerbModal item={activeItem} onClose={() => setActiveItem(null)} />}
+        {activeItem.category === "方劑" && <FormulaModal item={activeItem} onClose={() => setActiveItem(null)} />}
+        {activeItem.category === "書籍" && <BookModal item={activeItem} onClose={() => setActiveItem(null)} />}
+      </div>
+    );
+  }
+
   return (
     <div className="font-fttf min-h-screen bg-[#F7F5F0] text-[#3A4F3F] py-12 px-4">
       <button onClick={() => setIsAdminMode(true)} className="fixed top-2 left-2 text-[10px] text-[#A39284]/30 hover:text-[#3A4F3F] transition-colors">開發者專區</button>
@@ -92,36 +105,30 @@ export default function App() {
       </div>
 
       <main className="max-w-5xl mx-auto">
-  {filteredData.length > 0 ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {filteredData.map((item) => (
-        <div 
-          key={item.id} 
-          onClick={() => setActiveItem(item)} 
-          className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all cursor-pointer relative border border-[#E5E0D8]/40"
-        >
-          <div className="flex flex-wrap gap-1.5 items-start mb-3">
-            <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
-            {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
-              <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
+        {filteredData.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {filteredData.map((item) => (
+              <div 
+                key={item.id} 
+                onClick={() => setActiveItem(item)} 
+                className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all cursor-pointer relative border border-[#E5E0D8]/40"
+              >
+                <div className="flex flex-wrap gap-1.5 items-start mb-3">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded bg-[#F0EDE6] text-[#3A4F3F]">{item.category}</span>
+                  {[item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean).map((tag, idx) => (
+                    <span key={`tag-${idx}`} className="text-xs font-medium px-2.5 py-1 rounded bg-[#E5E0D8]/40 text-[#6B7A6E]">{tag}</span>
+                  ))}
+                </div>
+                <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
+                <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
+                <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">
+                  {parseBoldSyntax(item.description || item.effect || '')}
+                </div>
+              </div>
             ))}
           </div>
-          <h3 className="text-2xl font-bold text-[#3A4F3F] group-hover:text-[#A39284] transition-colors">{item.name}</h3>
-          <p className="text-sm italic text-[#A39284] mt-1 mb-4 font-serif">{item.category === "精油" ? item.englishName : (item.acuTable?.code || '')}</p>
-          <div className="text-sm text-[#6B7A6E] leading-relaxed mb-4">
-            {parseBoldSyntax(item.description || item.effect || '')}
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : <div className="text-center py-20 text-[#A39284]">沒有資料。</div>}
-</main>
-
-      {activeItem?.category === "精油" && <OilModal item={activeItem} onClose={() => setActiveItem(null)} />}
-      {activeItem?.category === "穴道" && <AcuModal item={activeItem} onClose={() => setActiveItem(null)} />}
-      {activeItem?.category === "中藥" && <HerbModal item={activeItem} onClose={() => setActiveItem(null)} />}
-      {activeItem?.category === "方劑" && <FormulaModal item={activeItem} onClose={() => setActiveItem(null)} />}
-      {activeItem?.category === "書籍" && <BookModal item={activeItem} onClose={() => setActiveItem(null)} />}
+        ) : <div className="text-center py-20 text-[#A39284]">沒有資料。</div>}
+      </main>
     </div>
   );
 }
