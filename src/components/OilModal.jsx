@@ -1,5 +1,47 @@
 import React from 'react';
-import { renderFormattedText } from "../utils/formatUtils.jsx";
+
+// --- 格式化函數 (直接定義在檔案內，確保可被組件使用) ---
+const parseBoldSyntax = (str) => {
+  if (!str) return str;
+  const lineStartRegex = /^(肌肉|神經|血管)([：:])/;
+  const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
+  
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (part.startsWith('==') && part.endsWith('==')) {
+      return <mark key={i} className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm">{part.slice(2, -2)}</mark>;
+    }
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part.slice(2, -2)}</strong>;
+    }
+    if ((part.startsWith('《') && part.endsWith('》')) || (part.startsWith('【') && part.endsWith('】'))) {
+      return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
+    }
+    if (lineStartRegex.test(part)) {
+      return part.replace(lineStartRegex, (match, keyword, colon) => (
+        <React.Fragment key={i}>
+          <strong className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{keyword}</strong>{colon}
+        </React.Fragment>
+      ));
+    }
+    return part;
+  });
+};
+
+const renderFormattedText = (text, customClasses = "") => {
+  if (!text) return <span className="italic text-gray-400">無記載</span>;
+  const lines = typeof text === 'string' ? text.split('\n').filter(line => line.trim() !== '') : [text];
+  
+  return (
+    <div className={`text-[15px] leading-8 text-[#6B7A6E] ${customClasses}`}>
+      {lines.map((line, i) => (
+        <div key={i} className="mb-1">
+          {typeof line === 'string' ? parseBoldSyntax(line) : line}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const UI = {
   text: "text-[15px] leading-8 text-[#6B7A6E]", 
@@ -11,123 +53,103 @@ export default function OilModal({ item, onClose }) {
   if (!item) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative border border-[#E5E0D8]/30" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-5 right-5 text-[#A39284] hover:text-[#3A4F3F] text-xl transition-colors">✕</button>
+    <div className="w-full h-auto py-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 px-4">
         
-        {/* 標籤區 */}
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#EAE7E0] text-[#6B7A6E]">
-            {item.constitutionTag || item.oilDetails?.constitutionTag || "無"}體質
-          </span>
-          <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#E5EAE6] text-[#4E6654]">
-            {item.chemicalTag || item.oilDetails?.chemicalTag || "無"}屬性
-          </span>
-        </div>
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#E5E0D8]/60 sticky top-8">
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#EAE7E0] text-[#6B7A6E]">
+                {item.constitutionTag || item.oilDetails?.constitutionTag || "無"}體質
+              </span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#E5EAE6] text-[#4E6654]">
+                {item.chemicalTag || item.oilDetails?.chemicalTag || "無"}屬性
+              </span>
+            </div>
+            <h2 className={UI.title}>{item.name}</h2>
+            <p className="text-base italic text-[#A39284] mt-1 mb-6 font-serif border-b border-[#F7F5F0] pb-4">{item.englishName}</p>
 
-        <h2 className={UI.title}>{item.name}</h2>
-        <p className="text-base italic text-[#A39284] mt-1 mb-3 font-serif border-b border-[#F7F5F0] pb-2">{item.englishName}</p>
-
-        {/* 表格區：確保讀取 item 內正確的欄位 */}
-        <div className="overflow-hidden border border-[#E5E0D8] rounded-xl mb-8 shadow-sm">
-          <table className="w-full text-[15px] border-collapse">
-            <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">
-              {[
-                { label: '別名', val: item.alias || item.oilTable?.alias },
-                { label: '植物種類／萃取部位', val: item.typePart || item.oilTable?.typePart },
-                { label: '萃取方法', val: item.method || item.oilTable?.method },
-                { label: '拉丁學名', val: item.latin || item.oilTable?.latin },
-                { label: '科名', val: item.family || item.oilTable?.family },
-                { label: '性味(四氣／五味)', val: item.nature || item.oilDetails?.nature || item.oilTable?.nature },
-                { label: '五行／陰陽屬性', val: item.property || item.oilDetails?.property || item.oilTable?.property },
-                { label: '歸經', val: item.meridian || item.oilDetails?.meridian || item.oilTable?.meridian },
-                { label: '主治', val: item.indications || item.oilDetails?.indications || item.oilTable?.indications },
-                { label: '類比音符', val: item.noteAnalogy || item.oilDetails?.noteAnalogy || item.oilTable?.noteAnalogy },
-                { label: '主宰星球', val: item.planet || item.oilDetails?.planet || item.oilTable?.planet },
-                { label: '重要產地', val: item.origin || item.oilDetails?.origin || item.oilTable?.origin }
-              ].map((row, i) => (
-                <tr key={i} className="text-center bg-[#FBFBFA]/40">
-                  <td className="px-4 py-2 font-bold bg-[#FBFBFA] border-r border-[#E5E0D8]">{row.label}</td>
-                  <td className="px-4 py-2">{renderFormattedText(row.val)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="space-y-5 text-[#3A4F3F]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className={UI.sectionLabel}>🔍 氣味</span>
-              {renderFormattedText(item.oilDetails?.scent)}
-            </div>
-            <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className={UI.sectionLabel}>✨ 外觀</span>
-              {renderFormattedText(item.oilDetails?.appearance)}
-            </div>
-          </div>
-
-          <div>
-            <span className="font-bold text-[#4E6654] block mb-1.5 text-base">📜 應用歷史與相關神話</span>
-            <div className="bg-[#FBFBFA] px-5 py-4 rounded-xl border border-[#E5E0D8]/30">
-              {renderFormattedText(item.oilDetails?.historyMyth)}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className={UI.sectionLabel}>🔬 化學結構</span>
-              {renderFormattedText(item.oilDetails?.chemistry)}
-            </div>
-            <div className="bg-[#FBFBFA] p-3.5 rounded-xl border border-[#E5E0D8]/40">
-              <span className={UI.sectionLabel}>⚖️ 屬性</span>
-              {renderFormattedText(item.oilDetails?.attribute)}
-            </div>
-          </div>
-
-          <div className="bg-red-50/40 p-4 rounded-xl border border-red-200/40">
-            <span className="font-bold text-red-800 block mb-1 text-[15px]">⚠️ 注意事項</span>
-            {renderFormattedText(item.oilDetails?.caution, "text-red-700/90")}
-          </div>
-
-          <div className="space-y-4 bg-[#F7F5F0]/60 p-4 rounded-xl border border-[#E5E0D8]/40">
-            <span className="font-bold text-[#3A4F3F] block border-b border-[#E5E0D8] pb-1.5 mb-1 text-[15px]">🩺 深度效能</span>
-            <div>
-              <span className={UI.sectionLabel}>🧠 心靈療效</span>
-              <div className="pl-2 border-l-2 border-[#A39284]">{renderFormattedText(item.oilDetails?.mindEffect)}</div>
-            </div>
-            <div>
-              <span className={UI.sectionLabel}>💪 身體療效</span>
-              <div className="pl-2 border-l-2 border-[#A39284]">{renderFormattedText(item.oilDetails?.bodyEffect)}</div>
-            </div>
-            <div>
-              <span className={UI.sectionLabel}>🧴 皮膚療效</span>
-              <div className="pl-2 border-l-2 border-[#A39284]">{renderFormattedText(item.oilDetails?.skinEffect)}</div>
-            </div>
-          </div>
-
-          <div className="space-y-3 bg-[#3A4F3F]/5 p-4 rounded-xl border border-[#3A4F3F]/10">
-            <div>
-              <span className={UI.sectionLabel}>🔗 適合與之調和的精油</span>
-              {renderFormattedText(item.oilDetails?.blendingOils)}
-            </div>
-            <div className="mt-2">
-              <span className={UI.sectionLabel}>🧪 精油配方</span>
-              {renderFormattedText(item.oilDetails?.formulas)}
-            </div>
-            <div className="mt-2">
-              <span className={UI.sectionLabel}>🧴 按摩基底油</span>
-              {renderFormattedText(item.oilDetails?.carrierOil)}
-            </div>
-            <div className="mt-2 border-t border-[#E5E0D8] pt-2">
-              <span className={UI.sectionLabel}>🚀 使用方法</span>
-              <div className="px-1">{renderFormattedText(item.oilDetails?.usage)}</div>
+            <div className="overflow-hidden border border-[#E5E0D8] rounded-xl shadow-sm">
+              <table className="w-full text-[14px] border-collapse">
+                <tbody className="divide-y divide-[#E5E0D8] text-[#3A4F3F]">
+                  {[
+                    { label: '別名', val: item.alias || item.oilDetails?.alias },
+                    { label: '部位', val: item.typePart || item.oilDetails?.typePart },
+                    { label: '方法', val: item.method || item.oilDetails?.method },
+                    { label: '學名', val: item.latin || item.oilDetails?.latin },
+                    { label: '科名', val: item.family || item.oilDetails?.family },
+                    { label: '性味', val: item.oilDetails?.nature },
+                    { label: '五行', val: item.oilDetails?.property },
+                    { label: '歸經', val: item.oilDetails?.meridian },
+                    { label: '主治', val: item.oilDetails?.indications },
+                    { label: '音符', val: item.oilDetails?.noteAnalogy },
+                    { label: '星球', val: item.oilDetails?.planet },
+                    { label: '產地', val: item.oilDetails?.origin }
+                  ].map((row, i) => (
+                    <tr key={i} className="bg-[#FBFBFA]/40">
+                      <td className="px-3 py-2 font-bold bg-[#FBFBFA] border-r border-[#E5E0D8] w-[35%]">{row.label}</td>
+                      <td className="px-3 py-2">{renderFormattedText(row.val)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-[#F7F5F0] text-center">
-          <button onClick={onClose} className="px-6 py-2 bg-[#3A4F3F] hover:bg-[#2C3C30] text-white text-xs font-medium rounded-xl transition-all">關閉並返回列表</button>
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-[#E5E0D8]/60">
+            <div className="space-y-8 text-[#3A4F3F]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><span className={UI.sectionLabel}>🔍 氣味</span>{renderFormattedText(item.oilDetails?.scent)}</div>
+                <div><span className={UI.sectionLabel}>✨ 外觀</span>{renderFormattedText(item.oilDetails?.appearance)}</div>
+              </div>
+
+              <div>
+                <span className="font-bold text-[#4E6654] block mb-2 text-base">📜 應用歷史與相關神話</span>
+                <div className="bg-[#F7F5F0]/40 p-5 rounded-xl border border-[#E5E0D8]/30">{renderFormattedText(item.oilDetails?.historyMyth)}</div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><span className={UI.sectionLabel}>🔬 化學結構</span>{renderFormattedText(item.oilDetails?.chemistry)}</div>
+                <div><span className={UI.sectionLabel}>⚖️ 屬性補充</span>{renderFormattedText(item.oilDetails?.attribute)}</div>
+              </div>
+
+              {item.oilDetails?.caution && (
+                <div className="bg-red-50/50 p-5 rounded-xl border border-red-100">
+                  <span className="font-bold text-red-800 text-sm block mb-2">⚠️ 注意事項</span>
+                  {renderFormattedText(item.oilDetails?.caution)}
+                </div>
+              )}
+
+              <div className="space-y-6 pt-4">
+                <span className="font-bold text-[#3A4F3F] block border-b border-[#E5E0D8] pb-2">🩺 深度療效</span>
+                <div className="space-y-4">
+                  {[ 
+                    { t: "心靈療效", v: item.oilDetails?.mindEffect, icon: "🧠" }, 
+                    { t: "身體療效", v: item.oilDetails?.bodyEffect, icon: "💪" }, 
+                    { t: "皮膚療效", v: item.oilDetails?.skinEffect, icon: "🧴" } 
+                  ].map((ef, i) => (
+                    <div key={i} className="flex gap-4 border-b border-[#F7F5F0] pb-4 last:border-0 last:pb-0">
+                      <div className="flex-shrink-0 w-24 pt-1">
+                        <div className="flex items-center gap-2 text-[#4E6654] font-bold text-sm"><span>{ef.icon}</span>{ef.t}</div>
+                      </div>
+                      <div className="flex-grow text-[14px] leading-7 text-[#6B7A6E]">
+                        {renderFormattedText(ef.v)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 pt-6">
+                <div><span className={UI.sectionLabel}>🔗 適合調和的精油</span>{renderFormattedText(item.oilDetails?.blendingOils)}</div>
+                <div><span className={UI.sectionLabel}>🧪 精油配方</span>{renderFormattedText(item.oilDetails?.formulas)}</div>
+                <div><span className={UI.sectionLabel}>🧴 按摩基底油</span>{renderFormattedText(item.oilDetails?.carrierOil)}</div>
+                <div><span className={UI.sectionLabel}>🚀 使用方法</span>{renderFormattedText(item.oilDetails?.usage)}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

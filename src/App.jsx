@@ -73,13 +73,23 @@ export default function App() {
 
   // --- 修改重點：當有 activeItem 時，完全渲染 Modal，不渲染下方頁面 ---
   if (activeItem) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#FCFBFA]">
-        {activeItem.category === "精油" && <OilModal item={activeItem} onClose={() => setActiveItem(null)} />}
-        {activeItem.category === "穴道" && <AcuModal item={activeItem} onClose={() => setActiveItem(null)} />}
-        {activeItem.category === "中藥" && <HerbModal item={activeItem} onClose={() => setActiveItem(null)} />}
-        {activeItem.category === "方劑" && <FormulaModal item={activeItem} onClose={() => setActiveItem(null)} />}
-        {activeItem.category === "書籍" && <BookModal item={activeItem} onClose={() => setActiveItem(null)} />}
+  return (
+    <div className="bg-[#F7F5F0] min-h-screen">
+      {/* 讓返回按鈕直接作為頁面頂部導航的一部分 */}
+      <div className="max-w-6xl mx-auto pt-8 px-4">
+        <button 
+          onClick={() => setActiveItem(null)}
+          className="text-[#A39284] hover:text-[#3A4F3F] flex items-center gap-2"
+        >
+          ← 返回列表
+        </button>
+      </div>
+        {/* 這裡繼續渲染你的內容，此時它們不再是彈窗，而是頁面的一部分 */}
+        {activeItem.category === "精油" && <OilModal item={activeItem} />}
+        {activeItem.category === "穴道" && <AcuModal item={activeItem} />}
+        {activeItem.category === "中藥" && <HerbModal item={activeItem} />}
+        {activeItem.category === "方劑" && <FormulaModal item={activeItem} />}
+        {activeItem.category === "書籍" && <BookModal item={activeItem} />}
       </div>
     );
   }

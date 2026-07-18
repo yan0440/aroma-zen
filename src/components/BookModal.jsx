@@ -95,7 +95,7 @@ export default function BookModal({ item, onClose }) {
     });
     if (tableBuffer.length > 0) result.push(<div key="final-table">{renderTable(tableBuffer)}</div>);
 
-    return <div className="space-y-3 text-sm leading-relaxed text-[#3A4F3F]">{result}</div>;
+    return <div className="space-y-3 text-base leading-relaxed text-[#3A4F3F]">{result}</div>;
   };
 
   const getRawTitle = (fullTitle) => {
@@ -113,51 +113,70 @@ export default function BookModal({ item, onClose }) {
     ) : <span className="text-2xl font-black text-[#3A4F3F]">{fullTitle}</span>;
   };
 
+  // 遞迴目錄渲染函式
+  const renderDirectory = (items) => {
+    return items.map((item) => (
+      <div key={item.id} className="space-y-1">
+        {item.type === 'folder' ? (
+          <>
+            <div className="text-sm text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl font-extrabold flex items-center gap-2 mt-2">
+              <span>📁</span> {item.title}
+            </div>
+            <div className="pl-6 border-l-2 border-[#E5E0D8] ml-3 space-y-1">
+              {renderDirectory(item.children || [])}
+            </div>
+          </>
+        ) : (
+          <button 
+  onClick={() => {
+    setSelectedContent(item);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }} 
+  className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition-colors ${
+    selectedContent?.id === item.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'
+  }`}
+          >
+            <span>📄</span>
+            <span className="truncate font-black">{getRawTitle(item.title)}</span>
+          </button>
+        )}
+      </div>
+    ));
+  };
+
   return (
-    <div className="h-screen w-full flex flex-col bg-[#FCFBFA] overflow-hidden">
-      {/* 頁首 */}
-      <div className="flex justify-between items-center px-8 py-5 border-b border-[#E5E0D8]/50 bg-white">
-        <div className="flex items-center gap-6">
-          <button onClick={onClose} className="text-[#A39284] hover:text-[#3A4F3F] font-bold text-sm">← 返回</button>
+    <div className="min-h-screen w-full bg-[#FBF9F6] pb-20">
+      <div className="border-b border-[#E5E0D8]/50 bg-white px-8 py-6">
+        <div className="max-w-6xl mx-auto flex items-center gap-6">
           <div>
-            <span className="text-[11px] font-bold text-[#6B9080] uppercase tracking-widest block mb-0.5">{item.category} 百科閱讀器</span>
+            <span className="text-[11px] font-bold text-[#6B9080] uppercase tracking-widest block mb-0.5">
+              {item.category} 百科閱讀器
+            </span>
             <h2 className="text-xl font-black text-[#3A4F3F]">{item.name}</h2>
           </div>
         </div>
       </div>
 
-      {/* 主內容區：佔滿剩餘高度，僅包含目錄與文章 */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* 左側目錄 */}
-        <div className="w-80 border-r border-[#E5E0D8]/60 bg-white overflow-y-auto p-4 space-y-4 text-sm">
+      {/* 主內容區：調整寬度讓閱讀器變大 */}
+      <div className="max-w-7xl mx-auto mt-8 flex flex-col md:flex-row gap-8 px-6">
+        
+        {/* 左側目錄：將寬度從 w-80 改為 w-64，讓目錄更精簡 */}
+        <div className="w-full md:w-64 shrink-0 space-y-2">
           <h4 className="text-[11px] font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄架構</h4>
-          {processedChapters.map((ch) => (
-            <div key={ch.id} className="space-y-1">
-              <div className="text-sm text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl font-extrabold">📁 {ch.title}</div>
-              <div className="pl-4 space-y-1 border-l border-[#6B9080]/20 ml-3">
-                {ch.children.map((child) => (
-                  <button key={child.id} onClick={() => child.type === 'content' && setSelectedContent(child)} 
-                    className={`w-full text-left p-2 rounded-lg flex items-start gap-2 ${selectedContent?.id === child.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'}`}>
-                    <span>{child.type === 'folder' ? '📂' : '📄'}</span>
-                    <span className="truncate font-black">{getRawTitle(child.title)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          {renderDirectory(processedChapters)}
         </div>
 
-        {/* 右側內容區 */}
-        <div className="flex-1 overflow-y-auto p-12">
+        {/* 右側內容區：flex-1 會自動填滿剩餘空間，閱讀器自動變大 */}
+        <div className="flex-1 min-w-0">
           {selectedContent ? (
-            <div className="space-y-6 max-w-3xl mx-auto">
+            <div className="space-y-6">
               <div className="border-b border-[#E5E0D8]/60 pb-5">{renderTitleWithAlias(selectedContent.title)}</div>
-              <div className="bg-[#FBF9F6] p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-inner">
+              <div className="bg-white p-8 rounded-2xl border border-[#E5E0D8]/40 shadow-sm">
                 {selectedContent.text ? parseModalSyntax(selectedContent.text) : <span className="text-[#A39284] italic">尚無內容。</span>}
               </div>
             </div>
           ) : (
-            <div className="text-center pt-20 text-[#A39284]">請從左側目錄選擇項目。</div>
+            <div className="p-20 text-center border-2 border-dashed border-[#E5E0D8] rounded-2xl text-[#A39284]">請從左側目錄選擇項目。</div>
           )}
         </div>
       </div>

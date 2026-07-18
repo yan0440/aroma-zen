@@ -1,11 +1,36 @@
 import React from 'react';
-import { parseBoldSyntax } from "../utils/formatUtils.jsx"; // 確保此路徑正確
-// 修改後 (正確)
-import PreviewRenderer from "./PreviewRenderer";
+
+// --- 格式化核心邏輯 ---
+const parseBoldSyntax = (str) => {
+  if (!str) return str;
+  const lineStartRegex = /^(肌肉|神經|血管)([：:])/;
+  const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
+  
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (part.startsWith('==') && part.endsWith('==')) {
+      return <mark key={i} className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm">{part.slice(2, -2)}</mark>;
+    }
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part.slice(2, -2)}</strong>;
+    }
+    if ((part.startsWith('《') && part.endsWith('》')) || (part.startsWith('【') && part.endsWith('】'))) {
+      return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
+    }
+    if (lineStartRegex.test(part)) {
+      return part.replace(lineStartRegex, (match, keyword, colon) => (
+        <React.Fragment key={i}>
+          <strong className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{keyword}</strong>{colon}
+        </React.Fragment>
+      ));
+    }
+    return part;
+  });
+};
 
 const UI = {
   text: "text-[15px] leading-8 text-[#6B7A6E]", 
-  title: "text-4xl font-bold text-[#6B9080] mb-4",
+  title: "text-4xl font-bold text-[#6B9080] mb-2",
   sectionLabel: "font-bold text-[#4E6654] block border-b border-[#E5E0D8] pb-1 mb-2 text-sm tracking-widest",
 };
 
@@ -14,18 +39,13 @@ export default function HerbModal({ item, onClose }) {
 
   const renderFormattedText = (text) => {
     if (!text) return <span className="italic text-gray-400">無記載</span>;
-    
     const lines = typeof text === 'string' ? text.split('\n').filter(l => l.trim() !== '') : [text];
-
     return (
       <div className={UI.text}>
         {lines.map((line, i) => {
           const trimmed = typeof line === 'string' ? line.trim() : line;
-          
-          // 偵測阿拉伯數字編號 (1.) 或中文數字編號 (一、)
           const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
           const isIndented = trimmed.startsWith('●');
-
           if (isNumbered) {
             const splitIndex = trimmed.search(/[.、]/) + 1;
             return (
@@ -35,71 +55,68 @@ export default function HerbModal({ item, onClose }) {
               </div>
             );
           }
-
           if (isIndented) {
-  return (
-    // 1. 使用 flex 代替 grid，更容易處理垂直置中
-    // 2. 增加 pl-8 確保整體縮排深度
-    <div key={i} className="flex items-baseline pl-4 mb-1">
-      {/* 移除 translate-y，改用自適應的 inline-block */}
-      <span className="text-[#A39284] mr-3 inline-block shrink-0">●</span>
-      <span className="leading-relaxed text-left flex-1">
-        {parseBoldSyntax(trimmed.replace('●', '').trim())}
-      </span>
-    </div>
-  );
-}
-
+            return (
+              <div key={i} className="flex items-baseline pl-4 mb-1">
+                <span className="text-[#A39284] mr-3 inline-block shrink-0">●</span>
+                <span className="leading-relaxed text-left flex-1">{parseBoldSyntax(trimmed.replace('●', '').trim())}</span>
+              </div>
+            );
+          }
           return <div key={i} className="mb-1">{parseBoldSyntax(trimmed)}</div>;
         })}
       </div>
     );
   };
 
-  // ... 其餘部分保持不變
   const displayAlert = item.alert || (['中藥', '方劑'].includes(item.category) ? "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非中醫師請勿擅自處方服藥。" : "");
 
   return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-2xl relative border border-[#E5E0D8]/30" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-5 right-5 text-[#A39284] hover:text-[#3A4F3F] text-xl transition-colors">✕</button>
-        <h2 className={UI.title}>{item.name}</h2>
+    <div className="min-h-screen bg-[#F7F5F0] py-8 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto mb-6" />
 
-        <div className="bg-white rounded-xl border border-[#E5E0D8] p-6 mb-6">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-[#6B7A6E]">
-            <p><strong>別名：</strong> {item.alias || '無別名'}</p>
-            <p><strong>類別：</strong> {item.tag || item.category || '無記載'}</p>
-            <p className="col-span-2"><strong>科屬：</strong> {item.family || '無記載'}</p>
-            <p><strong>性味：</strong> {item.nature || '無記載'}</p>
-            <p><strong>歸經：</strong> {item.meridian || '無記載'}</p>
-          </div>
-        </div>
-
-        <div className="space-y-6 text-[#3A4F3F]">
-          {[
-            { label: '品種來源', val: item.source },
-            { label: '功效', val: item.effect },
-            { label: '主治', val: item.indications },
-            { label: '文獻別錄', val: item.literature },
-            { label: '用法用量', val: item.dosage },
-            { label: '注意禁忌', val: item.contraindication },
-            { label: '現代藥理', val: item.pharmacology },
-            { label: '附藥說明', val: item.directions },
-            { label: '註', val: item.note }
-          ].map((field, i) => (
-            <div key={i}>
-              <h4 className={UI.sectionLabel}>{field.label}</h4>
-              {renderFormattedText(field.val)}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#E5E0D8]/60 sticky top-8">
+            <h2 className={UI.title}>{item.name}</h2>
+            <div className="space-y-4 text-sm text-[#6B7A6E] border-t border-[#F7F5F0] pt-6">
+              <p><strong>別名：</strong> {item.alias || '無'}</p>
+              <p><strong>類別：</strong> {item.tag || item.category || '無'}</p>
+              <p><strong>科屬：</strong> {item.family || '無'}</p>
+              <p><strong>性味：</strong> {item.nature || '無'}</p>
+              <p><strong>歸經：</strong> {item.meridian || '無'}</p>
             </div>
-          ))}
+          </div>
         </div>
 
-        {displayAlert && (
-          <div className="mt-8 mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm font-medium">
-            <strong className="block mb-1">⚠️ 重要提醒：</strong>
-            {displayAlert}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-[#E5E0D8]/60">
+            <div className="space-y-8">
+              {[
+                { label: '品種來源', val: item.source },
+                { label: '功效', val: item.effect },
+                { label: '主治', val: item.indications },
+                { label: '用法用量', val: item.dosage },
+                { label: '現代藥理', val: item.pharmacology },
+                { label: '文獻別錄', val: item.literature },
+                { label: '注意禁忌', val: item.contraindication },
+                { label: '附藥說明', val: item.directions},
+                { label: '註', val: item.note}
+              ].map((field, i) => (
+                <div key={i}>
+                  <h4 className={UI.sectionLabel}>{field.label}</h4>
+                  {renderFormattedText(field.val)}
+                </div>
+              ))}
+            </div>
+
+            {displayAlert && (
+              <div className="mt-12 p-5 bg-red-50 border border-red-100 rounded-xl text-red-700 text-xs font-medium">
+                <strong>⚠️ 重要提醒：</strong> {displayAlert}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
