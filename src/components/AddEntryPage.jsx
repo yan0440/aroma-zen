@@ -264,6 +264,7 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                 <input placeholder="歸經" value={formData.meridian || ''} className={inputClass} onChange={(e) => setFormData({...formData, meridian: e.target.value})} />
               </div>
               <textarea placeholder="品種來源" value={formData.source || ''} className={textareaClass} onChange={(e) => setFormData({...formData, source: e.target.value})} />
+              <textarea placeholder="性狀" value={formData.traits || ''} className={textareaClass} onChange={(e) => setFormData({...formData, traits: e.target.value})} />
               <textarea placeholder="功效" value={formData.effect || ''} className={textareaClass} onChange={(e) => setFormData({...formData, effect: e.target.value})} />
               <textarea placeholder="主治" value={formData.indications || ''} className={textareaClass} onChange={(e) => setFormData({...formData, indications: e.target.value})} />
               <textarea placeholder="用法用量" value={formData.dosage || ''} className={textareaClass} onChange={(e) => setFormData({...formData, dosage: e.target.value})} />

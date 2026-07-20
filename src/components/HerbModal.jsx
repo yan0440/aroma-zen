@@ -94,6 +94,7 @@ export default function HerbModal({ item, onClose }) {
             <div className="space-y-8">
               {[
                 { label: '品種來源', val: item.source },
+                { label: '性狀', val: item.traits },
                 { label: '功效', val: item.effect },
                 { label: '主治', val: item.indications },
                 { label: '用法用量', val: item.dosage },
