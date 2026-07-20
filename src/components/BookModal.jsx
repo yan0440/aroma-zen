@@ -5,7 +5,30 @@ export default function BookModal({ item, onClose }) {
 
   if (!item) return null;
 
-  // 1. 輔助：將區塊內容轉為 Table 組件
+  // 1. 資料處理輔助函式：深度處理資料結構
+  const restoreArray = (obj) => {
+    if (!obj) return [];
+    if (Array.isArray(obj)) return obj;
+    return Object.keys(obj)
+      .filter(key => !isNaN(key))
+      .sort((a, b) => Number(a) - Number(b))
+      .map(key => obj[key]);
+  };
+
+  const deepRestore = (node) => {
+    if (node.type === 'folder') {
+      return {
+        ...node,
+        children: restoreArray(node.children || []).map(deepRestore)
+      };
+    }
+    return node;
+  };
+
+  const rawChapters = item.bookDetails?.chapters;
+  const processedChapters = restoreArray(rawChapters).map(deepRestore);
+
+  // 2. 表格與文字渲染邏輯
   const renderTable = (rows) => {
     return (
       <div className="overflow-x-auto my-4 border border-[#E5E0D8] rounded-xl shadow-sm bg-white">
@@ -30,20 +53,6 @@ export default function BookModal({ item, onClose }) {
     );
   };
 
-  // 2. 還原陣列輔助函式
-  const restoreArray = (obj) => {
-    if (!obj || typeof obj !== 'object') return [];
-    return Object.keys(obj).sort((a, b) => Number(a) - Number(b)).map(key => obj[key]);
-  };
-
-  const rawChapters = item.bookDetails?.chapters;
-  const chapters = Array.isArray(rawChapters) ? rawChapters : restoreArray(rawChapters || {});
-  const processedChapters = chapters.map(ch => ({
-    ...ch,
-    children: Array.isArray(ch.children) ? ch.children : restoreArray(ch.children || {})
-  }));
-
-  // 3. 文字解析器
   const parseModalSyntax = (str) => {
     if (typeof str !== 'string') return null;
     const lines = str.split('\n');
@@ -94,7 +103,6 @@ export default function BookModal({ item, onClose }) {
       }
     });
     if (tableBuffer.length > 0) result.push(<div key="final-table">{renderTable(tableBuffer)}</div>);
-
     return <div className="space-y-3 text-base leading-relaxed text-[#3A4F3F]">{result}</div>;
   };
 
@@ -113,35 +121,45 @@ export default function BookModal({ item, onClose }) {
     ) : <span className="text-2xl font-black text-[#3A4F3F]">{fullTitle}</span>;
   };
 
-  // 遞迴目錄渲染函式
   const renderDirectory = (items) => {
-    return items.map((item) => (
-      <div key={item.id} className="space-y-1">
-        {item.type === 'folder' ? (
-          <>
-            <div className="text-sm text-[#3A4F3F] bg-[#F7F5F0] px-3 py-2 rounded-xl font-extrabold flex items-center gap-2 mt-2">
-              <span>📁</span> {item.title}
-            </div>
-            <div className="pl-6 border-l-2 border-[#E5E0D8] ml-3 space-y-1">
-              {renderDirectory(item.children || [])}
-            </div>
-          </>
-        ) : (
-          <button 
-  onClick={() => {
-    setSelectedContent(item);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }} 
-  className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition-colors ${
-    selectedContent?.id === item.id ? 'bg-[#3A4F3F] text-white font-bold' : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'
-  }`}
-          >
-            <span>📄</span>
-            <span className="truncate font-black">{getRawTitle(item.title)}</span>
-          </button>
-        )}
+    return (
+      <div className="w-full flex flex-col">
+        {items.map((item) => {
+          if (!item || !item.id) return null;
+          if (item.type === 'folder') {
+            return (
+              <div key={item.id} className="w-full mt-1">
+                <div className="text-sm text-[#3A4F3F] bg-[#F7F5F0] px-4 py-2.5 rounded-xl font-extrabold flex items-center gap-3">
+                  <span>📁</span> {item.title || '無標題目錄'}
+                </div>
+                {Array.isArray(item.children) && item.children.length > 0 && (
+                  <div style={{ paddingLeft: '20px' }} className="w-full border-l border-[#E5E0D8] ml-2 mt-1 space-y-1">
+                    {renderDirectory(item.children)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return (
+            <button 
+              key={item.id}
+              onClick={() => {
+                setSelectedContent(item);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              className={`w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 transition-all ${
+                selectedContent?.id === item.id 
+                  ? 'bg-[#3A4F3F] text-white font-bold' 
+                  : 'text-[#6B7A6E] hover:bg-[#F7F5F0]'
+              }`}
+            >
+              <span className="opacity-70">📄</span>
+              <span className="truncate font-black text-sm">{getRawTitle(item.title || '無標題內容')}</span>
+            </button>
+          );
+        })}
       </div>
-    ));
+    );
   };
 
   return (
@@ -157,16 +175,12 @@ export default function BookModal({ item, onClose }) {
         </div>
       </div>
 
-      {/* 主內容區：調整寬度讓閱讀器變大 */}
       <div className="max-w-7xl mx-auto mt-8 flex flex-col md:flex-row gap-8 px-6">
-        
-        {/* 左側目錄：將寬度從 w-80 改為 w-64，讓目錄更精簡 */}
         <div className="w-full md:w-64 shrink-0 space-y-2">
           <h4 className="text-[11px] font-bold text-[#A39284] tracking-widest uppercase px-2 mb-2">目錄架構</h4>
           {renderDirectory(processedChapters)}
         </div>
 
-        {/* 右側內容區：flex-1 會自動填滿剩餘空間，閱讀器自動變大 */}
         <div className="flex-1 min-w-0">
           {selectedContent ? (
             <div className="space-y-6">
