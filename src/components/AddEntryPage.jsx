@@ -269,8 +269,10 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
               <textarea placeholder="主治" value={formData.indications || ''} className={textareaClass} onChange={(e) => setFormData({...formData, indications: e.target.value})} />
               <textarea placeholder="用法用量" value={formData.dosage || ''} className={textareaClass} onChange={(e) => setFormData({...formData, dosage: e.target.value})} />
               <textarea placeholder="現代藥理" value={formData.pharmacology || ''} className={textareaClass} onChange={(e) => setFormData({...formData, pharmacology: e.target.value})} />
+              <textarea placeholder="選方" value={formData.medicine || ''} className={textareaClass} onChange={(e) => setFormData({...formData, medicine: e.target.value})} />
               <textarea placeholder="文獻別錄" value={formData.literature || ''} className={textareaClass} onChange={(e) => setFormData({...formData, literature: e.target.value})} />
               <textarea placeholder="注意禁忌" value={formData.contraindication || ''} className={textareaClass} onChange={(e) => setFormData({...formData, contraindication: e.target.value})} />
+              <textarea placeholder="炮製儲藏" value={formData.preparation || ''} className={textareaClass} onChange={(e) => setFormData({...formData, preparation: e.target.value})} />
               <textarea placeholder="附藥說明" value={formData.directions || ''} className={textareaClass} onChange={(e) => setFormData({...formData, directions: e.target.value})} />
               <textarea placeholder="註" value={formData.note || ''} className={textareaClass} onChange={(e) => setFormData({...formData, note: e.target.value})} />
             </div>
