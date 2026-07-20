@@ -99,6 +99,7 @@ export default function HerbModal({ item, onClose }) {
                 { label: '主治', val: item.indications },
                 { label: '用法用量', val: item.dosage },
                 { label: '現代藥理', val: item.pharmacology },
+                { label: '現代應用', val: item.contemporary },
                 { label: '選方', val: item.medicine },
                 { label: '文獻別錄', val: item.literature },
                 { label: '注意禁忌', val: item.contraindication },
