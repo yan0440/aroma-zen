@@ -64,8 +64,8 @@ export default function BookModal({ item, onClose }) {
       return text.split(regex).map((part, idx) => {
         if (!part) return null;
         if (part.startsWith('==') && part.endsWith('==')) return <mark key={idx} className="bg-[#F3E1C5] px-1 rounded">{part.slice(2, -2)}</mark>;
-        if (part.startsWith('**') && part.endsWith('**')) return <strong key={idx} className="text-[#AAB8AB]" style={{ fontWeight: 700 }}>{part.replace(/\*\*/g, '')}</strong>;
-        if (part.startsWith('《') && part.endsWith('》')) return <span key={idx} className="text-[#AAB8AB]" style={{ fontWeight: 700 }}>{part}</span>;
+        if (part.startsWith('**') && part.endsWith('**')) return <strong key={idx} className="text-[	#2F4F4F]" style={{ fontWeight: 700 }}>{part.replace(/\*\*/g, '')}</strong>;
+        if (part.startsWith('《') && part.endsWith('》')) return <span key={idx} className="text-[ #2F4F4F]" style={{ fontWeight: 700 }}>{part}</span>;
         if (part.startsWith('【') && part.endsWith('】')) {
           const hasAlias = part.match(/\(([^)]+)\)/);
           return (
@@ -95,7 +95,7 @@ export default function BookModal({ item, onClose }) {
             const splitIndex = trimmed.search(/[.、]/) + 1;
             result.push(<div key={i} className="grid grid-cols-[auto_1fr] gap-x-2"><span className="font-bold text-[#3A4F3F] shrink-0">{trimmed.substring(0, splitIndex)}</span><span>{processInlineSyntax(trimmed.substring(splitIndex).trim())}</span></div>);
           } else if (isIndented) {
-            result.push(<div key={i} className="flex items-baseline pl-0 mb-1"><span className="text-[#A39284] mr-2 inline-block shrink-0 translate-y-[-1px]">●</span><span className="leading-relaxed text-left flex-1">{processInlineSyntax(trimmed.replace('●', '').trim())}</span></div>);
+            result.push(<div key={i} className="flex items-baseline pl-0 mb-1"><span className="text-[	#778899] mr-2 inline-block shrink-0 translate-y-[-1px]">●</span><span className="leading-relaxed text-left flex-1">{processInlineSyntax(trimmed.replace('●', '').trim())}</span></div>);
           } else {
             result.push(<div key={i}>{processInlineSyntax(trimmed)}</div>);
           }
