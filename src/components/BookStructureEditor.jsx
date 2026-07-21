@@ -61,7 +61,6 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
   };
 
   // 遞迴渲染節點
-  // 遞迴渲染節點
   const renderNode = (node, index, path, level = 0) => {
     if (!node) return null;
     
@@ -100,13 +99,13 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
           )}
 
           {/* 名稱與別名整合容器 */}
-          <div className="flex-1 flex gap-2 items-center min-w-[200px]">
+          <div className="flex-1 flex gap-4 items-center min-w-[200px]">
             {/* 名稱輸入框 */}
             <input placeholder={isFolder ? "輸入目錄名稱" : "輸入篇名"} value={pureTitle}
-              className="flex-[2] text-sm border-b border-[#E5E0D8] outline-none h-8 bg-transparent"
+              className="flex-[1] text-sm border-b border-[#E5E0D8] outline-none h-8 bg-transparent"
               onChange={(e) => updateNode(path, { title: aliasText ? `${e.target.value}(別名：${aliasText})` : e.target.value })} />
 
-            {/* 別名輸入框 (整合你指定的樣式與邏輯) */}
+            {/* 別名輸入框 */}
             <div className="flex-[1] flex items-center border-b border-[#E5E0D8] h-8 px-1 min-w-[80px]">
               <input
                 placeholder="別名"
@@ -124,7 +123,7 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
             className="text-gray-400 hover:text-red-500 text-xs px-2 shrink-0">✕</button>
         </div>
 
-        {/* ... (其餘內容渲染與邏輯保持不變) ... */}
+        {/* 內容與遞迴區塊 */}
         {isFolder && isExpanded && (
           <div className="pl-6 space-y-2 border-l-2 border-[#6B9080]/20 mt-2">
             {Array.isArray(node.children) && node.children.map((child, childIdx) => 
@@ -138,6 +137,30 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
         
         {!isFolder && (
           <div className="space-y-2 mt-2">
+            <div className="flex gap-2 mb-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const template = "【概念】：\n\n【辨證分析】：\n\n【文獻別錄】：\n\n【方藥】：\n";
+                  const currentText = node.text || '';
+                  updateNode(path, { text: currentText ? currentText + '\n' + template : template });
+                }}
+                className="text-[11px] bg-[#E5E0D8]/60 hover:bg-[#E5E0D8] text-[#3A4F3F] px-2 py-1 rounded transition-colors"
+              >
+                📌 插入症狀模板
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const tableTemplate = "\n| 項目 | 內容 | 備註 |\n| :--- | :--- | :--- |\n| 欄位1 | 欄位2 | 欄位3 |\n";
+                  const currentText = node.text || '';
+                  updateNode(path, { text: currentText ? currentText + '\n' + tableTemplate : tableTemplate });
+                }}
+                className="text-[11px] bg-[#E5E0D8]/60 hover:bg-[#E5E0D8] text-[#3A4F3F] px-2 py-1 rounded transition-colors"
+              >
+                📊 插入表格模板
+              </button>
+            </div>
             <textarea placeholder="在此輸入詳細內容..." value={node.text || ''} className="w-full p-3 bg-[#FCFBFA] text-xs border border-[#E5E0D8] rounded-xl h-32 outline-none"
               onChange={(e) => updateNode(path, { text: e.target.value })} />
           </div>
@@ -152,24 +175,24 @@ export default function BookStructureEditor({ formData, setFormData, labelClass,
         <label className={labelClass}>作者 / 編著</label>
         <input value={formData.bookDetails?.author || ''} className={inputClass} onChange={(e) => setFormData({...formData, bookDetails: {...formData.bookDetails, author: e.target.value}})} />
         <button 
-  type="button" 
-  onClick={() => setFormData({
-    ...formData, 
-    bookDetails: { 
-      ...formData.bookDetails, 
-      chapters: [
-        ...(formData.bookDetails?.chapters || []), 
-        { id: `ch_${Date.now()}`, title: '', type: 'folder', children: [] }
-      ] 
-    }
-  })}
-  className="w-full mt-4 py-3 bg-[#6B9080] text-white rounded-xl font-bold 
-             transition-all duration-150 ease-in-out 
-             hover:bg-[#5A7B6D] hover:shadow-md 
-             active:scale-[0.98] active:bg-[#4A685B]"
->
-  ＋ 新增主目錄
-</button>
+          type="button" 
+          onClick={() => setFormData({
+            ...formData, 
+            bookDetails: { 
+              ...formData.bookDetails, 
+              chapters: [
+                ...(formData.bookDetails?.chapters || []), 
+                { id: `ch_${Date.now()}`, title: '', type: 'folder', children: [] }
+              ] 
+            }
+          })}
+          className="w-full mt-4 py-3 bg-[#6B9080] text-white rounded-xl font-bold 
+                     transition-all duration-150 ease-in-out 
+                     hover:bg-[#5A7B6D] hover:shadow-md 
+                     active:scale-[0.98] active:bg-[#4A685B]"
+        >
+          ＋ 新增主目錄
+        </button>
       </div>
       <div className="space-y-4 border-l-2 border-[#E5E0D8] pl-4">
         {Array.isArray(formData.bookDetails?.chapters) && formData.bookDetails.chapters.map((chapter, index) => renderNode(chapter, index, [index], 0))}
