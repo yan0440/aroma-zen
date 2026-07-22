@@ -10,6 +10,7 @@ import HerbModal from './components/HerbModal';
 import FormulaModal from './components/FormulaModal';
 import BookModal from './components/BookModal';
 import AdminPage from './components/AdminPage';
+import OtherCategoryView from './components/OtherCategoryView';
 import { db } from './firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 
@@ -23,7 +24,7 @@ export default function App() {
   const parseBoldSyntax = (str) => {
     if (typeof str !== 'string') return str;
     const boldKeywords = ['肌肉', '神經', '血管'];
-    const regex = /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
+    const regex = /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉 | 神經 | 血管)/g;
 
     return str.split('\n').map((line, lineIndex) => (
       <span key={lineIndex} className="block mb-1">
@@ -181,12 +182,24 @@ export default function App() {
                   {cat}
                 </button>
               ))}
+              <button
+                onClick={() => setSelectedCategory('其他')}
+                className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
+                  selectedCategory === '其他'
+                    ? 'bg-[#2F4638] text-white shadow-md shadow-[#2F4638]/15'
+                    : 'bg-white/80 text-[#5F6F65] border border-[#E6DDD3] hover:bg-white hover:text-[#2F4638]'
+                }`}
+              >
+                其他
+              </button>
             </div>
           </div>
         </section>
 
         <main>
-          {filteredData.length > 0 ? (
+          {selectedCategory === '其他' ? (
+            <OtherCategoryView allData={allData} />
+          ) : filteredData.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {filteredData.map((item) => (
                 <div
