@@ -81,7 +81,6 @@ export default function OtherCategoryView({ allData }) {
 
   const categories = Object.keys(allCategoryExplanations);
 
-  // 第三層：子分類（辛溫解表 / 辛涼解表）
   if (activeCategory && activeTag && activeChildTag) {
     const tagData = allCategoryExplanations[activeCategory]?.[activeTag]?.children?.[activeChildTag];
 
@@ -97,14 +96,18 @@ export default function OtherCategoryView({ allData }) {
     );
   }
 
-  // 第二層：中藥下的標籤（例如：解表藥）
   if (activeCategory && activeTag) {
     const tagData = allCategoryExplanations[activeCategory]?.[activeTag];
     const hasChildren = tagData?.children && Object.keys(tagData.children).length > 0;
 
     if (hasChildren) {
-      // 解表藥本身也要做搜尋，用 "解表" 當關鍵字
-      const parentMatchKeyword = activeTag === '解表藥' ? '解表' : activeTag;
+      const parentMatchKeyword =
+        activeCategory === '方劑' && activeTag === '解表劑'
+          ? '解表'
+          : activeTag === '解表藥'
+            ? '解表'
+            : activeTag;
+
       const parentMatched = getMatchedNamesByTag(allData, activeCategory, parentMatchKeyword);
 
       return (
@@ -173,7 +176,6 @@ export default function OtherCategoryView({ allData }) {
       );
     }
 
-    // 沒有 children 的標籤
     return (
       <DetailPanel
         categoryName={activeCategory}
@@ -186,7 +188,6 @@ export default function OtherCategoryView({ allData }) {
     );
   }
 
-  // 第一層：分類總覽（中藥 / 穴道 / 精油 / 方劑 / 書籍）
   if (activeCategory) {
     const categoryData = allCategoryExplanations[activeCategory] || {};
 
@@ -228,7 +229,6 @@ export default function OtherCategoryView({ allData }) {
     );
   }
 
-  // 第 0 層：所有分類按鈕
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
