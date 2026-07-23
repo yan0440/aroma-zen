@@ -805,7 +805,7 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                   />
                     <textarea
                     placeholder="現代藥理"
-                    value={formData.modernApp || ''}
+                    value={formData.modernpharmacolog || ''}
                     className={textareaClass}
                     onChange={(e) => setFormData({ ...formData, modernpharmacolog: e.target.value })}
                   />
