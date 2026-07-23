@@ -96,51 +96,51 @@ export default function BookModal({ item, onClose }) {
         }
 
         if (part.startsWith('【') && part.endsWith('】')) {
-          const hasAlias = part.match(/\(([^)]+)\)/);
-          const raw = part.replace(/\([^)]+\)/, '').replace(/[【】]/g, '');
+  const hasAlias = part.match(/\(([^)]+)\)/);
+  const raw = part.replace(/\([^)]+\)/, '').replace(/[【】]/g, '');
 
-          // 指定這三個當成「帶長背景」的副標題
-          const isSubheading = ['概念', '辨證分析', '文獻別錄'].includes(raw);
+  // 指定這三個當成「帶長方形背景」的副標題
+  const isSubheading = ['概念', '辨證分析', '文獻別錄'].includes(raw);
 
-          if (isSubheading) {
-            return (
-              <div
-                key={idx}
-                className="relative w-full flex items-center gap-3 my-5"
-              >
-                {/* 長背景條 */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] w-full bg-gradient-to-r from-[#6B9080]/40 via-[#6B9080]/20 to-transparent rounded-full" />
+  if (isSubheading) {
+    return (
+      <div
+        key={idx}
+        className="relative w-full flex items-center gap-3 my-5"
+      >
+        {/* 長方形背景色塊 */}
+        <div className="absolute left-0 top-0 h-10 w-full bg-[#6B9080]/10 rounded-xl" />
 
-                {/* 標題文字 */}
-                <div className="relative z-10 flex items-center gap-2">
-                  <span className="text-lg md:text-xl font-extrabold text-[#2F4638] tracking-tight">
-                    {raw}
-                  </span>
-                  {hasAlias && (
-                    <span className="text-xs font-medium bg-[#6B9080]/15 text-[#6B9080] px-2 py-0.5 rounded-md">
-                      {hasAlias[1]}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          }
-
-          // 其他【】維持原本的樣式
-          return (
-            <span
-              key={idx}
-              className="flex flex-wrap items-center gap-2 text-sm font-bold text-[#2F4638] pl-1 mt-2 mb-2 py-1.5 rounded-lg w-full"
-            >
-              <span>[{raw}]</span>
-              {hasAlias && (
-                <span className="text-xs font-medium bg-[#6B9080]/10 text-[#6B9080] px-2 py-0.5 rounded-md">
-                  {hasAlias[1]}
-                </span>
-              )}
+        {/* 標題文字 */}
+        <div className="relative z-10 flex items-center gap-2 pl-3">
+          <span className="text-lg md:text-xl font-extrabold text-[#2F4638] tracking-tight translate-y-[6px]">
+            {raw}
+          </span>
+          {hasAlias && (
+            <span className="text-xs font-medium bg-[#6B9080]/20 text-[#6B9080] px-2 py-0.5 rounded-md">
+              {hasAlias[1]}
             </span>
-          );
-        }
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 其他【】維持原本的樣式
+  return (
+    <span
+      key={idx}
+      className="flex flex-wrap items-center gap-2 text-sm font-bold text-[#2F4638] pl-1 mt-2 mb-2 py-1.5 rounded-lg w-full"
+    >
+      <span>[{raw}]</span>
+      {hasAlias && (
+        <span className="text-xs font-medium bg-[#6B9080]/10 text-[#6B9080] px-2 py-0.5 rounded-md">
+          {hasAlias[1]}
+        </span>
+      )}
+    </span>
+  );
+}
 
         return part;
       });

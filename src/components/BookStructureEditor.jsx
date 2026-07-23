@@ -329,7 +329,7 @@ export default function BookStructureEditor({
                     <button
                       type="button"
                       onClick={() => {
-                        const template = '【概念】\n\n【辨證分析】\n\n【文獻別錄】\n\n';
+                        const template = '【概念】\n\n\n【辨證分析】\n\n\n【文獻別錄】\n\n';
                         const currentText = selectedNode.text || '';
                         updateNode(selectedPath, {
                           text: currentText ? currentText + '\n' + template : template,
