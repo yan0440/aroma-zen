@@ -737,6 +737,12 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                 <div className="space-y-3 mb-4">
                   <div className="grid grid-cols-2 gap-3">
                     <input
+                      placeholder="別名"
+                      value={formData.alias || ''}
+                      className={inputClass}
+                      onChange={(e) => setFormData({ ...formData, alias: e.target.value })}
+                    />
+                    <input
                       placeholder="來源"
                       value={formData.source || ''}
                       className={inputClass}

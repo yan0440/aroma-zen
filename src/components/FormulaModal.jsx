@@ -129,6 +129,7 @@ export default function FormulaModal({ item, onClose }) {
             <h2 className={UI.title}>{item.name}</h2>
 
             <div className="space-y-4 text-sm text-[#6B7A6E] pt-6">
+              <p><strong className="text-[#3A4F3F]">別名：</strong> {item.alias || '無別名'}</p>
               <p><strong className="text-[#3A4F3F]">來源：</strong> {item.source || '無記載'}</p>
               <p><strong className="text-[#3A4F3F]">功效：</strong> {item.effect || '無記載'}</p>
             </div>
