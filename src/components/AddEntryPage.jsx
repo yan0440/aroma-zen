@@ -803,6 +803,12 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                     className={textareaClass}
                     onChange={(e) => setFormData({ ...formData, modernApp: e.target.value })}
                   />
+                    <textarea
+                    placeholder="現代藥理"
+                    value={formData.modernApp || ''}
+                    className={textareaClass}
+                    onChange={(e) => setFormData({ ...formData, modernpharmacolog: e.target.value })}
+                  />
                   <textarea
                     placeholder="附方"
                     value={formData.prescription || ''}
