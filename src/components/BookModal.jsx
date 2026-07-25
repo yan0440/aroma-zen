@@ -1,5 +1,30 @@
 import React, { useState, useRef } from 'react';
 
+const LEVEL_TYPES = ['篇', '章', '節', '目', '子目'];
+const CONTENT_TYPE = '內文';
+
+function normalizeType(type, level = 0) {
+  if (type === 'folder') return LEVEL_TYPES[Math.min(level, LEVEL_TYPES.length - 1)];
+  if (type === 'content') return CONTENT_TYPE;
+  if (LEVEL_TYPES.includes(type) || type === CONTENT_TYPE) return type;
+  return level === 0 ? '篇' : LEVEL_TYPES[Math.min(level, LEVEL_TYPES.length - 1)];
+}
+
+function getLevelLabel(type, level) {
+  if (type === CONTENT_TYPE) return CONTENT_TYPE;
+  return LEVEL_TYPES[Math.min(level, LEVEL_TYPES.length - 1)];
+}
+
+function getRawTitle(fullTitle = '') {
+  const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
+  return match ? match[1].trim() : fullTitle;
+}
+
+function getAliasTitle(fullTitle = '') {
+  const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
+  return match ? match[2].trim() : '';
+}
+
 export default function BookModal({ item, onClose }) {
   const [selectedContent, setSelectedContent] = useState(null);
   const contentRef = useRef(null);
@@ -15,18 +40,22 @@ export default function BookModal({ item, onClose }) {
       .map((key) => obj[key]);
   };
 
-  const deepRestore = (node) => {
-    if (node?.type === 'folder') {
-      return {
-        ...node,
-        children: restoreArray(node.children || []).map(deepRestore),
-      };
-    }
-    return node;
+  const deepRestore = (node, level = 0) => {
+    if (!node) return node;
+
+    const normalizedType = normalizeType(node.type, level);
+
+    return {
+      ...node,
+      type: normalizedType,
+      children: Array.isArray(node.children)
+        ? node.children.map((child, idx) => deepRestore(child, level + 1))
+        : restoreArray(node.children || []).map((child, idx) => deepRestore(child, level + 1)),
+    };
   };
 
   const rawChapters = item.bookDetails?.chapters;
-  const processedChapters = restoreArray(rawChapters).map(deepRestore);
+  const processedChapters = restoreArray(rawChapters).map((node, idx) => deepRestore(node, 0));
 
   const renderTable = (rows) => (
     <div className="overflow-x-auto my-5 rounded-[1.2rem] bg-[#FFFCF8] shadow-[0_6px_20px_rgba(63,81,68,0.05)]">
@@ -182,18 +211,15 @@ export default function BookModal({ item, onClose }) {
     return <div className="space-y-3 text-[15px] leading-8 text-[#3A4F3F]">{result}</div>;
   };
 
-  const getRawTitle = (fullTitle) => {
-    const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
-    return match ? match[1].trim() : fullTitle;
-  };
-
   const renderTitleWithAlias = (fullTitle) => {
-    const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
-    return match ? (
+    const alias = getAliasTitle(fullTitle);
+    const raw = getRawTitle(fullTitle);
+
+    return alias ? (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full">
-        <span className="text-2xl md:text-3xl font-black text-[#2F4638]">{match[1].trim()}</span>
+        <span className="text-2xl md:text-3xl font-black text-[#2F4638]">{raw}</span>
         <span className="text-xs bg-[#6B9080]/10 text-[#6B9080] font-medium px-2 py-1 rounded-full">
-          別名：{match[2].trim()}
+          別名：{alias}
         </span>
       </div>
     ) : (
@@ -201,25 +227,21 @@ export default function BookModal({ item, onClose }) {
     );
   };
 
-  const getNodeText = (node) => {
-    if (!node) return '';
-    return node.text || '';
-  };
-
   const renderDirectory = (items, level = 0) => (
     <div className="w-full space-y-2">
       {items.map((item) => {
         if (!item || !item.id) return null;
 
-        const hasChildren = item.type === 'folder' && Array.isArray(item.children) && item.children.length > 0;
+        const hasChildren = Array.isArray(item.children) && item.children.length > 0;
         const isActive = selectedContent?.id === item.id;
         const canOpenAsContent = !!item.text;
+        const isFolderLike = item.type !== CONTENT_TYPE;
 
         return (
           <div key={item.id} className="w-full">
             <button
               onClick={() => {
-                if (item.type === 'folder' && !canOpenAsContent && hasChildren) return;
+                if (isFolderLike && !canOpenAsContent && hasChildren) return;
                 setSelectedContent(item);
                 requestAnimationFrame(() => {
                   if (contentRef.current) contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -237,11 +259,14 @@ export default function BookModal({ item, onClose }) {
                 }`}
               />
               <div className="flex items-center gap-2 pl-1">
-                <span className="text-sm opacity-75">{item.type === 'folder' ? '📁' : '📄'}</span>
+                <span className="text-sm opacity-75">{isFolderLike ? '📁' : '📄'}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#6B9080]/10 text-[#6B9080] shrink-0">
+                  {item.type}
+                </span>
                 <span className="truncate text-sm font-medium">
                   {getRawTitle(item.title || '無標題內容')}
                 </span>
-                {item.type === 'folder' && item.text ? (
+                {item.type !== CONTENT_TYPE && item.text ? (
                   <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#6B9080]/10 text-[#6B9080]">
                     有內文
                   </span>
@@ -249,7 +274,7 @@ export default function BookModal({ item, onClose }) {
               </div>
             </button>
 
-            {item.type === 'folder' && hasChildren && (
+            {isFolderLike && hasChildren && (
               <div className="mt-2 pl-2 border-l border-[#E8E0D6]/50 space-y-2">
                 {renderDirectory(item.children, level + 1)}
               </div>

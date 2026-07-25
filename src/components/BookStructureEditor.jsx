@@ -88,7 +88,7 @@ function findFirstEditableNode(chapters) {
 
 function createFolderNode() {
   return {
-    id: `ch_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    id: `folder_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     title: '',
     type: 'folder',
     children: [],
@@ -98,12 +98,32 @@ function createFolderNode() {
 
 function createContentNode() {
   return {
-    id: `id_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    id: `content_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     title: '',
     type: 'content',
     children: [],
     text: '',
   };
+}
+
+function getLevelLabel(level) {
+  const labels = ['篇', '章', '節', '目', '子目'];
+  return labels[Math.min(level, labels.length - 1)];
+}
+
+function getPathNodes(chapters, path) {
+  const nodes = [];
+  let current = chapters;
+
+  for (let i = 0; i < path.length; i += 2) {
+    const index = path[i];
+    const node = current?.[index];
+    if (!node) break;
+    nodes.push(node);
+    current = node.children || [];
+  }
+
+  return nodes;
 }
 
 export default function BookStructureEditor({
@@ -127,6 +147,11 @@ export default function BookStructureEditor({
   const selectedNode = useMemo(() => {
     if (!selectedPath) return null;
     return getNodeByPath(chapters, selectedPath);
+  }, [chapters, selectedPath]);
+
+  const breadcrumbNodes = useMemo(() => {
+    if (!selectedPath) return [];
+    return getPathNodes(chapters, selectedPath);
   }, [chapters, selectedPath]);
 
   const updateChapters = (newChapters) => {
@@ -203,8 +228,7 @@ export default function BookStructureEditor({
   const renderNode = (node, index, path, level = 0) => {
     if (!node) return null;
 
-    const isRoot = level === 0;
-    const isFolder = node.type === 'folder' || isRoot;
+    const isFolder = node.type === 'folder';
     const isExpanded = expandedNodes[node.id] !== false;
     const isSelected =
       selectedPath &&
@@ -212,7 +236,7 @@ export default function BookStructureEditor({
       selectedPath.every((v, i) => v === path[i]);
 
     const { pureTitle, aliasText } = parseTitle(node.title || '');
-    const label = isRoot ? '根節點' : isFolder ? '子目錄' : '內文篇章';
+    const label = isFolder ? getLevelLabel(level) : '內文';
 
     return (
       <div key={node.id || index} className="space-y-2">
@@ -323,10 +347,21 @@ export default function BookStructureEditor({
         <section className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-[#FCFBFA] p-6 [scrollbar-gutter:stable]">
           {selectedNode ? (
             <div className="w-full space-y-6">
+              <div className="text-sm text-[#6B9080] flex items-center gap-1 flex-wrap">
+                {breadcrumbNodes.map((node, idx) => (
+                  <React.Fragment key={node.id || idx}>
+                    <span>
+                      {node.type === 'folder' ? getLevelLabel(idx) : '內文'} {node.title?.trim() || '未命名'}
+                    </span>
+                    {idx < breadcrumbNodes.length - 1 && <span>›</span>}
+                  </React.Fragment>
+                ))}
+              </div>
+
               <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold px-2 py-1 rounded bg-[#E5E0D8] text-[#3A4F3F]">
-                    {selectedNode.type === 'folder' ? '篇章' : '內文'}
+                    {selectedNode.type === 'folder' ? getLevelLabel(breadcrumbNodes.length - 1) : '內文'}
                   </span>
                   <button
                     type="button"
@@ -367,19 +402,6 @@ export default function BookStructureEditor({
                       className="w-full border border-[#E5E0D8] rounded-xl px-3 py-2 outline-none text-[#6B9080] disabled:bg-[#F7F5F0]"
                       placeholder="輸入別名"
                     />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">類型</label>
-                    <select
-                      value={selectedNode.type || 'content'}
-                      onChange={(e) => updateNode(selectedPath, { type: e.target.value })}
-                      disabled={disabled || isViewOnly}
-                      className="w-full md:w-48 border border-[#E5E0D8] rounded-xl px-3 py-2 outline-none bg-white disabled:bg-[#F7F5F0]"
-                    >
-                      <option value="content">內文</option>
-                      <option value="folder">篇章</option>
-                    </select>
                   </div>
                 </div>
 
