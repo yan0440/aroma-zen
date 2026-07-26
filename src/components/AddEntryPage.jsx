@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import BookStructureEditor from './BookStructureEditor';
+
+const normalizeText = (v = '') =>
+  String(v).trim().toLowerCase().replace(/\s+/g, ' ');
+
+const getEntryKey = (data) => {
+  const category = normalizeText(data.category);
+  const name = normalizeText(data.name);
+  return `${category}__${name}`;
+};
 
 export default function AddEntryPage({ onClose, editingItem, isViewOnly = false }) {
   const contentRef = useRef(null);
-  const [lastNodeId, setLastNodeId] = useState(null);
 
   const [formData, setFormData] = useState({
     category: '精油',
@@ -39,6 +47,13 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
     modernApp: '',
     modernPharmacology: '',
     prescription: '',
+    typePart: '',
+    method: '',
+    latin: '',
+    property: '',
+    noteAnalogy: '',
+    planet: '',
+    origin: '',
     acuTable: { code: '', meridian: '', alias: '' },
     acuDetails: {
       location: '',
@@ -72,91 +87,27 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
   useEffect(() => {
     if (!editingItem) return;
 
-    const convertObjectsToArrays = (obj) => {
+    const normalizeImportedData = (obj) => {
+      if (Array.isArray(obj)) return obj.map(normalizeImportedData);
       if (obj !== null && typeof obj === 'object') {
-        const keys = Object.keys(obj);
-        const isArrayLike = keys.length > 0 && keys.every((key) => !isNaN(key));
-
-        if (isArrayLike) {
-          return keys
-            .sort((a, b) => Number(a) - Number(b))
-            .map((key) => convertObjectsToArrays(obj[key]));
-        }
-
-        const newObj = {};
-        for (const key in obj) newObj[key] = convertObjectsToArrays(obj[key]);
-        return newObj;
+        const next = {};
+        for (const key in obj) next[key] = normalizeImportedData(obj[key]);
+        return next;
       }
       return obj;
     };
 
-    setFormData(convertObjectsToArrays(editingItem));
+    setFormData((prev) => ({
+      ...prev,
+      ...normalizeImportedData(editingItem),
+      bookDetails: {
+        author: editingItem?.bookDetails?.author || '',
+        chapters: Array.isArray(editingItem?.bookDetails?.chapters)
+          ? editingItem.bookDetails.chapters
+          : [],
+      },
+    }));
   }, [editingItem]);
-
-  const addNode = (path = []) => {
-    const newNode = {
-      id: `sub_${Date.now()}`,
-      title: '',
-      type: 'content',
-      text: '',
-      children: [],
-    };
-
-    const newChapters = JSON.parse(JSON.stringify(formData.bookDetails.chapters || []));
-
-    if (path.length === 0) {
-      newChapters.push(newNode);
-    } else {
-      let target = newChapters;
-      for (let i = 0; i < path.length; i++) target = target[path[i]];
-      if (target.type === 'folder') {
-        if (!target.children) target.children = [];
-        target.children.push(newNode);
-      } else {
-        target.type = 'folder';
-        target.children = [newNode];
-      }
-    }
-
-    setFormData({
-      ...formData,
-      bookDetails: { ...formData.bookDetails, chapters: newChapters },
-    });
-    setLastNodeId(`node_${Date.now()}`);
-  };
-
-  const handleSave = async () => {
-    if (!formData.name) return alert('請至少填寫名稱！');
-
-    const convertArraysToObjects = (obj) => {
-      if (Array.isArray(obj)) {
-        const newObj = {};
-        obj.forEach((item, index) => {
-          newObj[index.toString()] = convertArraysToObjects(item);
-        });
-        return newObj;
-      }
-      if (obj !== null && typeof obj === 'object') {
-        const newObj = {};
-        for (const key in obj) newObj[key] = convertArraysToObjects(obj[key]);
-        return newObj;
-      }
-      return obj;
-    };
-
-    const cleanData = convertArraysToObjects(formData);
-    const entryId = editingItem ? String(editingItem.id) : Date.now().toString();
-    const newEntry = { ...cleanData, id: entryId };
-
-    try {
-      await setDoc(doc(db, 'entries', entryId), newEntry);
-      alert('✅ 資料已成功儲存！');
-      onClose();
-    } catch (error) {
-      console.error('寫入資料失敗: ', error);
-      alert('儲存失敗，請檢查控制台錯誤訊息。');
-    }
-  };
 
   const inputClass = `w-full px-4 py-3 bg-white border border-[#E5E0D8] rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all ${isViewOnly ? 'opacity-70 cursor-not-allowed' : ''}`;
   const labelClass = 'text-[11px] font-bold text-[#A39284] uppercase tracking-widest mb-1.5 block';
@@ -205,6 +156,40 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
       )}
     </div>
   );
+
+  const handleSave = async () => {
+    if (!formData.name?.trim()) return alert('請至少填寫名稱！');
+
+    const entryKey = getEntryKey(formData);
+    if (!entryKey || entryKey === '__') return alert('名稱或分類無效！');
+
+    const entryId = editingItem?.id ? String(editingItem.id) : entryKey;
+
+    try {
+      if (!editingItem) {
+        const snap = await getDoc(doc(db, 'entries', entryId));
+        if (snap.exists()) {
+          alert('已有相同分類與名稱的百科資料，請修改名稱後再儲存。');
+          return;
+        }
+      }
+
+      const newEntry = {
+        ...formData,
+        id: entryId,
+        entryKey,
+        updatedAt: Date.now(),
+        createdAt: editingItem?.createdAt || Date.now(),
+      };
+
+      await setDoc(doc(db, 'entries', entryId), newEntry, { merge: true });
+      alert(editingItem ? '✅ 資料已成功更新！' : '✅ 資料已成功建立！');
+      onClose();
+    } catch (error) {
+      console.error('寫入資料失敗: ', error);
+      alert('儲存失敗，請檢查控制台錯誤訊息。');
+    }
+  };
 
   return (
     <div ref={contentRef} className="w-screen h-dvh bg-[#FBF9F6] flex flex-col overflow-hidden">
@@ -316,10 +301,6 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                   <BookStructureEditor
                     formData={formData}
                     setFormData={setFormData}
-                    labelClass={labelClass}
-                    inputClass={inputClass}
-                    addNode={addNode}
-                    lastNodeId={lastNodeId}
                     disabled={isViewOnly}
                     isViewOnly={isViewOnly}
                   />
