@@ -1,113 +1,207 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, runTransaction } from 'firebase/firestore';
 import BookStructureEditor from './BookStructureEditor';
 
 const normalizeText = (v = '') =>
-  String(v).trim().toLowerCase().replace(/\s+/g, ' ');
+  String(v)
+    .trim()
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
 
-const getEntryKey = (data) => {
-  const category = normalizeText(data.category);
-  const name = normalizeText(data.name);
-  return `${category}__${name}`;
+const getEntryKey = (category = '', name = '') =>
+  `${normalizeText(category)}__${normalizeText(name)}`;
+
+const getDefaultFormData = () => ({
+  category: '精油',
+  name: '',
+  tag: '',
+  description: '',
+  englishName: '',
+  constitutionTag: '',
+  chemicalTag: '',
+  alias: '',
+  source: '',
+  effect: '',
+  indications: '',
+  literature: '',
+  contraindication: '',
+  note: '',
+  family: '',
+  nature: '',
+  meridian: '',
+  traits: '',
+  dosage: '',
+  pharmacology: '',
+  contemporary: '',
+  medicine: '',
+  preparation: '',
+  directions: '',
+  analysis: '',
+  discussion: '',
+  syndrome: '',
+  modifications: '',
+  modernApp: '',
+  modernPharmacology: '',
+  prescription: '',
+  acuTable: { code: '', meridian: '', alias: '' },
+  acuDetails: {
+    location: '',
+    operation: '',
+    indications: '',
+    type: '',
+    nameExpl: '',
+    anatomy: '',
+    effectAncient: '',
+    effectModern: '',
+    matchingPoints: '',
+  },
+  oilDetails: {
+    scent: '',
+    appearance: '',
+    historyMyth: '',
+    chemistry: '',
+    attribute: '',
+    caution: '',
+    mindEffect: '',
+    bodyEffect: '',
+    skinEffect: '',
+    blendingOils: '',
+    formulas: '',
+    carrierOil: '',
+    usage: '',
+  },
+  bookDetails: { author: '', chapters: [] },
+  entryKey: '',
+  searchKey: '',
+  createdAt: '',
+  updatedAt: '',
+});
+
+const getFriendlyTransactionError = (error) => {
+  const code = String(error?.code || '').toLowerCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  if (code.includes('aborted') || message.includes('too much contention')) {
+    return '目前資料正在被其他人更新，請稍後再試。';
+  }
+  if (code.includes('permission-denied') || code.includes('permissiondenied')) {
+    return '你沒有儲存這筆資料的權限。';
+  }
+  if (code.includes('failed-precondition') || code.includes('failedprecondition')) {
+    return '資料狀態不符合儲存條件，請重新整理後再試。';
+  }
+  if (code.includes('resource-exhausted') || code.includes('resourceexhausted')) {
+    return '目前系統資源不足，請稍後再試。';
+  }
+  if (code.includes('unauthenticated')) {
+    return '請先登入後再儲存。';
+  }
+  return '儲存失敗，請稍後再試一次。';
 };
+
+function toObjectArrays(obj) {
+  if (Array.isArray(obj)) {
+    const newObj = {};
+    obj.forEach((item, index) => {
+      newObj[index.toString()] = toObjectArrays(item);
+    });
+    return newObj;
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const newObj = {};
+    for (const key in obj) newObj[key] = toObjectArrays(obj[key]);
+    return newObj;
+  }
+  return obj;
+}
+
+function convertObjectsToArrays(obj) {
+  if (obj !== null && typeof obj === 'object') {
+    const keys = Object.keys(obj);
+    const isArrayLike = keys.length > 0 && keys.every((key) => !isNaN(key));
+
+    if (isArrayLike) {
+      return keys
+        .sort((a, b) => Number(a) - Number(b))
+        .map((key) => convertObjectsToArrays(obj[key]));
+    }
+
+    const newObj = {};
+    for (const key in obj) newObj[key] = convertObjectsToArrays(obj[key]);
+    return newObj;
+  }
+  return obj;
+}
 
 export default function AddEntryPage({ onClose, editingItem, isViewOnly = false }) {
   const contentRef = useRef(null);
-
-  const [formData, setFormData] = useState({
-    category: '精油',
-    name: '',
-    tag: '',
-    description: '',
-    englishName: '',
-    constitutionTag: '',
-    chemicalTag: '',
-    alias: '',
-    source: '',
-    effect: '',
-    indications: '',
-    literature: '',
-    contraindication: '',
-    note: '',
-    family: '',
-    nature: '',
-    meridian: '',
-    traits: '',
-    dosage: '',
-    pharmacology: '',
-    contemporary: '',
-    medicine: '',
-    preparation: '',
-    directions: '',
-    analysis: '',
-    discussion: '',
-    syndrome: '',
-    modifications: '',
-    modernApp: '',
-    modernPharmacology: '',
-    prescription: '',
-    typePart: '',
-    method: '',
-    latin: '',
-    property: '',
-    noteAnalogy: '',
-    planet: '',
-    origin: '',
-    acuTable: { code: '', meridian: '', alias: '' },
-    acuDetails: {
-      location: '',
-      operation: '',
-      indications: '',
-      type: '',
-      nameExpl: '',
-      anatomy: '',
-      effectAncient: '',
-      effectModern: '',
-      matchingPoints: '',
-    },
-    oilDetails: {
-      scent: '',
-      appearance: '',
-      historyMyth: '',
-      chemistry: '',
-      attribute: '',
-      caution: '',
-      mindEffect: '',
-      bodyEffect: '',
-      skinEffect: '',
-      blendingOils: '',
-      formulas: '',
-      carrierOil: '',
-      usage: '',
-    },
-    bookDetails: { author: '', chapters: [] },
-  });
+  const [lastNodeId, setLastNodeId] = useState(null);
+  const [saveError, setSaveError] = useState('');
+  const [formData, setFormData] = useState(getDefaultFormData());
 
   useEffect(() => {
-    if (!editingItem) return;
+    if (!editingItem) {
+      setFormData(getDefaultFormData());
+      setSaveError('');
+      return;
+    }
 
-    const normalizeImportedData = (obj) => {
-      if (Array.isArray(obj)) return obj.map(normalizeImportedData);
-      if (obj !== null && typeof obj === 'object') {
-        const next = {};
-        for (const key in obj) next[key] = normalizeImportedData(obj[key]);
-        return next;
-      }
-      return obj;
-    };
+    const normalized = convertObjectsToArrays(editingItem);
 
-    setFormData((prev) => ({
-      ...prev,
-      ...normalizeImportedData(editingItem),
+    setFormData({
+      ...getDefaultFormData(),
+      ...normalized,
+      category: editingItem.category || '精油',
+      name: editingItem.name || '',
       bookDetails: {
         author: editingItem?.bookDetails?.author || '',
         chapters: Array.isArray(editingItem?.bookDetails?.chapters)
           ? editingItem.bookDetails.chapters
           : [],
       },
-    }));
+      entryKey:
+        editingItem?.entryKey ||
+        getEntryKey(editingItem?.category || '', editingItem?.name || ''),
+      searchKey: editingItem?.searchKey || '',
+      createdAt: editingItem?.createdAt || '',
+      updatedAt: editingItem?.updatedAt || '',
+    });
+    setSaveError('');
   }, [editingItem]);
+
+  const addNode = (path = []) => {
+    const newNode = {
+      id: `sub_${Date.now()}`,
+      title: '',
+      type: 'content',
+      text: '',
+      children: [],
+    };
+
+    const newChapters = JSON.parse(JSON.stringify(formData.bookDetails.chapters || []));
+
+    if (path.length === 0) {
+      newChapters.push(newNode);
+    } else {
+      let target = newChapters;
+      for (let i = 0; i < path.length; i++) target = target[path[i]];
+      if (target.type === 'folder') {
+        if (!target.children) target.children = [];
+        target.children.push(newNode);
+      } else {
+        target.type = 'folder';
+        target.children = [newNode];
+      }
+    }
+
+    setFormData({
+      ...formData,
+      bookDetails: { ...formData.bookDetails, chapters: newChapters },
+    });
+    setLastNodeId(`node_${Date.now()}`);
+  };
 
   const inputClass = `w-full px-4 py-3 bg-white border border-[#E5E0D8] rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all ${isViewOnly ? 'opacity-70 cursor-not-allowed' : ''}`;
   const labelClass = 'text-[11px] font-bold text-[#A39284] uppercase tracking-widest mb-1.5 block';
@@ -158,36 +252,128 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
   );
 
   const handleSave = async () => {
-    if (!formData.name?.trim()) return alert('請至少填寫名稱！');
+    setSaveError('');
 
-    const entryKey = getEntryKey(formData);
-    if (!entryKey || entryKey === '__') return alert('名稱或分類無效！');
-
-    const entryId = editingItem?.id ? String(editingItem.id) : entryKey;
+    if (!formData.name?.trim()) {
+      setSaveError('請至少填寫名稱！');
+      return;
+    }
 
     try {
-      if (!editingItem) {
-        const snap = await getDoc(doc(db, 'entries', entryId));
-        if (snap.exists()) {
-          alert('已有相同分類與名稱的百科資料，請修改名稱後再儲存。');
-          return;
-        }
+      const category = formData.category?.trim();
+      const name = formData.name?.trim();
+
+      if (!category || !name) {
+        setSaveError('請至少填寫分類與名稱！');
+        return;
       }
 
-      const newEntry = {
-        ...formData,
-        id: entryId,
-        entryKey,
-        updatedAt: Date.now(),
-        createdAt: editingItem?.createdAt || Date.now(),
-      };
+      const newEntryKey = getEntryKey(category, name);
+      const oldEntryKey =
+        editingItem?.entryKey ||
+        getEntryKey(editingItem?.category || '', editingItem?.name || '');
+      const isEditing = !!editingItem;
+      const isKeyChanged = isEditing && newEntryKey !== oldEntryKey;
 
-      await setDoc(doc(db, 'entries', entryId), newEntry, { merge: true });
-      alert(editingItem ? '✅ 資料已成功更新！' : '✅ 資料已成功建立！');
+      const newKeyRef = doc(db, 'entryKeys', newEntryKey);
+      const newEntryRef = doc(db, 'entries', newEntryKey);
+      const oldKeyRef = doc(db, 'entryKeys', oldEntryKey);
+      const oldEntryRef = doc(db, 'entries', oldEntryKey);
+
+      const cleanData = toObjectArrays(formData);
+      const now = Date.now();
+
+      await runTransaction(db, async (transaction) => {
+        const newKeySnap = await transaction.get(newKeyRef);
+
+        if (!isEditing) {
+          if (newKeySnap.exists()) {
+            throw new Error('已有相同分類與名稱的百科資料');
+          }
+
+          const newEntry = {
+            ...cleanData,
+            id: newEntryKey,
+            entryKey: newEntryKey,
+            searchKey: normalizeText(
+              `${category} ${name} ${formData.alias || ''} ${formData.englishName || ''}`
+            ),
+            createdAt: now,
+            updatedAt: now,
+            name,
+            category,
+          };
+
+          transaction.set(newKeyRef, {
+            entryKey: newEntryKey,
+            entryId: newEntryKey,
+            category,
+            name,
+            createdAt: now,
+            updatedAt: now,
+          });
+
+          transaction.set(newEntryRef, newEntry);
+          return;
+        }
+
+        const oldEntrySnap = await transaction.get(oldEntryRef);
+        if (!oldEntrySnap.exists()) {
+          throw new Error('找不到原始資料，請重新整理後再試。');
+        }
+
+        const baseCreatedAt = oldEntrySnap.data()?.createdAt || editingItem?.createdAt || now;
+
+        const newEntry = {
+          ...cleanData,
+          id: newEntryKey,
+          entryKey: newEntryKey,
+          searchKey: normalizeText(
+            `${category} ${name} ${formData.alias || ''} ${formData.englishName || ''}`
+          ),
+          createdAt: baseCreatedAt,
+          updatedAt: now,
+          name,
+          category,
+        };
+
+        if (!isKeyChanged) {
+          transaction.set(newKeyRef, {
+            entryKey: newEntryKey,
+            entryId: newEntryKey,
+            category,
+            name,
+            createdAt: baseCreatedAt,
+            updatedAt: now,
+          });
+
+          transaction.set(newEntryRef, newEntry);
+          return;
+        }
+
+        if (newKeySnap.exists()) {
+          throw new Error('已存在相同分類與名稱的百科資料');
+        }
+
+        transaction.set(newKeyRef, {
+          entryKey: newEntryKey,
+          entryId: newEntryKey,
+          category,
+          name,
+          createdAt: baseCreatedAt,
+          updatedAt: now,
+        });
+
+        transaction.set(newEntryRef, newEntry);
+        transaction.delete(oldKeyRef);
+        transaction.delete(oldEntryRef);
+      });
+
+      alert(editingItem ? '✅ 資料已成功更新！' : '✅ 資料已成功儲存！');
       onClose();
     } catch (error) {
       console.error('寫入資料失敗: ', error);
-      alert('儲存失敗，請檢查控制台錯誤訊息。');
+      setSaveError(getFriendlyTransactionError(error));
     }
   };
 
@@ -301,6 +487,10 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                   <BookStructureEditor
                     formData={formData}
                     setFormData={setFormData}
+                    labelClass={labelClass}
+                    inputClass={inputClass}
+                    addNode={addNode}
+                    lastNodeId={lastNodeId}
                     disabled={isViewOnly}
                     isViewOnly={isViewOnly}
                   />
@@ -430,6 +620,12 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                 </div>
               )}
             </div>
+
+            {saveError && (
+              <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                {saveError}
+              </div>
+            )}
 
             <div className="flex justify-end gap-4 py-6">
               <button

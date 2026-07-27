@@ -5,6 +5,12 @@ import AddEntryPage from './AddEntryPage';
 import EncyclopediaViewer from './EncyclopediaViewer';
 import CardViewer from './CardViewer';
 
+const normalizeText = (v = '') =>
+  String(v).trim().normalize('NFKC').replace(/\s+/g, ' ').toLowerCase();
+
+const getEntryKey = (category = '', name = '') =>
+  `${normalizeText(category)}__${normalizeText(name)}`;
+
 export default function AdminPage({ allData, onBack }) {
   const [password, setPassword] = useState('');
   const [isAuth, setIsAuth] = useState(false);
@@ -38,23 +44,13 @@ export default function AdminPage({ allData, onBack }) {
 
       return arr
         .map((ch) => {
-          const current = [
-            ch.title,
-            ch.alias,
-            ch.name,
-            ch.text,
-          ].filter(Boolean).join(' ');
-
+          const current = [ch.title, ch.alias, ch.name, ch.text].filter(Boolean).join(' ');
           return `${current} ${walkChapters(ch.children)}`;
         })
         .join(' ');
     };
 
-    return [
-      item.name,
-      item.bookDetails?.author,
-      walkChapters(item.bookDetails?.chapters),
-    ]
+    return [item.name, item.bookDetails?.author, walkChapters(item.bookDetails?.chapters)]
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
@@ -63,34 +59,7 @@ export default function AdminPage({ allData, onBack }) {
   const getSearchText = (item) => {
     return [
       item.name,
-      item.englishName,
-      item.tag,
-      item.constitutionTag,
-      item.chemicalTag,
-      item.description,
-      item.effect,
-      item.indications,
-      item.syndrome,
-      item.modifications,
-      item.modernApp,
-      item.acuTable?.meridian,
-      item.acuTable?.effectAncient,
-      item.acuTable?.effectModern,
-      item.acuTable?.function,
-      item.acuTable?.combination,
-      item.acuDetails?.indications,
-      item.acuTable?.matchingPoints,
-      item.acuTable?.code,
-      item.oilDetails?.mindEffect,
-      item.oilDetails?.bodyEffect,
-      item.oilDetails?.skinEffect,
-      item.oilDetails?.usage,
-      item.oilDetails?.nature,
-      item.oilDetails?.attribute,
-      item.pharmacology,
-      item.contemporary,
-      item.directions,
-      item.note,
+      
     ]
       .filter(Boolean)
       .join(' ')
@@ -111,9 +80,18 @@ export default function AdminPage({ allData, onBack }) {
 
   const handleLoadMore = () => setDisplayCount((prev) => prev + 10);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (item) => {
     if (!confirm('確定刪除？')) return;
-    await deleteDoc(doc(db, 'entries', id));
+
+    const entryKey = item?.entryKey || getEntryKey(item?.category || '', item?.name || '');
+
+    try {
+      await deleteDoc(doc(db, 'entries', entryKey));
+      await deleteDoc(doc(db, 'entryKeys', entryKey));
+    } catch (error) {
+      console.error('刪除失敗:', error);
+      alert('刪除失敗，請稍後再試。');
+    }
   };
 
   if (!isAuth) {
@@ -166,9 +144,7 @@ export default function AdminPage({ allData, onBack }) {
         <EncyclopediaViewer item={viewingItem} onClose={() => setViewingItem(null)} />
       )}
 
-      {viewingCard && (
-        <CardViewer item={viewingCard} onClose={() => setViewingCard(null)} />
-      )}
+      {viewingCard && <CardViewer item={viewingCard} onClose={() => setViewingCard(null)} />}
 
       <header className="shrink-0 bg-[#F7F5F0] px-6 md:px-10 py-6 border-b border-[#E5E0D8] print:hidden">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
@@ -265,7 +241,7 @@ export default function AdminPage({ allData, onBack }) {
                       編輯
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item)}
                       className="px-4 py-2 text-sm text-[#D4A373] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
                     >
                       刪除
