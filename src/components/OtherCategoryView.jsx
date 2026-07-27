@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { allCategoryExplanations } from '../data/categoryData';
 
 function normalizeText(value) {
@@ -13,12 +13,15 @@ function getItemTag(item) {
   return item?.tag || item?.constitutionTag || item?.chemicalTag || item?.acuTable?.meridian || '';
 }
 
-function getMatchedNamesByTag(allData, categoryName, keyword) {
+function getMatchedNamesByTag(allData, categoryName, keywords) {
+  const keywordList = Array.isArray(keywords) ? keywords : [keywords];
+  const validKeywords = keywordList.filter(Boolean);
+
   return Array.from(
     new Set(
       allData
         .filter((item) => item?.category === categoryName)
-        .filter((item) => tagIncludes(getItemTag(item), keyword))
+        .filter((item) => validKeywords.some((keyword) => tagIncludes(getItemTag(item), keyword)))
         .map((item) => item.name)
         .filter(Boolean)
     )
@@ -75,45 +78,82 @@ function DetailPanel({ categoryName, tagName, tagData, allData, onBack, matchKey
 }
 
 export default function OtherCategoryView({ allData }) {
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [activeTag, setActiveTag] = useState(null);
-  const [activeChildTag, setActiveChildTag] = useState(null);
+  const [viewState, setViewState] = useState({
+    category: null,
+    tag: null,
+    childTag: null,
+  });
 
+  const { category: activeCategory, tag: activeTag, childTag: activeChildTag } = viewState;
   const categories = Object.keys(allCategoryExplanations);
 
-  if (activeCategory && activeTag && activeChildTag) {
-    const tagData = allCategoryExplanations[activeCategory]?.[activeTag]?.children?.[activeChildTag];
+  const categoryData = useMemo(
+    () => (activeCategory ? allCategoryExplanations[activeCategory] || {} : {}),
+    [activeCategory]
+  );
 
+  const tagData = useMemo(
+    () => (activeCategory && activeTag ? categoryData?.[activeTag] || null : null),
+    [activeCategory, activeTag, categoryData]
+  );
+
+  const childTagData = useMemo(
+    () =>
+      activeCategory && activeTag && activeChildTag
+        ? categoryData?.[activeTag]?.children?.[activeChildTag] || null
+        : null,
+    [activeCategory, activeTag, activeChildTag, categoryData]
+  );
+
+  const hasChildren = !!(tagData?.children && Object.keys(tagData.children).length > 0);
+
+  const parentMatchKeyword = useMemo(() => {
+    if (!tagData) return [];
+    if (activeCategory === '方劑' && activeTag === '解表劑') return ['解表'];
+    if (activeTag === '解表藥') return ['解表'];
+    return tagData.keywords?.length ? tagData.keywords : [activeTag];
+  }, [tagData, activeCategory, activeTag]);
+
+  const childMatchKeyword = useMemo(() => {
+    if (!childTagData) return [];
+    return childTagData.keywords?.length ? childTagData.keywords : [activeChildTag];
+  }, [childTagData, activeChildTag]);
+
+  const setCategoryView = (category) => {
+    setViewState({ category, tag: null, childTag: null });
+  };
+
+  const setTagView = (tag) => {
+    setViewState((prev) => ({ ...prev, tag, childTag: null }));
+  };
+
+  const setChildTagView = (childTag) => {
+    setViewState((prev) => ({ ...prev, childTag }));
+  };
+
+  const backToOverview = () => setViewState({ category: null, tag: null, childTag: null });
+  const backToCategory = () => setViewState((prev) => ({ category: prev.category, tag: null, childTag: null }));
+  const backToTag = () => setViewState((prev) => ({ ...prev, childTag: null }));
+
+  if (activeCategory && activeTag && activeChildTag) {
     return (
       <DetailPanel
         categoryName={activeCategory}
         tagName={activeChildTag}
-        tagData={tagData}
+        tagData={childTagData}
         allData={allData}
-        matchKeyword={activeChildTag}
-        onBack={() => setActiveChildTag(null)}
+        matchKeyword={childMatchKeyword}
+        onBack={backToTag}
       />
     );
   }
 
   if (activeCategory && activeTag) {
-    const tagData = allCategoryExplanations[activeCategory]?.[activeTag];
-    const hasChildren = tagData?.children && Object.keys(tagData.children).length > 0;
-
     if (hasChildren) {
-      const parentMatchKeyword =
-        activeCategory === '方劑' && activeTag === '解表劑'
-          ? '解表'
-          : activeTag === '解表藥'
-            ? '解表'
-            : activeTag;
-
-      const parentMatched = getMatchedNamesByTag(allData, activeCategory, parentMatchKeyword);
-
       return (
         <div className="rounded-[1.5rem] border border-white/70 bg-white p-6 md:p-8 shadow-[0_8px_24px_rgba(122,106,90,0.06)]">
           <button
-            onClick={() => setActiveTag(null)}
+            onClick={backToCategory}
             className="mb-5 inline-flex items-center gap-2 text-sm text-[#7F6D5F] hover:text-[#3A4F3F] transition-colors"
           >
             ← 返回上一層
@@ -137,36 +177,30 @@ export default function OtherCategoryView({ allData }) {
             <div>
               <h5 className="text-sm font-bold text-[#2F4638] mb-3">自動搜尋到的百科名稱</h5>
               <div className="flex flex-wrap gap-2">
-                {parentMatched.length > 0 ? (
-                  parentMatched.map((name) => (
-                    <span
-                      key={name}
-                      className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-sm text-[#5F6F65]"
-                    >
-                      {name}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-sm text-[#A39284]">尚未搜尋到相關百科</span>
-                )}
+                {getMatchedNamesByTag(allData, activeCategory, parentMatchKeyword).map((name) => (
+                  <span
+                    key={name}
+                    className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-sm text-[#5F6F65]"
+                  >
+                    {name}
+                  </span>
+                ))}
               </div>
             </div>
 
             <div>
               <h5 className="text-sm font-bold text-[#2F4638] mb-3">下一層分類</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(tagData.children).map(([childName, childData]) => (
+                {Object.entries(tagData.children).map(([childName]) => (
                   <button
                     key={childName}
-                    onClick={() => setActiveChildTag(childName)}
+                    onClick={() => setChildTagView(childName)}
                     className="rounded-2xl border border-[#E7DED4] bg-white px-4 py-5 text-left hover:bg-[#F3E1C5] hover:border-[#C8A97E] transition-all"
                   >
                     <h4 className="text-sm md:text-base font-bold text-[#2F4638]">
                       {childName}
                     </h4>
-                    <p className="text-xs text-[#A39284] mt-1">
-                      點擊查看詳細內容
-                    </p>
+                    <p className="text-xs text-[#A39284] mt-1">點擊查看詳細內容</p>
                   </button>
                 ))}
               </div>
@@ -182,19 +216,19 @@ export default function OtherCategoryView({ allData }) {
         tagName={activeTag}
         tagData={tagData}
         allData={allData}
-        matchKeyword={activeTag}
-        onBack={() => setActiveTag(null)}
+        matchKeyword={parentMatchKeyword}
+        onBack={backToCategory}
       />
     );
   }
 
   if (activeCategory) {
-    const categoryData = allCategoryExplanations[activeCategory] || {};
+    const categoryDataOnly = allCategoryExplanations[activeCategory] || {};
 
     return (
       <div>
         <button
-          onClick={() => setActiveCategory(null)}
+          onClick={backToOverview}
           className="mb-5 inline-flex items-center gap-2 text-sm text-[#7F6D5F] hover:text-[#3A4F3F] transition-colors"
         >
           ← 返回分類總覽
@@ -209,17 +243,17 @@ export default function OtherCategoryView({ allData }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(categoryData).map(([tagName, tagData]) => (
+            {Object.entries(categoryDataOnly).map(([tagName, tagDataItem]) => (
               <button
                 key={tagName}
-                onClick={() => setActiveTag(tagName)}
+                onClick={() => setTagView(tagName)}
                 className="rounded-2xl border border-[#E7DED4] bg-white px-4 py-5 text-left hover:bg-[#F3E1C5] hover:border-[#C8A97E] transition-all"
               >
                 <h4 className="text-sm md:text-base font-bold text-[#2F4638]">
                   {tagName}
                 </h4>
                 <p className="text-xs text-[#A39284] mt-1">
-                  {tagData.children ? '點擊進入下一層' : '點擊查看詳細內容'}
+                  {tagDataItem.children ? '點擊進入下一層' : '點擊查看詳細內容'}
                 </p>
               </button>
             ))}
@@ -242,15 +276,13 @@ export default function OtherCategoryView({ allData }) {
         {categories.map((categoryName) => (
           <button
             key={categoryName}
-            onClick={() => setActiveCategory(categoryName)}
+            onClick={() => setCategoryView(categoryName)}
             className="rounded-2xl border border-[#E7DED4] bg-white px-4 py-5 text-left hover:bg-[#F3E1C5] hover:border-[#C8A97E] transition-all"
           >
             <h4 className="text-sm md:text-base font-bold text-[#2F4638]">
               {categoryName}
             </h4>
-            <p className="text-xs text-[#A39284] mt-1">
-              點擊進入下一層
-            </p>
+            <p className="text-xs text-[#A39284] mt-1">點擊進入下一層</p>
           </button>
         ))}
       </div>
