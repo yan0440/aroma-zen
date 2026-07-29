@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
-import { deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import AddEntryPage from './AddEntryPage';
 
@@ -13,6 +13,29 @@ const getEntryKey = (category = '', name = '') =>
   `${normalizeText(category)}__${normalizeText(name)}`;
 
 const categories = ['全部', '書籍', '精油', '穴道', '中藥', '方劑'];
+
+const buildBookSearchText = (item) => {
+  const walkChapters = (chapters) => {
+    if (!chapters) return '';
+    const arr = Array.isArray(chapters) ? chapters : Object.values(chapters);
+
+    return arr
+      .map((ch) => {
+        const current = [ch.title, ch.alias, ch.name, ch.text].filter(Boolean).join(' ');
+        return `${current} ${walkChapters(ch.children)}`;
+      })
+      .join(' ');
+  };
+
+  return normalizeText([item.name, item.bookDetails?.author, walkChapters(item.bookDetails?.chapters)].filter(Boolean).join(' '));
+};
+
+const buildSearchText = (item) => {
+  if (item.category === '書籍') return buildBookSearchText(item);
+  return normalizeText([item.name, item.alias, item.englishName, item.tag, item.source, item.effect, item.indications]
+    .filter(Boolean)
+    .join(' '));
+};
 
 const EntryRow = React.memo(function EntryRow({
   item,
@@ -88,40 +111,24 @@ export default function AdminPage({ allData, onBack }) {
     setDisplayCount(10);
   }, [filterCategory, searchName]);
 
-  const getBookSearchText = useCallback((item) => {
-    const walkChapters = (chapters) => {
-      if (!chapters) return '';
-      const arr = Array.isArray(chapters) ? chapters : Object.values(chapters);
+  const indexedData = useMemo(() => {
+    return (allData || []).map((item) => ({
+      ...item,
+      _searchText: item._searchText || buildSearchText(item),
+    }));
+  }, [allData]);
 
-      return arr
-        .map((ch) => {
-          const current = [ch.title, ch.alias, ch.name, ch.text].filter(Boolean).join(' ');
-          return `${current} ${walkChapters(ch.children)}`;
-        })
-        .join(' ');
-    };
-
-    return [item.name, item.bookDetails?.author, walkChapters(item.bookDetails?.chapters)]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-  }, []);
-
-  const getSearchText = useCallback((item) => {
-    return [item.name].filter(Boolean).join(' ').toLowerCase();
-  }, []);
+  const filteredByCategory = useMemo(() => {
+    return filterCategory === '全部'
+      ? indexedData
+      : indexedData.filter((item) => item.category === filterCategory);
+  }, [indexedData, filterCategory]);
 
   const filteredEntries = useMemo(() => {
-    const query = searchName.toLowerCase();
-    return allData
-      .filter((item) => filterCategory === '全部' || item.category === filterCategory)
-      .filter((item) => {
-        if (!query) return true;
-        const searchableText =
-          item.category === '書籍' ? getBookSearchText(item) : getSearchText(item);
-        return searchableText.includes(query);
-      });
-  }, [allData, filterCategory, searchName, getBookSearchText, getSearchText]);
+    const query = normalizeText(searchName);
+    if (!query) return filteredByCategory;
+    return filteredByCategory.filter((item) => (item._searchText || '').includes(query));
+  }, [filteredByCategory, searchName]);
 
   const displayedEntries = useMemo(
     () => filteredEntries.slice(0, displayCount),
@@ -317,7 +324,7 @@ export default function AdminPage({ allData, onBack }) {
               ))}
             </div>
 
-            {filteredEntries.length > 10 && displayedEntries.length < filteredEntries.length && (
+            {filteredEntries.length > displayCount && (
               <div className="pt-4 pb-2 flex justify-center print:hidden">
                 <button
                   onClick={handleLoadMore}
