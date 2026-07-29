@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '../firebase';
 import { doc, runTransaction } from 'firebase/firestore';
 import BookStructureEditor from './BookStructureEditor';
@@ -45,6 +45,12 @@ const getDefaultFormData = () => ({
   modernApp: '',
   modernPharmacology: '',
   prescription: '',
+  typePart: '',
+  method: '',
+  property: '',
+  planet: '',
+  origin: '',
+  noteAnalogy: '',
   acuTable: { code: '', meridian: '', alias: '' },
   acuDetails: {
     location: '',
@@ -139,6 +145,7 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
   const contentRef = useRef(null);
   const [lastNodeId, setLastNodeId] = useState(null);
   const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState(getDefaultFormData());
 
   useEffect(() => {
@@ -161,6 +168,19 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
           ? editingItem.bookDetails.chapters
           : [],
       },
+      acuTable: {
+        code: editingItem?.acuTable?.code || '',
+        meridian: editingItem?.acuTable?.meridian || '',
+        alias: editingItem?.acuTable?.alias || '',
+      },
+      acuDetails: {
+        ...getDefaultFormData().acuDetails,
+        ...(editingItem?.acuDetails || {}),
+      },
+      oilDetails: {
+        ...getDefaultFormData().oilDetails,
+        ...(editingItem?.oilDetails || {}),
+      },
       entryKey:
         editingItem?.entryKey ||
         getEntryKey(editingItem?.category || '', editingItem?.name || ''),
@@ -171,7 +191,7 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
     setSaveError('');
   }, [editingItem]);
 
-  const addNode = (path = []) => {
+  const addNode = useCallback((path = []) => {
     const newNode = {
       id: `sub_${Date.now()}`,
       title: '',
@@ -180,39 +200,42 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
       children: [],
     };
 
-    const newChapters = JSON.parse(JSON.stringify(formData.bookDetails.chapters || []));
+    setFormData((prev) => {
+      const newChapters = JSON.parse(JSON.stringify(prev.bookDetails.chapters || []));
 
-    if (path.length === 0) {
-      newChapters.push(newNode);
-    } else {
-      let target = newChapters;
-      for (let i = 0; i < path.length; i++) target = target[path[i]];
-      if (target.type === 'folder') {
-        if (!target.children) target.children = [];
-        target.children.push(newNode);
+      if (path.length === 0) {
+        newChapters.push(newNode);
       } else {
-        target.type = 'folder';
-        target.children = [newNode];
+        let target = newChapters;
+        for (let i = 0; i < path.length; i++) target = target[path[i]];
+        if (target.type === 'folder') {
+          if (!target.children) target.children = [];
+          target.children.push(newNode);
+        } else {
+          target.type = 'folder';
+          target.children = [newNode];
+        }
       }
-    }
 
-    setFormData({
-      ...formData,
-      bookDetails: { ...formData.bookDetails, chapters: newChapters },
+      return {
+        ...prev,
+        bookDetails: { ...prev.bookDetails, chapters: newChapters },
+      };
     });
+
     setLastNodeId(`node_${Date.now()}`);
-  };
+  }, []);
 
   const inputClass = `w-full px-4 py-3 bg-white border border-[#E5E0D8] rounded-xl focus:ring-2 focus:ring-[#3A4F3F]/10 focus:border-[#3A4F3F] outline-none transition-all ${isViewOnly ? 'opacity-70 cursor-not-allowed' : ''}`;
   const labelClass = 'text-[11px] font-bold text-[#A39284] uppercase tracking-widest mb-1.5 block';
   const textareaClass = `${inputClass} h-24`;
 
-  const getValueByPath = (obj, path) => {
+  const getValueByPath = useCallback((obj, path) => {
     const value = path.split('.').reduce((acc, key) => acc?.[key], obj);
     return value ?? '';
-  };
+  }, []);
 
-  const updateValueByPath = (path, value) => {
+  const updateValueByPath = useCallback((path, value) => {
     const keys = path.split('.');
     setFormData((prev) => {
       const next = { ...prev };
@@ -226,14 +249,14 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
       cur[keys[keys.length - 1]] = value;
       return next;
     });
-  };
+  }, []);
 
-  const renderField = (label, path, placeholder = '', isTextarea = false) => (
+  const renderField = useCallback((label, path, placeholder = '', isTextarea = false) => (
     <div>
       <label className={labelClass}>{label}</label>
       {isTextarea ? (
         <textarea
-          disabled={isViewOnly}
+          disabled={isViewOnly || isSaving}
           className={textareaClass}
           value={getValueByPath(formData, path)}
           placeholder={placeholder}
@@ -241,7 +264,7 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
         />
       ) : (
         <input
-          disabled={isViewOnly}
+          disabled={isViewOnly || isSaving}
           className={inputClass}
           value={getValueByPath(formData, path)}
           placeholder={placeholder}
@@ -249,25 +272,27 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
         />
       )}
     </div>
-  );
+  ), [formData, getValueByPath, updateValueByPath, isViewOnly, isSaving]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (isSaving || isViewOnly) return;
     setSaveError('');
 
-    if (!formData.name?.trim()) {
+    const category = formData.category?.trim();
+    const name = formData.name?.trim();
+
+    if (!name) {
       setSaveError('請至少填寫名稱！');
       return;
     }
+    if (!category) {
+      setSaveError('請至少填寫分類與名稱！');
+      return;
+    }
+
+    setIsSaving(true);
 
     try {
-      const category = formData.category?.trim();
-      const name = formData.name?.trim();
-
-      if (!category || !name) {
-        setSaveError('請至少填寫分類與名稱！');
-        return;
-      }
-
       const newEntryKey = getEntryKey(category, name);
       const oldEntryKey =
         editingItem?.entryKey ||
@@ -374,8 +399,10 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
     } catch (error) {
       console.error('寫入資料失敗: ', error);
       setSaveError(getFriendlyTransactionError(error));
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [editingItem, formData, isSaving, isViewOnly, onClose]);
 
   return (
     <div ref={contentRef} className="w-screen h-dvh bg-[#FBF9F6] flex flex-col overflow-hidden">
@@ -399,9 +426,10 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
           {!isViewOnly && (
             <button
               onClick={handleSave}
-              className="px-8 py-2 bg-[#3A4F3F] text-white rounded-full font-bold hover:bg-[#2C3C30] shadow-lg transition-all"
+              disabled={isSaving}
+              className="px-8 py-2 bg-[#3A4F3F] text-white rounded-full font-bold hover:bg-[#2C3C30] shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              儲存資料
+              {isSaving ? '儲存中...' : '儲存資料'}
             </button>
           )}
         </div>
@@ -415,10 +443,10 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                 <div>
                   <label className={labelClass}>分類</label>
                   <select
-                    disabled={isViewOnly}
+                    disabled={isViewOnly || isSaving}
                     className={inputClass}
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
                   >
                     <option value="書籍">書籍</option>
                     <option value="精油">精油</option>
@@ -431,11 +459,11 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                 <div>
                   <label className={labelClass}>名稱</label>
                   <input
-                    disabled={isViewOnly}
+                    disabled={isViewOnly || isSaving}
                     placeholder="輸入名稱"
                     value={formData.name}
                     className={inputClass}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
 
@@ -443,15 +471,15 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                   <div className="md:col-span-2">
                     <label className={labelClass}>作者 / 編著</label>
                     <input
-                      disabled={isViewOnly}
+                      disabled={isViewOnly || isSaving}
                       placeholder="輸入作者 / 編著"
                       value={formData.bookDetails.author}
                       className={inputClass}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          bookDetails: { ...formData.bookDetails, author: e.target.value },
-                        })
+                        setFormData((prev) => ({
+                          ...prev,
+                          bookDetails: { ...prev.bookDetails, author: e.target.value },
+                        }))
                       }
                     />
                   </div>
@@ -461,11 +489,11 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
               <div className="w-full mb-6">
                 <label className={labelClass}>簡介描述</label>
                 <textarea
-                  disabled={isViewOnly}
+                  disabled={isViewOnly || isSaving}
                   placeholder="簡介描述"
                   value={formData.description}
                   className={textareaClass}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 />
               </div>
 
@@ -473,11 +501,11 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                 <div className="mb-6">
                   <label className={labelClass}>核心標籤</label>
                   <input
-                    disabled={isViewOnly}
+                    disabled={isViewOnly || isSaving}
                     placeholder="例如：解表、清熱"
                     value={formData.tag}
                     className={inputClass}
-                    onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, tag: e.target.value }))}
                   />
                 </div>
               )}
@@ -491,8 +519,8 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                     inputClass={inputClass}
                     addNode={addNode}
                     lastNodeId={lastNodeId}
-                    disabled={isViewOnly}
-                    isViewOnly={isViewOnly}
+                    disabled={isViewOnly || isSaving}
+                    isViewOnly={isViewOnly || isSaving}
                   />
                 </div>
               )}
@@ -507,35 +535,37 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                       <label className={labelClass}>適用體質與化學屬性標籤</label>
                       <div className="flex gap-2">
                         <input
-                          disabled={isViewOnly}
+                          disabled={isViewOnly || isSaving}
                           placeholder="體質標籤"
                           value={formData.constitutionTag}
                           className={inputClass}
-                          onChange={(e) => setFormData({ ...formData, constitutionTag: e.target.value })}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, constitutionTag: e.target.value }))}
                         />
                         <input
-                          disabled={isViewOnly}
+                          disabled={isViewOnly || isSaving}
                           placeholder="化學屬性標籤"
                           value={formData.chemicalTag}
                           className={inputClass}
-                          onChange={(e) => setFormData({ ...formData, chemicalTag: e.target.value })}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, chemicalTag: e.target.value }))}
                         />
                       </div>
                     </div>
 
-                    {renderField('別名', 'alias')}
-                    {renderField('植物種類／萃取部位', 'typePart')}
-                    {renderField('萃取方法', 'method')}
-                    {renderField('外文名', 'englishName')}
-                    {renderField('拉丁學名', 'latin')}
-                    {renderField('科名', 'family')}
-                    {renderField('性味', 'nature')}
-                    {renderField('五行／陰陽屬性', 'property')}
-                    {renderField('歸經', 'meridian')}
-                    {renderField('主治', 'indications')}
-                    {renderField('類比音符', 'noteAnalogy')}
-                    {renderField('主宰星球', 'planet')}
-                    {renderField('重要產地', 'origin')}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                      {renderField('別名', 'alias')}
+                      {renderField('植物種類／萃取部位', 'typePart')}
+                      {renderField('萃取方法', 'method')}
+                      {renderField('外文名', 'englishName')}
+                      {renderField('拉丁學名', 'latin')}
+                      {renderField('科名', 'family')}
+                      {renderField('性味', 'nature')}
+                      {renderField('五行／陰陽屬性', 'property')}
+                      {renderField('歸經', 'meridian')}
+                      {renderField('主治', 'indications')}
+                      {renderField('類比音符', 'noteAnalogy')}
+                      {renderField('主宰星球', 'planet')}
+                      {renderField('重要產地', 'origin')}
+                    </div>
                   </div>
 
                   <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -637,9 +667,10 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
               {!isViewOnly && (
                 <button
                   onClick={handleSave}
-                  className="px-10 py-3 bg-[#3A4F3F] text-white rounded-2xl font-fttf hover:bg-[#2C3C30] shadow-xl shadow-[#3A4F3F]/20 transition-all"
+                  disabled={isSaving}
+                  className="px-10 py-3 bg-[#3A4F3F] text-white rounded-2xl font-fttf hover:bg-[#2C3C30] shadow-xl shadow-[#3A4F3F]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  儲存資料
+                  {isSaving ? '儲存中...' : '儲存資料'}
                 </button>
               )}
             </div>

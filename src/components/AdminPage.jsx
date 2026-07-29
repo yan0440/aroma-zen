@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
-import { deleteDoc, doc } from 'firebase/firestore';
+import { deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import AddEntryPage from './AddEntryPage';
 
@@ -12,12 +12,15 @@ const normalizeText = (v = '') =>
 const getEntryKey = (category = '', name = '') =>
   `${normalizeText(category)}__${normalizeText(name)}`;
 
+const categories = ['全部', '書籍', '精油', '穴道', '中藥', '方劑'];
+
 const EntryRow = React.memo(function EntryRow({
   item,
   onViewItem,
   onViewCard,
   onEdit,
-  onDelete
+  onDelete,
+  disabled
 }) {
   return (
     <div className="bg-white p-5 rounded-2xl border border-[#E5E0D8]/60 flex justify-between items-center shadow-sm print:break-inside-avoid">
@@ -25,25 +28,29 @@ const EntryRow = React.memo(function EntryRow({
       <div className="flex gap-2 flex-wrap justify-end print:hidden">
         <button
           onClick={() => onViewItem(item)}
-          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+          disabled={disabled}
+          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           檢視
         </button>
         <button
           onClick={() => onViewCard(item)}
-          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+          disabled={disabled}
+          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           圖卡
         </button>
         <button
           onClick={() => onEdit(item)}
-          className="px-4 py-2 text-sm text-[#6B9080] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+          disabled={disabled}
+          className="px-4 py-2 text-sm text-[#6B9080] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           編輯
         </button>
         <button
           onClick={() => onDelete(item)}
-          className="px-4 py-2 text-sm text-[#D4A373] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+          disabled={disabled}
+          className="px-4 py-2 text-sm text-[#D4A373] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           刪除
         </button>
@@ -63,6 +70,8 @@ export default function AdminPage({ allData, onBack }) {
   const [filterCategory, setFilterCategory] = useState('全部');
   const [searchName, setSearchName] = useState('');
   const [displayCount, setDisplayCount] = useState(10);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState('');
 
   useEffect(() => {
     fetch('/version.json')
@@ -78,8 +87,6 @@ export default function AdminPage({ allData, onBack }) {
   useEffect(() => {
     setDisplayCount(10);
   }, [filterCategory, searchName]);
-
-  const categories = ['全部', '書籍', '精油', '穴道', '中藥', '方劑'];
 
   const getBookSearchText = useCallback((item) => {
     const walkChapters = (chapters) => {
@@ -126,18 +133,28 @@ export default function AdminPage({ allData, onBack }) {
   }, []);
 
   const handleDelete = useCallback(async (item) => {
+    if (isDeleting) return;
     if (!confirm('確定刪除？')) return;
+
+    setIsDeleting(true);
+    setDeleteMessage('');
 
     const entryKey = item?.entryKey || getEntryKey(item?.category || '', item?.name || '');
 
     try {
-      await deleteDoc(doc(db, 'entries', entryKey));
-      await deleteDoc(doc(db, 'entryKeys', entryKey));
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'entries', entryKey));
+      batch.delete(doc(db, 'entryKeys', entryKey));
+      await batch.commit();
+      setDeleteMessage('刪除成功');
     } catch (error) {
       console.error('刪除失敗:', error);
+      setDeleteMessage('刪除失敗，請稍後再試。');
       alert('刪除失敗，請稍後再試。');
+    } finally {
+      setIsDeleting(false);
     }
-  }, []);
+  }, [isDeleting]);
 
   const handleViewItem = useCallback((item) => {
     setViewingItem(item);
@@ -279,6 +296,12 @@ export default function AdminPage({ allData, onBack }) {
             </div>
           </div>
 
+          {deleteMessage && (
+            <div className="text-sm text-[#6B7A6E] bg-white px-4 py-2 rounded-xl border border-[#E5E0D8]">
+              {deleteMessage}
+            </div>
+          )}
+
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             <div className="grid gap-3">
               {displayedEntries.map((item) => (
@@ -289,6 +312,7 @@ export default function AdminPage({ allData, onBack }) {
                   onViewCard={handleViewCard}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  disabled={isDeleting}
                 />
               ))}
             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 function AutoResizeTextarea({ value, onChange, placeholder, className, disabled }) {
   const textareaRef = useRef(null);
@@ -38,23 +38,27 @@ function buildTitle(pureTitle, aliasText) {
   return `${pureTitle}(別名：${aliasText})`;
 }
 
-function updateNestedState(currentData, path, updateFnOrValue) {
+function cloneDeep(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function updateNestedState(currentData, path, updater) {
   if (path.length === 0) {
-    return typeof updateFnOrValue === 'function' ? updateFnOrValue(currentData) : updateFnOrValue;
+    return typeof updater === 'function' ? updater(currentData) : updater;
   }
 
   const [key, ...restPath] = path;
 
   if (Array.isArray(currentData)) {
     return currentData.map((item, index) =>
-      index === key ? updateNestedState(item, restPath, updateFnOrValue) : item
+      index === key ? updateNestedState(item, restPath, updater) : item
     );
   }
 
   if (typeof currentData === 'object' && currentData !== null) {
     return {
       ...currentData,
-      [key]: updateNestedState(currentData[key], restPath, updateFnOrValue),
+      [key]: updateNestedState(currentData[key], restPath, updater),
     };
   }
 
@@ -71,14 +75,14 @@ function getNodeByPath(chapters, path) {
 }
 
 function findFirstEditableNode(chapters) {
-  const stack = chapters.map((node, index) => ({ node, path: [index] }));
+  const queue = chapters.map((node, index) => ({ node, path: [index] }));
 
-  while (stack.length) {
-    const { node, path } = stack.shift();
+  while (queue.length) {
+    const { node, path } = queue.shift();
     if (node?.type !== 'folder') return { node, path };
     if (Array.isArray(node.children)) {
       node.children.forEach((child, idx) =>
-        stack.push({ node: child, path: [...path, 'children', idx] })
+        queue.push({ node: child, path: [...path, 'children', idx] })
       );
     }
   }
@@ -144,6 +148,16 @@ export default function BookStructureEditor({
     }
   }, [chapters, selectedPath]);
 
+  useEffect(() => {
+    if (selectedPath) {
+      const node = getNodeByPath(chapters, selectedPath);
+      if (!node && chapters.length) {
+        const first = findFirstEditableNode(chapters);
+        setSelectedPath(first?.path || null);
+      }
+    }
+  }, [chapters, selectedPath]);
+
   const selectedNode = useMemo(() => {
     if (!selectedPath) return null;
     return getNodeByPath(chapters, selectedPath);
@@ -154,59 +168,66 @@ export default function BookStructureEditor({
     return getPathNodes(chapters, selectedPath);
   }, [chapters, selectedPath]);
 
-  const updateChapters = (newChapters) => {
-    setFormData({
-      ...formData,
+  const updateChapters = useCallback((newChapters) => {
+    setFormData((prev) => ({
+      ...prev,
       bookDetails: {
-        ...formData.bookDetails,
+        ...(prev.bookDetails || {}),
         chapters: newChapters,
       },
-    });
-  };
+    }));
+  }, [setFormData]);
 
-  const toggleNode = (id) => {
+  const toggleNode = useCallback((id) => {
     setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  }, []);
 
-  const updateNode = (path, updates) => {
+  const updateNode = useCallback((path, updates) => {
     const newChapters = updateNestedState(chapters, path, (node) => ({ ...node, ...updates }));
     updateChapters(newChapters);
-  };
+  }, [chapters, updateChapters]);
 
-  const deleteNode = (path) => {
+  const deleteNode = useCallback((path) => {
     if (!path || path.length === 0) return;
 
     const parentPath = path.slice(0, -1);
     const indexToDelete = path[path.length - 1];
+    const newChapters = cloneDeep(chapters);
 
-    const newChapters = updateNestedState(chapters, parentPath, (parent) => {
-      if (Array.isArray(parent)) return parent.filter((_, idx) => idx !== indexToDelete);
-      if (parent && Array.isArray(parent.children)) {
-        return { ...parent, children: parent.children.filter((_, idx) => idx !== indexToDelete) };
-      }
-      return parent;
-    });
+    if (parentPath.length === 0) {
+      newChapters.splice(indexToDelete, 1);
+      updateChapters(newChapters);
+      setSelectedPath(null);
+      return;
+    }
+
+    const parent = getNodeByPath(newChapters, parentPath);
+    if (parentPath[parentPath.length - 1] === 'children' && Array.isArray(parent)) {
+      parent.splice(indexToDelete, 1);
+    } else if (parent && Array.isArray(parent.children)) {
+      parent.children.splice(indexToDelete, 1);
+    }
 
     updateChapters(newChapters);
     setSelectedPath(null);
-  };
+  }, [chapters, updateChapters]);
 
-  const addRootContent = () => {
+  const addRootContent = useCallback(() => {
     const newNode = createContentNode();
     const newChapters = [...chapters, newNode];
     updateChapters(newChapters);
     setSelectedPath([newChapters.length - 1]);
-  };
+  }, [chapters, updateChapters]);
 
-  const addRootFolder = () => {
+  const addRootFolder = useCallback(() => {
     const newNode = createFolderNode();
     const newChapters = [...chapters, newNode];
     updateChapters(newChapters);
     setSelectedPath([newChapters.length - 1]);
     setExpandedNodes((prev) => ({ ...prev, [newNode.id]: true }));
-  };
+  }, [chapters, updateChapters]);
 
-  const addChild = (path, type = 'content') => {
+  const addChild = useCallback((path, type = 'content') => {
     const newChild = type === 'folder' ? createFolderNode() : createContentNode();
 
     const newChapters = updateNestedState(chapters, path, (node) => {
@@ -216,16 +237,16 @@ export default function BookStructureEditor({
 
     updateChapters(newChapters);
 
-    const parentNode = getNodeByPath(chapters, path);
+    const parentNode = getNodeByPath(newChapters, path);
     if (parentNode?.id) {
       setExpandedNodes((prev) => ({ ...prev, [parentNode.id]: true }));
     }
 
     const parentChildren = getNodeByPath(newChapters, path)?.children || [];
     setSelectedPath([...path, 'children', parentChildren.length - 1]);
-  };
+  }, [chapters, updateChapters]);
 
-  const renderNode = (node, index, path, level = 0) => {
+  const renderNode = useCallback((node, index, path, level = 0) => {
     if (!node) return null;
 
     const isFolder = node.type === 'folder';
@@ -303,9 +324,12 @@ export default function BookStructureEditor({
         )}
       </div>
     );
-  };
+  }, [expandedNodes, selectedPath, toggleNode, addChild, isViewOnly]);
 
-  const selectedTitleParts = parseTitle(selectedNode?.title || '');
+  const selectedTitleParts = useMemo(
+    () => parseTitle(selectedNode?.title || ''),
+    [selectedNode]
+  );
 
   return (
     <div className="w-full bg-[#FCFBFA] flex flex-col overflow-hidden">
