@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const parseBoldSyntax = (str) => {
   if (!str) return str;
@@ -31,6 +31,27 @@ const UI = {
   text: "text-[15px] leading-8 text-[#55655B]",
   title: "text-4xl font-bold text-[#2F4638] mb-2",
   sectionLabel: "font-bold text-[#4E6654] block pb-1 mb-2 text-sm tracking-[0.18em] uppercase"
+};
+
+const AutoHeightTextarea = ({ value, className = "" }) => {
+  const ref = useRef(null);
+  const [height, setHeight] = useState('auto');
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.style.height = '0px';
+    setHeight(`${ref.current.scrollHeight}px`);
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      readOnly
+      value={value || '此項目目前尚未填寫簡介。'}
+      className={`w-full resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-[15px] leading-8 text-[#55655B] outline-none focus:outline-none focus:ring-0 whitespace-pre-wrap ${className}`}
+      style={{ height }}
+    />
+  );
 };
 
 export default function OilModal({ item, onClose }) {
@@ -121,6 +142,11 @@ export default function OilModal({ item, onClose }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-sm font-bold text-[#2F4638] mb-2">簡介</h3>
+              <AutoHeightTextarea value={item.description || item.oilDetails?.description} />
             </div>
           </div>
         </div>

@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const parseBoldSyntax = (text) => {
   if (!text) return null;
@@ -50,14 +52,37 @@ const Card = ({ children, className = "" }) => (
   </div>
 );
 
+const AutoHeightTextarea = ({ value, className = "" }) => {
+  const ref = useRef(null);
+  const [height, setHeight] = useState('auto');
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.style.height = '0px';
+    setHeight(`${ref.current.scrollHeight}px`);
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      readOnly
+      value={value || '此條目目前尚未填寫簡介。'}
+      className={`w-full resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-[15px] leading-8 text-[#45584B] outline-none focus:outline-none focus:ring-0 whitespace-pre-wrap ${className}`}
+      style={{ height }}
+    />
+  );
+};
+
 export default function AcuModal({ item, onClose }) {
   if (!item) return null;
+
   const acuTable = item.acuTable || {};
   const acuDetails = item.acuDetails || {};
 
   const renderFormattedText = (text, customClasses = "") => {
     if (!text) return <span className="italic text-[#A39284]">無記載</span>;
     const lines = text.split('\n').filter(line => line.trim() !== '');
+
     return (
       <div className={`${UI.text} ${customClasses}`}>
         {lines.map((line, i) => (
@@ -68,20 +93,29 @@ export default function AcuModal({ item, onClose }) {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)] py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-[#F5F1E8] py-6 px-4 md:px-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="p-8 sticky top-8">
-            <span className="inline-flex text-[10px] font-bold tracking-[0.28em] px-3 py-1 rounded-full bg-[#F2E9DC] text-[#617263]">
-              {item.category || '穴道'}百科
-            </span>
-            <h2 className={`${UI.title} mt-4`}>{item.name}</h2>
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8 self-start">
+          <Card className="p-8">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <span className="inline-flex text-[10px] font-bold tracking-[0.28em] px-3 py-1 rounded-full bg-[#F2E9DC] text-[#617263]">
+                {item.category || '穴道'}百科
+              </span>
+            </div>
+
+            <h2 className={UI.title}>{item.name}</h2>
+
             <p className="text-xs italic tracking-widest text-[#A39284] mt-1.5 mb-6 font-mono border-b border-[#E8E0D6] pb-4">
               CODE: {acuTable?.code || 'N/A'}
             </p>
+
             <div className="space-y-4 text-sm text-[#3A4F3F] leading-7">
               <p><strong className="text-[#5E7263]">經絡：</strong> {acuTable?.meridian || '無記載'}</p>
               <p><strong className="text-[#5E7263]">別名：</strong> {acuTable?.alias || '無記載'}</p>
+              <div className="pt-2">
+                <h3 className="text-sm font-bold text-[#2F4638] mb-2">簡介</h3>
+                <AutoHeightTextarea value={item.description} />
+              </div>
             </div>
           </Card>
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const parseBoldSyntax = (str) => {
   if (!str) return str;
@@ -35,6 +35,27 @@ const UI = {
   text: "text-[16px] leading-8 text-[#55655B]",
   title: "text-4xl font-bold text-[#2F4638] mb-2",
   sectionLabel: "font-bold text-[#4E6654] block pb-1 mb-2 text-sm tracking-[0.18em] uppercase"
+};
+
+const AutoHeightTextarea = ({ value, className = "" }) => {
+  const ref = useRef(null);
+  const [height, setHeight] = useState('auto');
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.style.height = '0px';
+    setHeight(`${ref.current.scrollHeight}px`);
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      readOnly
+      value={value || '此條目目前尚未填寫簡介。'}
+      className={`w-full resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-[16px] leading-8 text-[#55655B] outline-none focus:outline-none focus:ring-0 whitespace-pre-wrap ${className}`}
+      style={{ height }}
+    />
+  );
 };
 
 export default function HerbModal({ item, onClose }) {
@@ -97,15 +118,34 @@ export default function HerbModal({ item, onClose }) {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)] py-8 px-4 md:px-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white/70 p-8 rounded-[1.6rem] shadow-[0_10px_30px_rgba(63,81,68,0.06)] backdrop-blur-md sticky top-8">
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8 self-start">
+          <div className="bg-white/70 p-8 rounded-[1.6rem] shadow-[0_10px_30px_rgba(63,81,68,0.06)] backdrop-blur-md">
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {item.category && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F3E1C5] text-[#2C3C30]">
+                  {item.category}
+                </span>
+              )}
+              {item.tag && item.tag !== item.category && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F7F5F0] text-[#6B7A6E]">
+                  {item.tag}
+                </span>
+              )}
+            </div>
+
             <h2 className={UI.title}>{item.name}</h2>
+
             <div className="space-y-4 text-sm text-[#6B7A6E] pt-6">
               <p><strong className="text-[#3A4F3F]">別名：</strong> {item.alias || '無'}</p>
               <p><strong className="text-[#3A4F3F]">類別：</strong> {item.tag || item.category || '無'}</p>
               <p><strong className="text-[#3A4F3F]">科屬：</strong> {item.family || '無'}</p>
               <p><strong className="text-[#3A4F3F]">性味：</strong> {item.nature || '無'}</p>
               <p><strong className="text-[#3A4F3F]">歸經：</strong> {item.meridian || '無'}</p>
+            </div>
+
+            <div className="mt-6 pt-2">
+              <h3 className="text-sm font-bold text-[#2F4638] mb-2">簡介</h3>
+              <AutoHeightTextarea value={item.description} />
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -37,6 +37,28 @@ const UI = {
   text: "text-[15px] leading-8 text-[#6B7A6E]",
   title: "text-4xl font-bold text-[#2F4638] mb-2",
   sectionLabel: "font-bold text-[#4E6654] block pb-1 mb-2 text-sm tracking-widest uppercase"
+};
+
+const AutoHeightTextarea = ({ value, placeholder, className = "" }) => {
+  const ref = useRef(null);
+  const [height, setHeight] = useState('auto');
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.style.height = 'auto';
+    setHeight(`${ref.current.scrollHeight}px`);
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      readOnly
+      value={value || placeholder}
+      rows={1}
+      className={`w-full resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-sm leading-7 text-[#5F6F66] outline-none focus:outline-none focus:ring-0 whitespace-pre-wrap ${className}`}
+      style={{ height }}
+    />
+  );
 };
 
 export default function FormulaModal({ item, onClose }) {
@@ -132,6 +154,14 @@ export default function FormulaModal({ item, onClose }) {
               <p><strong className="text-[#3A4F3F]">別名：</strong> {item.alias || '無別名'}</p>
               <p><strong className="text-[#3A4F3F]">來源：</strong> {item.source || '無記載'}</p>
               <p><strong className="text-[#3A4F3F]">功效：</strong> {item.effect || '無記載'}</p>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-sm font-bold text-[#2F4638] mb-2">簡介</h3>
+              <AutoHeightTextarea
+                value={item.description}
+                placeholder="此條目目前尚未填寫簡介。"
+              />
             </div>
           </div>
         </div>
