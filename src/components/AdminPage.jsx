@@ -1,15 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import AddEntryPage from './AddEntryPage';
-import EncyclopediaViewer from './EncyclopediaViewer';
-import CardViewer from './CardViewer';
+
+const EncyclopediaViewer = lazy(() => import('./EncyclopediaViewer'));
+const CardViewer = lazy(() => import('./CardViewer'));
 
 const normalizeText = (v = '') =>
   String(v).trim().normalize('NFKC').replace(/\s+/g, ' ').toLowerCase();
 
 const getEntryKey = (category = '', name = '') =>
   `${normalizeText(category)}__${normalizeText(name)}`;
+
+const EntryRow = React.memo(function EntryRow({
+  item,
+  onViewItem,
+  onViewCard,
+  onEdit,
+  onDelete
+}) {
+  return (
+    <div className="bg-white p-5 rounded-2xl border border-[#E5E0D8]/60 flex justify-between items-center shadow-sm print:break-inside-avoid">
+      <span className="font-semibold text-[#3A4F3F]">{item.name}</span>
+      <div className="flex gap-2 flex-wrap justify-end print:hidden">
+        <button
+          onClick={() => onViewItem(item)}
+          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+        >
+          檢視
+        </button>
+        <button
+          onClick={() => onViewCard(item)}
+          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+        >
+          圖卡
+        </button>
+        <button
+          onClick={() => onEdit(item)}
+          className="px-4 py-2 text-sm text-[#6B9080] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+        >
+          編輯
+        </button>
+        <button
+          onClick={() => onDelete(item)}
+          className="px-4 py-2 text-sm text-[#D4A373] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
+        >
+          刪除
+        </button>
+      </div>
+    </div>
+  );
+});
 
 export default function AdminPage({ allData, onBack }) {
   const [password, setPassword] = useState('');
@@ -28,8 +69,11 @@ export default function AdminPage({ allData, onBack }) {
       .then((res) => res.json())
       .then((data) => setVersion(data.version))
       .catch(() => setVersion('v1.2.7'));
+  }, []);
+
+  useEffect(() => {
     window.scrollTo(0, 0);
-  }, [viewingItem, viewingCard, viewState]);
+  }, [viewState]);
 
   useEffect(() => {
     setDisplayCount(10);
@@ -37,7 +81,7 @@ export default function AdminPage({ allData, onBack }) {
 
   const categories = ['全部', '書籍', '精油', '穴道', '中藥', '方劑'];
 
-  const getBookSearchText = (item) => {
+  const getBookSearchText = useCallback((item) => {
     const walkChapters = (chapters) => {
       if (!chapters) return '';
       const arr = Array.isArray(chapters) ? chapters : Object.values(chapters);
@@ -54,33 +98,34 @@ export default function AdminPage({ allData, onBack }) {
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-  };
+  }, []);
 
-  const getSearchText = (item) => {
-    return [
-      item.name,
-      
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-  };
+  const getSearchText = useCallback((item) => {
+    return [item.name].filter(Boolean).join(' ').toLowerCase();
+  }, []);
 
-  const filteredEntries = allData
-    .filter((item) => filterCategory === '全部' || item.category === filterCategory)
-    .filter((item) => {
-      const query = searchName.toLowerCase();
-      if (!query) return true;
-      const searchableText =
-        item.category === '書籍' ? getBookSearchText(item) : getSearchText(item);
-      return searchableText.includes(query);
-    });
+  const filteredEntries = useMemo(() => {
+    const query = searchName.toLowerCase();
+    return allData
+      .filter((item) => filterCategory === '全部' || item.category === filterCategory)
+      .filter((item) => {
+        if (!query) return true;
+        const searchableText =
+          item.category === '書籍' ? getBookSearchText(item) : getSearchText(item);
+        return searchableText.includes(query);
+      });
+  }, [allData, filterCategory, searchName, getBookSearchText, getSearchText]);
 
-  const displayedEntries = filteredEntries.slice(0, displayCount);
+  const displayedEntries = useMemo(
+    () => filteredEntries.slice(0, displayCount),
+    [filteredEntries, displayCount]
+  );
 
-  const handleLoadMore = () => setDisplayCount((prev) => prev + 10);
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + 10);
+  }, []);
 
-  const handleDelete = async (item) => {
+  const handleDelete = useCallback(async (item) => {
     if (!confirm('確定刪除？')) return;
 
     const entryKey = item?.entryKey || getEntryKey(item?.category || '', item?.name || '');
@@ -92,7 +137,20 @@ export default function AdminPage({ allData, onBack }) {
       console.error('刪除失敗:', error);
       alert('刪除失敗，請稍後再試。');
     }
-  };
+  }, []);
+
+  const handleViewItem = useCallback((item) => {
+    setViewingItem(item);
+  }, []);
+
+  const handleViewCard = useCallback((item) => {
+    setViewingCard(item);
+  }, []);
+
+  const handleEdit = useCallback((item) => {
+    setEditingItem(item);
+    setViewState('add');
+  }, []);
 
   if (!isAuth) {
     return (
@@ -140,11 +198,22 @@ export default function AdminPage({ allData, onBack }) {
 
   return (
     <div className="w-screen h-dvh bg-[#F7F5F0] flex flex-col overflow-hidden">
-      {viewingItem && (
-        <EncyclopediaViewer item={viewingItem} onClose={() => setViewingItem(null)} />
-      )}
-
-      {viewingCard && <CardViewer item={viewingCard} onClose={() => setViewingCard(null)} />}
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#F7F5F0]/80">
+            <div className="rounded-2xl bg-white px-5 py-3 shadow-lg text-[#3A4F3F] font-medium">
+              載入中...
+            </div>
+          </div>
+        }
+      >
+        {viewingItem && (
+          <EncyclopediaViewer item={viewingItem} onClose={() => setViewingItem(null)} />
+        )}
+        {viewingCard && (
+          <CardViewer item={viewingCard} onClose={() => setViewingCard(null)} />
+        )}
+      </Suspense>
 
       <header className="shrink-0 bg-[#F7F5F0] px-6 md:px-10 py-6 border-b border-[#E5E0D8] print:hidden">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
@@ -213,41 +282,14 @@ export default function AdminPage({ allData, onBack }) {
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             <div className="grid gap-3">
               {displayedEntries.map((item) => (
-                <div
+                <EntryRow
                   key={item.id}
-                  className="bg-white p-5 rounded-2xl border border-[#E5E0D8]/60 flex justify-between items-center shadow-sm print:break-inside-avoid"
-                >
-                  <span className="font-semibold text-[#3A4F3F]">{item.name}</span>
-                  <div className="flex gap-2 flex-wrap justify-end print:hidden">
-                    <button
-                      onClick={() => setViewingItem(item)}
-                      className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
-                    >
-                      檢視
-                    </button>
-                    <button
-                      onClick={() => setViewingCard(item)}
-                      className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
-                    >
-                      圖卡
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingItem(item);
-                        setViewState('add');
-                      }}
-                      className="px-4 py-2 text-sm text-[#6B9080] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
-                    >
-                      編輯
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item)}
-                      className="px-4 py-2 text-sm text-[#D4A373] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8]"
-                    >
-                      刪除
-                    </button>
-                  </div>
-                </div>
+                  item={item}
+                  onViewItem={handleViewItem}
+                  onViewCard={handleViewCard}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
 

@@ -1,12 +1,31 @@
-import React from 'react';
-import BookModal from './BookModal';
-import OilModal from './OilModal';
-import AcuModal from './AcuModal';
-import HerbModal from './HerbModal';
-import FormulaModal from './FormulaModal';
+import React, { memo, Suspense } from 'react';
+import { lazy } from 'react';
 
-export default function EncyclopediaViewer({ item, onClose }) {
+const BookModal = lazy(() => import('./BookModal'));
+const OilModal = lazy(() => import('./OilModal'));
+const AcuModal = lazy(() => import('./AcuModal'));
+const HerbModal = lazy(() => import('./HerbModal'));
+const FormulaModal = lazy(() => import('./FormulaModal'));
+
+function EncyclopediaViewer({ item, onClose }) {
   if (!item) return null;
+
+  const renderModal = () => {
+    switch (item.category) {
+      case '書籍':
+        return <BookModal item={item} />;
+      case '精油':
+        return <OilModal item={item} />;
+      case '穴道':
+        return <AcuModal item={item} />;
+      case '中藥':
+        return <HerbModal item={item} />;
+      case '方劑':
+        return <FormulaModal item={item} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#FCFBFA] overflow-y-auto">
@@ -23,12 +42,18 @@ export default function EncyclopediaViewer({ item, onClose }) {
       </div>
 
       <div className="max-w-[1400px] mx-auto py-8 px-6">
-        {item.category === '書籍' && <BookModal item={item} />}
-        {item.category === '精油' && <OilModal item={item} />}
-        {item.category === '穴道' && <AcuModal item={item} />}
-        {item.category === '中藥' && <HerbModal item={item} />}
-        {item.category === '方劑' && <FormulaModal item={item} />}
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-20 text-[#6B7A6E]">
+              載入中...
+            </div>
+          }
+        >
+          {renderModal()}
+        </Suspense>
       </div>
     </div>
   );
 }
+
+export default memo(EncyclopediaViewer);

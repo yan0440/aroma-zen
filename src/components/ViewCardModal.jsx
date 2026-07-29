@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 
 const parseBoldSyntax = (str) => {
   if (typeof str !== 'string') return str;
@@ -40,10 +40,13 @@ const parseBoldSyntax = (str) => {
   ));
 };
 
-export default function ViewCardModal({ item, onClose }) {
-  if (!item) return null;
+function ViewCardModal({ item, onClose }) {
+  const tags = useMemo(
+    () => [item?.tag, item?.constitutionTag, item?.chemicalTag, item?.acuTable?.meridian].filter(Boolean),
+    [item]
+  );
 
-  const tags = [item.tag, item.constitutionTag, item.chemicalTag, item.acuTable?.meridian].filter(Boolean);
+  if (!item) return null;
 
   return (
     <div className="relative w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
@@ -87,3 +90,5 @@ export default function ViewCardModal({ item, onClose }) {
     </div>
   );
 }
+
+export default memo(ViewCardModal);
