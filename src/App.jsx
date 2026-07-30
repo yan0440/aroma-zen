@@ -12,7 +12,7 @@ import BookModal from './components/BookModal';
 import AdminPage from './components/AdminPage';
 import OtherCategoryView from './components/OtherCategoryView';
 import { db } from './firebase';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 const CATEGORIES = ['書籍', '精油', '穴道', '中藥', '方劑', '其他'];
 const BOLD_KEYWORDS = ['肌肉', '神經', '血管'];
@@ -50,14 +50,24 @@ const DataCard = memo(function DataCard({ item, onClick, parseBoldSyntax }) {
     <div onClick={onClick} className="group relative cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/70 bg-white p-6 md:p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#6B9080] via-[#C8A97E] to-[#D9C6B0] opacity-70" />
       <div className="flex flex-wrap gap-2 items-center mb-4">
-        <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold tracking-wider text-[#3A4F3F]">{item.category}</span>
+        <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold tracking-wider text-[#3A4F3F]">
+          {item.category}
+        </span>
         {tags.map((tag, idx) => (
-          <span key={`tag-${idx}`} className="rounded-full border border-[#E7DED4] bg-white px-3 py-1 text-[11px] font-medium text-[#7C8A80]">{tag}</span>
+          <span key={`tag-${idx}`} className="rounded-full border border-[#E7DED4] bg-white px-3 py-1 text-[11px] font-medium text-[#7C8A80]">
+            {tag}
+          </span>
         ))}
       </div>
-      <h3 className="text-2xl md:text-[1.7rem] font-black tracking-tight text-[#2F4638] group-hover:text-[#6B9080] transition-colors">{item.name}</h3>
-      <p className="mt-2 mb-4 text-sm italic text-[#A39284] font-serif">{item.category === '精油' ? item.englishName : (item.acuTable?.code || '')}</p>
-      <div className="text-sm leading-7 text-[#5F6F65]">{parseBoldSyntax(item.description || item.effect || '')}</div>
+      <h3 className="text-2xl md:text-[1.7rem] font-black tracking-tight text-[#2F4638] group-hover:text-[#6B9080] transition-colors">
+        {item.name}
+      </h3>
+      <p className="mt-2 mb-4 text-sm italic text-[#A39284] font-serif">
+        {item.category === '精油' ? item.englishName : (item.acuTable?.code || '')}
+      </p>
+      <div className="text-sm leading-7 text-[#5F6F65]">
+        {parseBoldSyntax(item.description || item.effect || '')}
+      </div>
       <div className="mt-5 flex items-center justify-between pt-4 border-t border-[#EEE6DC]">
         <span className="text-xs text-[#A39284]">點擊查看詳細內容</span>
         <span className="text-xs font-semibold text-[#6B9080] group-hover:translate-x-1 transition-transform">→</span>
@@ -103,9 +113,7 @@ export default function App() {
   const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => {
-    const q = selectedCategory === '其他'
-      ? query(collection(db, 'entries'))
-      : query(collection(db, 'entries'), where('category', '==', selectedCategory));
+    const q = query(collection(db, 'entries'));
 
     const unsub = onSnapshot(q, (snapshot) => {
       const entries = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -113,7 +121,7 @@ export default function App() {
     });
 
     return () => unsub();
-  }, [selectedCategory]);
+  }, []);
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);
@@ -156,20 +164,32 @@ export default function App() {
     });
   }, [allData, debouncedSearchQuery, selectedCategory]);
 
-  const visibleData = useMemo(() => filteredData.slice(0, visibleCount), [filteredData, visibleCount]);
+  const visibleData = useMemo(
+    () => filteredData.slice(0, visibleCount),
+    [filteredData, visibleCount]
+  );
 
   if (isAdminMode) {
     return <AdminPage allData={allData} onBack={() => setIsAdminMode(false)} />;
   }
 
   if (activeItem) {
-    const modalMap = { 精油: OilModal, 穴道: AcuModal, 中藥: HerbModal, 方劑: FormulaModal, 書籍: BookModal };
+    const modalMap = {
+      精油: OilModal,
+      穴道: AcuModal,
+      中藥: HerbModal,
+      方劑: FormulaModal,
+      書籍: BookModal
+    };
     const ModalComponent = modalMap[activeItem.category];
 
     return (
       <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
         <div className="max-w-6xl mx-auto px-4 pt-8">
-          <button onClick={() => setActiveItem(null)} className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-sm text-[#7F6D5F] shadow-sm hover:text-[#3A4F3F] hover:shadow-md transition-all">
+          <button
+            onClick={() => setActiveItem(null)}
+            className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-sm text-[#7F6D5F] shadow-sm hover:text-[#3A4F3F] hover:shadow-md transition-all"
+          >
             ← 返回列表
           </button>
         </div>
@@ -182,7 +202,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
-      <button onClick={() => setIsAdminMode(true)} className="fixed top-3 left-3 z-50 rounded-full bg-white px-3 py-1 text-[10px] font-medium text-[#A39284] shadow-sm border border-white hover:text-[#3A4F3F] hover:bg-white transition-all">
+      <button
+        onClick={() => setIsAdminMode(true)}
+        className="fixed top-3 left-3 z-50 rounded-full bg-white px-3 py-1 text-[10px] font-medium text-[#A39284] shadow-sm border border-white hover:text-[#3A4F3F] hover:bg-white transition-all"
+      >
         開發者專區
       </button>
 
@@ -191,8 +214,12 @@ export default function App() {
           <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-xs tracking-[0.28em] text-[#A39284] shadow-sm mb-5">
             東方經絡 × 西方芳療
           </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-[#2F4638] mb-4">本草與芳香數位百科</h1>
-          <p className="text-sm md:text-base text-[#8E7B6A] tracking-wide">結合東方經絡與西方芳療的健康數位誌</p>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-[#2F4638] mb-4">
+            本草與芳香數位百科
+          </h1>
+          <p className="text-sm md:text-base text-[#8E7B6A] tracking-wide">
+            結合東方經絡與西方芳療的健康數位誌
+          </p>
         </header>
 
         <section className="mb-10 rounded-[2rem] border border-white bg-white p-4 md:p-5 shadow-sm">

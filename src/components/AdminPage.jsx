@@ -32,9 +32,11 @@ const buildBookSearchText = (item) => {
 
 const buildSearchText = (item) => {
   if (item.category === '書籍') return buildBookSearchText(item);
-  return normalizeText([item.name, item.alias, item.englishName, item.tag, item.source, item.effect, item.indications]
-    .filter(Boolean)
-    .join(' '));
+  return normalizeText(
+    [item.name, item.alias, item.englishName, item.tag, item.source, item.effect, item.indications]
+      .filter(Boolean)
+      .join(' ')
+  );
 };
 
 const EntryRow = React.memo(function EntryRow({
@@ -106,6 +108,12 @@ export default function AdminPage({ allData, onBack }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [viewState]);
+
+  useEffect(() => {
+    setFilterCategory('全部');
+    setSearchName('');
+    setDisplayCount(10);
+  }, []);
 
   useEffect(() => {
     setDisplayCount(10);
