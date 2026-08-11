@@ -5,17 +5,36 @@ import { fileURLToPath } from 'node:url';
 const currentFile = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFile);
 
-const publicDirectory = path.resolve(
+const projectDirectory = path.resolve(
   currentDirectory,
-  '../public'
+  '..'
 );
 
-const versionFile = path.join(
+const publicDirectory = path.join(
+  projectDirectory,
+  'public'
+);
+
+const srcDirectory = path.join(
+  projectDirectory,
+  'src'
+);
+
+const generatedVersionFile = path.join(
+  srcDirectory,
+  'generatedVersion.js'
+);
+
+const publicVersionFile = path.join(
   publicDirectory,
   'version.json'
 );
 
 fs.mkdirSync(publicDirectory, {
+  recursive: true,
+});
+
+fs.mkdirSync(srcDirectory, {
   recursive: true,
 });
 
@@ -30,16 +49,22 @@ const version = [
   String(now.getUTCSeconds()).padStart(2, '0'),
 ].join('-');
 
-const versionData = {
-  version: `v${version}`,
+const appVersion = `v${version}`;
+
+const versionJson = {
+  version: appVersion,
 };
 
 fs.writeFileSync(
-  versionFile,
-  JSON.stringify(versionData, null, 2),
+  publicVersionFile,
+  JSON.stringify(versionJson, null, 2),
   'utf8'
 );
 
-console.log(
-  `version.json 已建立：${versionData.version}`
+fs.writeFileSync(
+  generatedVersionFile,
+  `export const APP_VERSION = '${appVersion}';\n`,
+  'utf8'
 );
+
+console.log(`版本號已產生：${appVersion}`);

@@ -1,0 +1,1 @@
+export const APP_VERSION = 'v2026-08-11-06-15-00';

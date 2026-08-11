@@ -21,6 +21,7 @@ import {
 
 import { auth, db } from '../firebase';
 import AddEntryPage from './AddEntryPage';
+import { APP_VERSION } from '../generatedVersion.js';
 
 const EncyclopediaViewer = lazy(() => import('./EncyclopediaViewer'));
 const CardViewer = lazy(() => import('./CardViewer'));
@@ -189,7 +190,6 @@ export default function AdminPage({ allData, onBack }) {
   const [viewingItem, setViewingItem] = useState(null);
   const [viewingCard, setViewingCard] = useState(null);
 
-  const [version, setVersion] = useState('讀取中...');
   const [filterCategory, setFilterCategory] = useState('全部');
   const [searchName, setSearchName] = useState('');
   const [displayCount, setDisplayCount] = useState(10);
@@ -199,8 +199,10 @@ export default function AdminPage({ allData, onBack }) {
 
   const deletingRef = useRef(false);
 
+  const version = APP_VERSION;
+
   /*
-   * 監聽 Firebase 登入狀態
+   * 監聽 Firebase Authentication 登入狀態
    */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -219,55 +221,6 @@ export default function AdminPage({ allData, onBack }) {
     return () => unsubscribe();
   }, []);
 
-  /*
-   * 讀取版本號
-   */
-  useEffect(() => {
-  let isMounted = true;
-
-  const loadVersion = async () => {
-    try {
-      const versionUrl =
-        `${import.meta.env.BASE_URL}version.json?t=${Date.now()}`;
-
-      console.log('讀取版本檔:', versionUrl);
-
-      const response = await fetch(versionUrl, {
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `版本檔讀取失敗：${response.status}`
-        );
-      }
-
-      const data = await response.json();
-
-      console.log('version.json 內容:', data);
-
-      if (!data?.version) {
-        throw new Error('version.json 缺少 version 欄位');
-      }
-
-      if (isMounted) {
-        setVersion(String(data.version));
-      }
-    } catch (error) {
-      console.error('版本號讀取失敗:', error);
-
-      if (isMounted) {
-        setVersion('版本讀取失敗');
-      }
-    }
-  };
-
-  loadVersion();
-
-  return () => {
-    isMounted = false;
-  };
-}, []);
   /*
    * 切換頁面時回到頂端
    */
