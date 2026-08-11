@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "generate:version": "node scripts/generate-version.mjs",
-    "build": "npm run generate:version && vite build",
+    "build": "vite build",
     "preview": "vite preview"
 },
   "dependencies": {
