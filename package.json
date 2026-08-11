@@ -5,13 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
+    "generate:version": "node scripts/generate-version.js",
+    "build": "npm run generate:version && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@vercel/speed-insights": "^2.0.0",
-    "firebase": "^12.16.0",
+    "firebase": "^12.17.1",
     "firebase-admin": "^14.2.0",
     "mammoth": "^1.12.0",
     "react": "^19.2.7",

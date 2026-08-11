@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  memo,
+} from 'react';
+
 import { oilData } from './data/oilData.js';
 import { acuData } from './data/acuData.js';
 import { herbData } from './data/herbData.js';
@@ -86,7 +92,6 @@ function parseBoldSyntax(str) {
 const DataCard = memo(function DataCard({
   item,
   onClick,
-  parseBoldSyntax,
 }) {
   const tags = [
     item.tag,
@@ -183,8 +188,10 @@ const getBookSearchText = (item) => {
 const getSearchText = (item) => {
   const fields = [
     item.name,
+    item.alias,
     item.englishName,
     item.tag,
+    item.source,
     item.constitutionTag,
     item.chemicalTag,
     item.description,
@@ -219,6 +226,38 @@ const getSearchText = (item) => {
     .toLowerCase();
 };
 
+function StatusMessage({
+  isOnline,
+  isUsingCache,
+  dataError,
+}) {
+  if (dataError) {
+    return (
+      <div className="fixed left-1/2 top-4 z-[300] w-[92%] max-w-xl -translate-x-1/2 rounded-xl bg-red-600 px-4 py-3 text-center text-sm text-white shadow-lg">
+        {dataError}
+      </div>
+    );
+  }
+
+  if (!isOnline) {
+    return (
+      <div className="fixed bottom-4 left-1/2 z-[300] -translate-x-1/2 rounded-full bg-[#D4A373] px-4 py-2 text-sm text-white shadow-lg">
+        目前離線，正在使用已儲存的百科資料
+      </div>
+    );
+  }
+
+  if (isUsingCache) {
+    return (
+      <div className="fixed bottom-4 left-1/2 z-[300] -translate-x-1/2 rounded-full bg-[#D4A373] px-4 py-2 text-sm text-white shadow-lg">
+        目前使用已儲存的百科資料
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default function App() {
   const [dbData, setDbData] = useState([]);
 
@@ -239,16 +278,21 @@ export default function App() {
 
   const [isUsingCache, setIsUsingCache] = useState(false);
   const [dataError, setDataError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   /*
-   * 完整監聽 entries。
+   * 讀取完整 entries。
    *
    * 重要：
-   * 這裡不能依賴 selectedCategory，
-   * 否則主頁點哪個分類，Firestore 就只會取得哪個分類。
+   * 不要把 selectedCategory 放進依賴陣列，
+   * 否則主頁分類會影響 Firestore 資料來源。
    */
   useEffect(() => {
-    const entriesQuery = query(collection(db, 'entries'));
+    const entriesQuery = query(
+      collection(db, 'entries')
+    );
+
+    console.log('開始讀取 Firestore entries...');
 
     const unsubscribe = onSnapshot(
       entriesQuery,
@@ -261,27 +305,37 @@ export default function App() {
           ...entryDoc.data(),
         }));
 
-        setDbData(entries);
-        setDataError('');
+        console.log('Firestore 讀取成功');
+        console.log('資料筆數:', entries.length);
+        console.log('是否使用快取:', snapshot.metadata.fromCache);
+        console.log('資料內容:', entries);
 
-        // true 表示目前資料來自本機快取
-        // false 表示已取得伺服器最新資料
+        setDbData(entries);
         setIsUsingCache(snapshot.metadata.fromCache);
+        setDataError('');
+        setIsLoading(false);
       },
       (error) => {
-        console.error('百科資料讀取失敗:', error);
+        console.error('Firestore 讀取錯誤:', error);
+        console.error('錯誤代碼:', error.code);
+        console.error('錯誤訊息:', error.message);
 
         setDataError(
-          '目前無法取得最新資料，將顯示已儲存的百科內容。'
+          `百科資料讀取失敗：${error.code || error.message}`
         );
+
+        setIsLoading(false);
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      console.log('取消 Firestore 監聽');
+      unsubscribe();
+    };
   }, []);
 
   /*
-   * 監聽網路狀態
+   * 監聽網路狀態。
    */
   useEffect(() => {
     const handleOnline = () => {
@@ -304,7 +358,7 @@ export default function App() {
   }, []);
 
   /*
-   * 搜尋延遲
+   * 搜尋延遲。
    */
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -315,7 +369,7 @@ export default function App() {
   }, [searchQuery]);
 
   /*
-   * 切換分類或搜尋時，重新顯示前 20 筆
+   * 切換分類或搜尋時，重新顯示前 20 筆。
    */
   useEffect(() => {
     setVisibleCount(20);
@@ -323,7 +377,6 @@ export default function App() {
 
   /*
    * 靜態資料。
-   * 這些資料已經打包在前端，因此程式載入後即使離線也可以使用。
    */
   const staticData = useMemo(
     () => [
@@ -370,8 +423,7 @@ export default function App() {
   }, [staticData, dbData]);
 
   /*
-   * 主頁分類搜尋。
-   * 這裡只負責前端顯示，不會改變 dbData 或 allData。
+   * 主頁前端分類與搜尋。
    */
   const filteredData = useMemo(() => {
     const normalizedQuery = debouncedSearchQuery
@@ -414,19 +466,27 @@ export default function App() {
   );
 
   /*
-   * 後台只接收完整 allData。
+   * 進入後台時，只傳完整 allData。
    */
   if (isAdminMode) {
     return (
-      <AdminPage
-        allData={allData}
-        onBack={() => setIsAdminMode(false)}
-      />
+      <>
+        <StatusMessage
+          isOnline={isOnline}
+          isUsingCache={isUsingCache}
+          dataError={dataError}
+        />
+
+        <AdminPage
+          allData={allData}
+          onBack={() => setIsAdminMode(false)}
+        />
+      </>
     );
   }
 
   /*
-   * 詳細內容頁
+   * 詳細內容頁。
    */
   if (activeItem) {
     const modalMap = {
@@ -441,11 +501,11 @@ export default function App() {
 
     return (
       <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
-        {(isUsingCache || !isOnline) && (
-          <div className="fixed bottom-4 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-[#D4A373] px-4 py-2 text-sm text-white shadow-lg">
-            目前使用已儲存的百科資料
-          </div>
-        )}
+        <StatusMessage
+          isOnline={isOnline}
+          isUsingCache={isUsingCache}
+          dataError={dataError}
+        />
 
         <div className="max-w-6xl mx-auto px-4 pt-8">
           <button
@@ -471,17 +531,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
-      {(isUsingCache || !isOnline) && (
-        <div className="fixed bottom-4 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-[#D4A373] px-4 py-2 text-sm text-white shadow-lg">
-          目前使用已儲存的百科資料
-        </div>
-      )}
-
-      {dataError && isOnline && (
-        <div className="fixed bottom-4 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-[#A39284] px-4 py-2 text-sm text-white shadow-lg">
-          {dataError}
-        </div>
-      )}
+      <StatusMessage
+        isOnline={isOnline}
+        isUsingCache={isUsingCache}
+        dataError={dataError}
+      />
 
       <button
         onClick={() => setIsAdminMode(true)}
@@ -504,6 +558,12 @@ export default function App() {
             結合東方經絡與西方芳療的健康數位誌
           </p>
         </header>
+
+        {isLoading && (
+          <div className="mb-6 rounded-2xl border border-[#E5E0D8] bg-white px-4 py-3 text-center text-sm text-[#A39284]">
+            正在讀取百科資料...
+          </div>
+        )}
 
         <section className="mb-10 rounded-[2rem] border border-white bg-white p-4 md:p-5 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
@@ -553,7 +613,6 @@ export default function App() {
                     }
                     item={item}
                     onClick={() => setActiveItem(item)}
-                    parseBoldSyntax={parseBoldSyntax}
                   />
                 ))}
               </div>
@@ -571,7 +630,9 @@ export default function App() {
             </>
           ) : (
             <div className="rounded-3xl border border-[#E5E0D8] bg-white px-6 py-16 text-center text-[#A39284] shadow-sm">
-              沒有資料。
+              {isLoading
+                ? '正在讀取資料...'
+                : '目前沒有符合條件的資料。'}
             </div>
           )}
         </main>

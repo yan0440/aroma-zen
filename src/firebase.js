@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, isSupported } from 'firebase/analytics';
+import { getAuth } from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -17,16 +18,24 @@ const firebaseConfig = {
   measurementId: 'G-FZEECL8R1F',
 };
 
+// 初始化 Firebase App
 const app = initializeApp(firebaseConfig);
 
-// 啟用 Firestore 離線持久化快取
+// 匯出 app，供其他檔案使用
+export { app };
+
+// 初始化 Firebase Authentication
+export const auth = getAuth(app);
+
+// 初始化 Firestore 離線持久化快取
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     tabManager: persistentMultipleTabManager(),
   }),
 });
 
-// Analytics 在部分瀏覽器、隱私模式或非瀏覽器環境可能不支援
+// Firebase Analytics
+// 部分瀏覽器、無痕模式或非瀏覽器環境可能不支援 Analytics
 isSupported()
   .then((supported) => {
     if (supported) {
