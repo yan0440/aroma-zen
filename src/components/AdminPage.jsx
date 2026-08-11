@@ -189,7 +189,7 @@ export default function AdminPage({ allData, onBack }) {
   const [viewingItem, setViewingItem] = useState(null);
   const [viewingCard, setViewingCard] = useState(null);
 
-  const [version, setVersion] = useState('v2026-08-11-b02f021');
+  const [version, setVersion] = useState('讀取中...');
   const [filterCategory, setFilterCategory] = useState('全部');
   const [searchName, setSearchName] = useState('');
   const [displayCount, setDisplayCount] = useState(10);
@@ -223,14 +223,18 @@ export default function AdminPage({ allData, onBack }) {
    * 讀取版本號
    */
   useEffect(() => {
+  let isMounted = true;
+
   const loadVersion = async () => {
     try {
-      const response = await fetch(
-        `/version.json?t=${Date.now()}`,
-        {
-          cache: 'no-store',
-        }
-      );
+      const versionUrl =
+        `${import.meta.env.BASE_URL}version.json?t=${Date.now()}`;
+
+      console.log('讀取版本檔:', versionUrl);
+
+      const response = await fetch(versionUrl, {
+        cache: 'no-store',
+      });
 
       if (!response.ok) {
         throw new Error(
@@ -240,18 +244,29 @@ export default function AdminPage({ allData, onBack }) {
 
       const data = await response.json();
 
-      if (data?.version) {
+      console.log('version.json 內容:', data);
+
+      if (!data?.version) {
+        throw new Error('version.json 缺少 version 欄位');
+      }
+
+      if (isMounted) {
         setVersion(String(data.version));
       }
     } catch (error) {
       console.error('版本號讀取失敗:', error);
 
-      // 讀取失敗時保留目前版本，不退回舊版 v1.2.7
-      setVersion('v2026-08-11-b02f021');
+      if (isMounted) {
+        setVersion('版本讀取失敗');
+      }
     }
   };
 
   loadVersion();
+
+  return () => {
+    isMounted = false;
+  };
 }, []);
   /*
    * 切換頁面時回到頂端
