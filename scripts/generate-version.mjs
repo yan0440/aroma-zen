@@ -20,14 +20,14 @@ const srcDirectory = path.join(
   'src'
 );
 
-const generatedVersionFile = path.join(
-  srcDirectory,
-  'generatedVersion.js'
-);
-
 const publicVersionFile = path.join(
   publicDirectory,
   'version.json'
+);
+
+const generatedVersionFile = path.join(
+  srcDirectory,
+  'generatedVersion.js'
 );
 
 fs.mkdirSync(publicDirectory, {
@@ -55,6 +55,8 @@ const versionJson = {
   version: appVersion,
 };
 
+const generatedVersionJs = `export const APP_VERSION = '${appVersion}';\n`;
+
 fs.writeFileSync(
   publicVersionFile,
   JSON.stringify(versionJson, null, 2),
@@ -63,8 +65,10 @@ fs.writeFileSync(
 
 fs.writeFileSync(
   generatedVersionFile,
-  `export const APP_VERSION = '${appVersion}';\n`,
+  generatedVersionJs,
   'utf8'
 );
 
 console.log(`版本號已產生：${appVersion}`);
+console.log(`已更新：${publicVersionFile}`);
+console.log(`已更新：${generatedVersionFile}`);
