@@ -342,7 +342,7 @@ export default function OilModal({
               </div>
 
               <div className="mt-6">
-                <h3 className="mb-2 text-sm font-bold text-[#2F4638]">
+                <h3 className="mb-2 text-xl font-bold text-[#2F4638]">
                   簡介
                 </h3>
 

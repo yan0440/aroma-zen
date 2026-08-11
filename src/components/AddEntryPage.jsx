@@ -342,12 +342,45 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
           return;
         }
 
-        const oldEntrySnap = await transaction.get(oldEntryRef);
-        if (!oldEntrySnap.exists()) {
-          throw new Error('找不到原始資料，請重新整理後再試。');
-        }
+        const oldEntrySnap =
+  await transaction.get(oldEntryRef);
 
-        const baseCreatedAt = oldEntrySnap.data()?.createdAt || editingItem?.createdAt || now;
+const oldEntryExists =
+  oldEntrySnap.exists();
+
+if (!oldEntryExists) {
+  if (newKeySnap.exists()) {
+    throw new Error(
+      '已存在相同分類與名稱的百科資料'
+    );
+  }
+
+  const newEntry = {
+    ...cleanData,
+    id: newEntryKey,
+    entryKey: newEntryKey,
+    searchKey: normalizeText(
+      `${category} ${name} ${
+        formData.alias || ''
+      } ${
+        formData.englishName || ''
+      }`
+    ),
+    createdAt:editingItem?.createdAt || now,updatedAt: now,name,category,
+  };
+
+  transaction.set(newKeyRef, {entryKey: newEntryKey,entryId: newEntryKey,category,name,createdAt:editingItem?.createdAt || now,
+    updatedAt: now,
+  });
+
+  transaction.set(
+    newEntryRef,
+    newEntry
+  );
+
+  return;
+}
+const baseCreatedAt =oldEntrySnap.data()?.createdAt ||editingItem?.createdAt ||now;
 
         const newEntry = {
           ...cleanData,

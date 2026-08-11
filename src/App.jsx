@@ -47,6 +47,18 @@ const BOLD_KEYWORDS = [
 ];
 
 
+const normalizeText = (value = '') =>
+  String(value)
+    .trim()
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
+
+const getDataKey = (item) =>
+  `${normalizeText(item?.category)}__${normalizeText(item?.name)}`;
+
+
 function parseBoldSyntax(str) {
   if (typeof str !== 'string') {
     return str;
@@ -191,6 +203,7 @@ const DataCard = memo(function DataCard({
         </span>
 
         <span className="text-xs font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
+          →
         </span>
       </div>
     </div>
@@ -230,16 +243,17 @@ const getBookSearchText = (item) => {
       .join(' ');
   };
 
-  return [
-    item.name,
-    item.bookDetails?.author,
-    walkChapters(
-      item.bookDetails?.chapters
-    ),
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+  return normalizeText(
+    [
+      item.name,
+      item.bookDetails?.author,
+      walkChapters(
+        item.bookDetails?.chapters
+      ),
+    ]
+      .filter(Boolean)
+      .join(' ')
+  );
 };
 
 
@@ -281,10 +295,11 @@ const getSearchText = (item) => {
     item.note,
   ];
 
-  return fields
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+  return normalizeText(
+    fields
+      .filter(Boolean)
+      .join(' ')
+  );
 };
 
 
@@ -403,6 +418,17 @@ export default function App() {
           entries
         );
 
+        console.table(
+          entries.map((entry) => ({
+            id: entry.id,
+            category: entry.category,
+            name: entry.name,
+            entryKey: entry.entryKey,
+            description:
+              entry.description || '',
+          }))
+        );
+
         setDbData(entries);
         setIsUsingCache(
           snapshot.metadata.fromCache
@@ -513,40 +539,66 @@ export default function App() {
 
 
   const allData = useMemo(() => {
-    const merged = [
-      ...staticData,
-      ...dbData,
-    ].map((item) => {
-      if (item.category !== '書籍') {
-        return item;
-      }
+    const dataMap = new Map();
 
-      return {
-        ...item,
-        _searchText: getBookSearchText(item),
-      };
-    });
-
-    const seen = new Set();
-
-    return merged.filter((item) => {
+    const addItem = (item, source) => {
       if (
         !item ||
         !item.name ||
         !item.category
       ) {
-        return false;
+        return;
       }
 
-      const key = `${item.category}__${item.name}`;
+      const key = getDataKey(item);
 
-      if (seen.has(key)) {
-        return false;
+      const normalizedItem =
+        item.category === '書籍'
+          ? {
+              ...item,
+              _searchText:
+                getBookSearchText(item),
+            }
+          : item;
+
+      const existingItem =
+        dataMap.get(key);
+
+      if (!existingItem) {
+        dataMap.set(key, {
+          ...normalizedItem,
+          _source: source,
+        });
+
+        return;
       }
 
-      seen.add(key);
-      return true;
+      if (source === 'firestore') {
+        dataMap.set(key, {
+          ...normalizedItem,
+          _source: source,
+        });
+      }
+    };
+
+    staticData.forEach((item) => {
+      addItem(item, 'static');
     });
+
+    dbData.forEach((item) => {
+      addItem(item, 'firestore');
+    });
+
+    return Array.from(dataMap.values()).map(
+      (item) => {
+        const {
+          _source,
+          ...cleanItem
+        } = item;
+
+        return cleanItem;
+      }
+    );
   }, [staticData, dbData]);
 
 
