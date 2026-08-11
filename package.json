@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "generate:version": "node scripts/generate-version.js",
-    "build": "npm run generate:version && vite build",
-    "preview": "vite preview"
-  },
+  "dev": "vite",
+  "generate:version": "node scripts/generate-version.mjs",
+  "build": "npm run generate:version && vite build",
+  "preview": "vite preview"
+},
   "dependencies": {
     "@vercel/speed-insights": "^2.0.0",
     "firebase": "^12.17.1",
