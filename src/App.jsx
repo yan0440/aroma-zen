@@ -26,20 +26,39 @@ import {
   query,
 } from 'firebase/firestore';
 
-const CATEGORIES = ['書籍', '精油', '穴道', '中藥', '方劑', '其他'];
-const BOLD_KEYWORDS = ['肌肉', '神經', '血管'];
+const CATEGORIES = [
+  '書籍',
+  '精油',
+  '穴道',
+  '中藥',
+  '方劑',
+  '其他',
+];
+
+const BOLD_KEYWORDS = [
+  '肌肉',
+  '神經',
+  '血管',
+];
 
 function parseBoldSyntax(str) {
   if (typeof str !== 'string') return str;
 
-  const regex = /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
+  const regex =
+    /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
 
   return str.split('\n').map((line, lineIndex) => (
-    <span key={lineIndex} className="block mb-1">
+    <span
+      key={lineIndex}
+      className="block mb-1"
+    >
       {line.split(regex).map((part, i) => {
         if (!part) return null;
 
-        if (part.startsWith('==') && part.endsWith('==')) {
+        if (
+          part.startsWith('==') &&
+          part.endsWith('==')
+        ) {
           return (
             <mark
               key={i}
@@ -50,7 +69,10 @@ function parseBoldSyntax(str) {
           );
         }
 
-        if (part.startsWith('**') && part.endsWith('**')) {
+        if (
+          part.startsWith('**') &&
+          part.endsWith('**')
+        ) {
           return (
             <strong
               key={i}
@@ -72,7 +94,9 @@ function parseBoldSyntax(str) {
           );
         }
 
-        if (part.match(/^[【《\(].*[】》\)]$/)) {
+        if (
+          part.match(/^[【《\(].*[】》\)]$/)
+        ) {
           return (
             <span
               key={i}
@@ -133,7 +157,9 @@ const DataCard = memo(function DataCard({
       </p>
 
       <div className="text-sm leading-7 text-[#5F6F65]">
-        {parseBoldSyntax(item.description || item.effect || '')}
+        {parseBoldSyntax(
+          item.description || item.effect || ''
+        )}
       </div>
 
       <div className="mt-5 flex items-center justify-between pt-4 border-t border-[#EEE6DC]">
@@ -262,9 +288,15 @@ export default function App() {
   const [dbData, setDbData] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [
+    debouncedSearchQuery,
+    setDebouncedSearchQuery,
+  ] = useState('');
 
-  const [selectedCategory, setSelectedCategory] = useState('書籍');
+  const [
+    selectedCategory,
+    setSelectedCategory,
+  ] = useState('書籍');
 
   const [activeItem, setActiveItem] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -280,19 +312,14 @@ export default function App() {
   const [dataError, setDataError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  /*
-   * 讀取完整 entries。
-   *
-   * 重要：
-   * 不要把 selectedCategory 放進依賴陣列，
-   * 否則主頁分類會影響 Firestore 資料來源。
-   */
   useEffect(() => {
     const entriesQuery = query(
       collection(db, 'entries')
     );
 
-    console.log('開始讀取 Firestore entries...');
+    console.log(
+      '開始讀取 Firestore entries...'
+    );
 
     const unsubscribe = onSnapshot(
       entriesQuery,
@@ -300,28 +327,54 @@ export default function App() {
         includeMetadataChanges: true,
       },
       (snapshot) => {
-        const entries = snapshot.docs.map((entryDoc) => ({
-          id: entryDoc.id,
-          ...entryDoc.data(),
-        }));
+        const entries = snapshot.docs.map(
+          (entryDoc) => ({
+            id: entryDoc.id,
+            ...entryDoc.data(),
+          })
+        );
 
-        console.log('Firestore 讀取成功');
-        console.log('資料筆數:', entries.length);
-        console.log('是否使用快取:', snapshot.metadata.fromCache);
-        console.log('資料內容:', entries);
+        console.log(
+          'Firestore 讀取成功'
+        );
+        console.log(
+          '資料筆數:',
+          entries.length
+        );
+        console.log(
+          '是否使用快取:',
+          snapshot.metadata.fromCache
+        );
+        console.log(
+          '資料內容:',
+          entries
+        );
 
         setDbData(entries);
-        setIsUsingCache(snapshot.metadata.fromCache);
+        setIsUsingCache(
+          snapshot.metadata.fromCache
+        );
         setDataError('');
         setIsLoading(false);
       },
       (error) => {
-        console.error('Firestore 讀取錯誤:', error);
-        console.error('錯誤代碼:', error.code);
-        console.error('錯誤訊息:', error.message);
+        console.error(
+          'Firestore 讀取錯誤:',
+          error
+        );
+        console.error(
+          '錯誤代碼:',
+          error.code
+        );
+        console.error(
+          '錯誤訊息:',
+          error.message
+        );
 
         setDataError(
-          `百科資料讀取失敗：${error.code || error.message}`
+          `百科資料讀取失敗：${
+            error.code || error.message
+          }`
         );
 
         setIsLoading(false);
@@ -329,14 +382,13 @@ export default function App() {
     );
 
     return () => {
-      console.log('取消 Firestore 監聽');
+      console.log(
+        '取消 Firestore 監聽'
+      );
       unsubscribe();
     };
   }, []);
 
-  /*
-   * 監聽網路狀態。
-   */
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -348,36 +400,46 @@ export default function App() {
       setIsUsingCache(true);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener(
+      'online',
+      handleOnline
+    );
+
+    window.addEventListener(
+      'offline',
+      handleOffline
+    );
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener(
+        'online',
+        handleOnline
+      );
+
+      window.removeEventListener(
+        'offline',
+        handleOffline
+      );
     };
   }, []);
 
-  /*
-   * 搜尋延遲。
-   */
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
+      setDebouncedSearchQuery(
+        searchQuery
+      );
     }, 250);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  /*
-   * 切換分類或搜尋時，重新顯示前 20 筆。
-   */
   useEffect(() => {
     setVisibleCount(20);
-  }, [selectedCategory, debouncedSearchQuery]);
+  }, [
+    selectedCategory,
+    debouncedSearchQuery,
+  ]);
 
-  /*
-   * 靜態資料。
-   */
   const staticData = useMemo(
     () => [
       ...(oilData || []),
@@ -389,11 +451,11 @@ export default function App() {
     []
   );
 
-  /*
-   * 合併靜態資料與 Firestore 資料。
-   */
   const allData = useMemo(() => {
-    const merged = [...staticData, ...dbData].map((item) => {
+    const merged = [
+      ...staticData,
+      ...dbData,
+    ].map((item) => {
       if (item.category !== '書籍') {
         return item;
       }
@@ -407,7 +469,11 @@ export default function App() {
     const seen = new Set();
 
     return merged.filter((item) => {
-      if (!item || !item.name || !item.category) {
+      if (
+        !item ||
+        !item.name ||
+        !item.category
+      ) {
         return false;
       }
 
@@ -422,13 +488,11 @@ export default function App() {
     });
   }, [staticData, dbData]);
 
-  /*
-   * 主頁前端分類與搜尋。
-   */
   const filteredData = useMemo(() => {
-    const normalizedQuery = debouncedSearchQuery
-      .trim()
-      .toLowerCase();
+    const normalizedQuery =
+      debouncedSearchQuery
+        .trim()
+        .toLowerCase();
 
     return allData.filter((item) => {
       if (!item || !item.name) {
@@ -439,7 +503,9 @@ export default function App() {
         return false;
       }
 
-      if (item.category !== selectedCategory) {
+      if (
+        item.category !== selectedCategory
+      ) {
         return false;
       }
 
@@ -452,7 +518,9 @@ export default function App() {
           ? item._searchText || ''
           : getSearchText(item);
 
-      return searchableText.includes(normalizedQuery);
+      return searchableText.includes(
+        normalizedQuery
+      );
     });
   }, [
     allData,
@@ -465,9 +533,6 @@ export default function App() {
     [filteredData, visibleCount]
   );
 
-  /*
-   * 進入後台時，只傳完整 allData。
-   */
   if (isAdminMode) {
     return (
       <>
@@ -485,9 +550,6 @@ export default function App() {
     );
   }
 
-  /*
-   * 詳細內容頁。
-   */
   if (activeItem) {
     const modalMap = {
       精油: OilModal,
@@ -497,7 +559,8 @@ export default function App() {
       書籍: BookModal,
     };
 
-    const ModalComponent = modalMap[activeItem.category];
+    const ModalComponent =
+      modalMap[activeItem.category];
 
     return (
       <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
@@ -559,12 +622,6 @@ export default function App() {
           </p>
         </header>
 
-        {isLoading && (
-          <div className="mb-6 rounded-2xl border border-[#E5E0D8] bg-white px-4 py-3 text-center text-sm text-[#A39284]">
-            正在讀取百科資料...
-          </div>
-        )}
-
         <section className="mb-10 rounded-[2rem] border border-white bg-white p-4 md:p-5 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             <div className="relative w-full md:max-w-xs">
@@ -576,7 +633,9 @@ export default function App() {
                 type="text"
                 placeholder="搜尋名稱、英文、經絡或功效標籤..."
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) =>
+                  setSearchQuery(event.target.value)
+                }
                 className="w-full rounded-2xl border border-[#E6DDD3] bg-white py-3 pl-8 pr-4 text-sm outline-none ring-0 transition focus:border-[#3A4F3F]/30 focus:bg-white"
               />
             </div>
@@ -585,7 +644,9 @@ export default function App() {
               {CATEGORIES.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() =>
+                    setSelectedCategory(category)
+                  }
                   className={`shrink-0 rounded-full px-4.5 py-2 text-sm font-medium transition-all ${
                     selectedCategory === category
                       ? 'bg-[#2F4638] text-white shadow-md'
@@ -601,7 +662,9 @@ export default function App() {
 
         <main>
           {selectedCategory === '其他' ? (
-            <OtherCategoryView allData={allData} />
+            <OtherCategoryView
+              allData={allData}
+            />
           ) : filteredData.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -612,15 +675,22 @@ export default function App() {
                       `${item.category}-${item.name}-${index}`
                     }
                     item={item}
-                    onClick={() => setActiveItem(item)}
+                    onClick={() =>
+                      setActiveItem(item)
+                    }
                   />
                 ))}
               </div>
 
-              {visibleCount < filteredData.length && (
+              {visibleCount <
+                filteredData.length && (
                 <div className="mt-8 text-center">
                   <button
-                    onClick={() => setVisibleCount((count) => count + 20)}
+                    onClick={() =>
+                      setVisibleCount(
+                        (count) => count + 20
+                      )
+                    }
                     className="rounded-full bg-[#2F4638] px-5 py-2.5 text-sm font-medium text-white shadow-md hover:opacity-90 transition-all"
                   >
                     載入更多
