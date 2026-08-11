@@ -59,9 +59,7 @@ function getAliasTitle(fullTitle = '') {
 }
 
 export default function BookModal({
-  item,
-  onClose,
-  backLabel = '← 返回列表',
+  item,onClose,backLabel = '返回列表',
 }) {
   const [
     selectedContent,
@@ -552,41 +550,41 @@ export default function BookModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
-      <header className="w-full shrink-0 border-b border-[#D8C8B8] bg-[#718678] shadow-[0_4px_16px_rgba(88,102,94,0.18)]">
-        <div className="flex w-full items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#D9C6B0] text-lg text-[#718678]">
-              📖
-            </div>
+      <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
+  <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
+    <div className="flex min-w-0 items-center gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center text-3xl leading-none md:text-4xl">
+  📖
+</div>
 
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F3E5D6]">
-                Book Reader
-              </p>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
+          Book Reader
+        </p>
 
-              <h2 className="truncate text-lg font-black text-white md:text-xl">
-                {item.name}
-              </h2>
+        <h2 className="truncate text-lg font-black text-[#718678] md:text-xl">
+          {item.name}
+        </h2>
 
-              <p className="hidden text-xs text-[#E9DCCF] sm:block">
-                {item.category} · 百科閱讀器
-              </p>
-            </div>
-          </div>
+        <p className="hidden text-xs text-[#8C725F] sm:block">
+          {item.category} · 百科閱讀器
+        </p>
+      </div>
+    </div>
 
-          <button
-  type="button"
-  onClick={() => {
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-  }}
-  className="shrink-0 rounded-lg border border-[#F3E5D6]/60 bg-[#D9C6B0]/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-[#D9C6B0]/45"
->
-  {backLabel}
-</button>
-        </div>
-      </header>
+    <button
+      type="button"
+      onClick={() => {
+        if (typeof onClose === 'function') {
+          onClose();
+        }
+      }}
+      className="shrink-0 rounded-lg border border-[#B2B2A8] bg-[#B2B2A8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5F7568]"
+    >
+      {backLabel}
+    </button>
+  </div>
+</header>
 
       <div className="flex min-h-0 w-full flex-1 flex-col gap-4 bg-[#F5EEE5] p-4 md:p-6">
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)]">

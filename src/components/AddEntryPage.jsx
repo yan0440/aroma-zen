@@ -552,19 +552,19 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-                      {renderField('別名', 'alias')}
-                      {renderField('植物種類／萃取部位', 'typePart')}
-                      {renderField('萃取方法', 'method')}
-                      {renderField('外文名', 'englishName')}
-                      {renderField('拉丁學名', 'latin')}
-                      {renderField('科名', 'family')}
-                      {renderField('性味', 'nature')}
-                      {renderField('五行／陰陽屬性', 'property')}
-                      {renderField('歸經', 'meridian')}
-                      {renderField('主治', 'indications')}
-                      {renderField('類比音符', 'noteAnalogy')}
-                      {renderField('主宰星球', 'planet')}
-                      {renderField('重要產地', 'origin')}
+                      {renderField('🏷️ 別名', 'alias')}
+                      {renderField('🌿 植物種類／萃取部位', 'typePart')}
+                      {renderField('🧪 萃取方法', 'method')}
+                      {renderField('🌐 外文名', 'englishName')}
+                      {renderField('🧬 拉丁學名', 'latin')}
+                      {renderField('🌳 科名', 'family')}
+                      {renderField('👅 性味', 'nature')}
+                      {renderField('☯️ 五行／陰陽屬性', 'property')}
+                      {renderField('🎯 歸經', 'meridian')}
+                      {renderField('🩹 主治', 'indications')}
+                      {renderField('🎵 類比音符', 'noteAnalogy')}
+                      {renderField('🪐 主宰星球', 'planet')}
+                      {renderField('🌍 重要產地', 'origin')}
                     </div>
                   </div>
 
@@ -589,14 +589,14 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
               {formData.category === '穴道' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    {renderField('國際代碼', 'acuTable.code')}
-                    {renderField('經絡', 'acuTable.meridian')}
+                    {renderField('🆔 國際代碼', 'acuTable.code')}
+                    {renderField('🎯 經絡', 'acuTable.meridian')}
                   </div>
-                  {renderField('別名', 'acuTable.alias')}
+                  {renderField('🏷️ 別名', 'acuTable.alias')}
                   {renderField('主治', 'acuDetails.indications', '', true)}
-                  {renderField('類別', 'acuDetails.type', '', true)}
+                  {renderField('🗂️ 類別', 'acuDetails.type', '', true)}
                   {renderField('釋名', 'acuDetails.nameExpl', '', true)}
-                  {renderField('位置', 'acuDetails.location', '', true)}
+                  {renderField('📍 位置', 'acuDetails.location', '', true)}
                   {renderField('解剖', 'acuDetails.anatomy', '', true)}
                   {renderField('操作', 'acuDetails.operation', '', true)}
                   {renderField('古代功效', 'acuDetails.effectAncient', '', true)}
@@ -608,45 +608,45 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
               {formData.category === '中藥' && (
                 <div className="space-y-3 mb-4">
                   <div className="grid grid-cols-2 gap-3">
-                    {renderField('別名', 'alias')}
-                    {renderField('科屬', 'family')}
-                    {renderField('性味', 'nature')}
-                    {renderField('歸經', 'meridian')}
+                    {renderField('🗂️ 別名', 'alias')}
+                    {renderField('🌿 科屬', 'family')}
+                    {renderField('👅 性味', 'nature')}
+                    {renderField('🎯 歸經', 'meridian')}
                   </div>
-                  {renderField('品種來源', 'source', '', true)}
-                  {renderField('性狀', 'traits', '', true)}
-                  {renderField('功效', 'effect', '', true)}
-                  {renderField('主治', 'indications', '', true)}
-                  {renderField('用法用量', 'dosage', '', true)}
-                  {renderField('現代藥理', 'pharmacology', '', true)}
-                  {renderField('現代應用', 'contemporary', '', true)}
-                  {renderField('選方', 'medicine', '', true)}
-                  {renderField('文獻別錄', 'literature', '', true)}
-                  {renderField('注意禁忌', 'contraindication', '', true)}
-                  {renderField('炮製儲藏', 'preparation', '', true)}
-                  {renderField('附藥說明', 'directions', '', true)}
-                  {renderField('註', 'note', '', true)}
+                  {renderField('🌱 品種來源', 'source', '', true)}
+                  {renderField('🔍 性狀', 'traits', '', true)}
+                  {renderField('✨ 功效', 'effect', '', true)}
+                  {renderField('🎯 主治', 'indications', '', true)}
+                  {renderField('⚖️ 用法用量', 'dosage', '', true)}
+                  {renderField('🧬 現代藥理', 'pharmacology', '', true)}
+                  {renderField('🏥 現代應用', 'contemporary', '', true)}
+                  {renderField('📜 選方', 'medicine', '', true)}
+                  {renderField('📚 文獻別錄', 'literature', '', true)}
+                  {renderField('⚠️ 注意禁忌', 'contraindication', '', true)}
+                  {renderField('🔥 炮製儲藏', 'preparation', '', true)}
+                  {renderField('💡 附藥說明', 'directions', '', true)}
+                  {renderField('📝註', 'note', '', true)}
                 </div>
               )}
 
               {formData.category === '方劑' && (
                 <div className="space-y-3 mb-4">
                   <div className="grid grid-cols-2 gap-3">
-                    {renderField('別名', 'alias')}
-                    {renderField('來源', 'source')}
-                    {renderField('功效', 'effect')}
+                    {renderField('🗂️ 別名', 'alias')}
+                    {renderField('🌱 來源', 'source')}
+                    {renderField('✨ 功效', 'effect')}
                   </div>
-                  {renderField('製法用量', 'preparation', '', true)}
-                  {renderField('主治', 'indications', '', true)}
-                  {renderField('文獻別錄', 'literature', '', true)}
-                  {renderField('方義', 'analysis', '', true)}
-                  {renderField('方論', 'discussion', '', true)}
-                  {renderField('辨證要點', 'syndrome', '', true)}
-                  {renderField('加減', 'modifications', '', true)}
-                  {renderField('注意禁忌', 'contraindication', '', true)}
-                  {renderField('現代應用', 'modernApp', '', true)}
-                  {renderField('現代藥理', 'modernPharmacology', '', true)}
-                  {renderField('附方', 'prescription', '', true)}
+                  {renderField('🏺 製法用量', 'preparation', '', true)}
+                  {renderField('🎯 主治', 'indications', '', true)}
+                  {renderField('📚 文獻別錄', 'literature', '', true)}
+                  {renderField('🧮 方義', 'analysis', '', true)}
+                  {renderField('🗣️ 方論', 'discussion', '', true)}
+                  {renderField('👁️ 辨證要點', 'syndrome', '', true)}
+                  {renderField('➕ 加減', 'modifications', '', true)}
+                  {renderField('⚠️ 注意禁忌', 'contraindication', '', true)}
+                  {renderField('🏥 現代應用', 'modernApp', '', true)}
+                  {renderField('🧬 現代藥理', 'modernPharmacology', '', true)}
+                  {renderField('📎 附方', 'prescription', '', true)}
                 </div>
               )}
             </div>

@@ -95,7 +95,7 @@ const UI = {
     'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
 
   sectionLabel:
-    'mb-2 block pb-1 text-sm font-bold uppercase tracking-[0.18em] text-[#4E6654]',
+  'mb-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
 };
 
 
@@ -249,26 +249,10 @@ export default function AcuModal({
   };
 
   const rows = [
-    {
-      label: '穴位代碼',
-      val: acuTable.code,
-    },
-    {
-      label: '經絡',
-      val: acuTable.meridian,
-    },
-    {
-      label: '別名',
-      val: acuTable.alias,
-    },
-    {
-      label: '類別',
-      val: acuDetails.type,
-    },
-    {
-      label: '位置',
-      val: acuDetails.location,
-    },
+    {label: '🆔 穴位代碼', val: acuTable.code,},
+    {label: '🎯 經絡', val: acuTable.meridian,},
+    {label: '🏷️ 別名', val: acuTable.alias,},
+    {label: '🗂️ 類別', val: acuDetails.type,},
   ];
 
   return (
@@ -281,12 +265,10 @@ export default function AcuModal({
             </div>
 
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
-                Acupoint
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">Acupoint
               </p>
 
-              <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">
-                {item.name}
+              <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">{item.name}
               </h1>
 
               <p className="hidden text-xs text-[#8C725F] sm:block">
@@ -365,53 +347,11 @@ export default function AcuModal({
           </section>
 
           <section className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10">
-              <div className="space-y-8 text-[#3A4F3F]">
-                <div>
-                  <span className={UI.sectionLabel}>
-                    🎯 主治
-                  </span>
-
-                  {renderFormattedText(
-                    acuDetails.indications
-                  )}
-                </div>
-
-                <div>
-                  <span className={UI.sectionLabel}>
-                    📖 釋名
-                  </span>
-
-                  {renderFormattedText(
-                    acuDetails.nameExpl
-                  )}
-                </div>
-
-                <div>
-                  <span className={UI.sectionLabel}>
-                    📍 位置
-                  </span>
-
-                  {renderFormattedText(
-                    acuDetails.location
-                  )}
-                </div>
-
-                <div>
-                  <span className={UI.sectionLabel}>
-                    🧩 類別
-                  </span>
-
-                  {renderFormattedText(
-                    acuDetails.type
-                  )}
-                </div>
-
-                {acuDetails.anatomy && (
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      💀 解剖
-                    </span>
+            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10"><div className="space-y-8 text-[#3A4F3F]"><div><span className={UI.sectionLabel}>🎯 主治</span>
+                  {renderFormattedText(acuDetails.indications)}</div><div><span className={UI.sectionLabel}>📖 釋名</span>
+                  {renderFormattedText(acuDetails.nameExpl)}</div><div><span className={UI.sectionLabel}>📍 位置</span>
+                  {renderFormattedText(acuDetails.location)}</div><div><span className={UI.sectionLabel}>🧩 類別</span>
+                  {renderFormattedText(acuDetails.type)}</div>{acuDetails.anatomy && (<div><span className={UI.sectionLabel}>💀 解剖</span>
 
                     <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
                       {acuDetails.anatomy
@@ -478,7 +418,7 @@ export default function AcuModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 border-t border-[#E5E0D8] pt-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div>
                     <span className={UI.sectionLabel}>
                       ✨ 古代功效
@@ -500,12 +440,12 @@ export default function AcuModal({
                   </div>
                 </div>
 
-                <div className="border-t border-[#E5E0D8] pt-6">
+                <div>
                   <span className={UI.sectionLabel}>
                     🔗 配穴建議
                   </span>
 
-                  <div className="rounded-xl bg-[#F7F9F6]/70 p-5">
+                  <div className={`${UI.text} rounded-xl bg-[#F7F9F6]/70 p-5`}>
                     {acuDetails.matchingPoints
                       ? acuDetails.matchingPoints
                           .split('\n')

@@ -87,7 +87,7 @@ const UI = {
   text: 'text-[15px] leading-8 text-[#55655B]',
   title: 'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
   sectionLabel:
-    'mb-2 block pb-1 text-sm font-bold uppercase tracking-[0.18em] text-[#4E6654]',
+  'mb-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
 };
 
 const AutoHeightTextarea = ({
@@ -234,82 +234,24 @@ export default function OilModal({
   };
 
   const rows = [
-    {
-      label: '別名',
-      val:
-        item.alias ||
-        item.oilDetails?.alias,
-    },
-    {
-      label: '植物種類／萃取部位',
-      val:
-        item.typePart ||
-        item.oilDetails?.typePart,
-    },
-    {
-      label: '方法',
-      val:
-        item.method ||
-        item.oilDetails?.method,
-    },
-    {
-      label: '學名',
-      val:
-        item.latin ||
-        item.oilDetails?.latin,
-    },
-    {
-      label: '科名',
-      val:
-        item.family ||
-        item.oilDetails?.family,
-    },
-    {
-      label: '性味',
-      val: item.oilDetails?.nature,
-    },
-    {
-      label: '五行',
-      val: item.oilDetails?.property,
-    },
-    {
-      label: '歸經',
-      val: item.oilDetails?.meridian,
-    },
-    {
-      label: '主治',
-      val: item.oilDetails?.indications,
-    },
-    {
-      label: '音符',
-      val: item.oilDetails?.noteAnalogy,
-    },
-    {
-      label: '星球',
-      val: item.oilDetails?.planet,
-    },
-    {
-      label: '產地',
-      val: item.oilDetails?.origin,
-    },
+    {label: '🏷️ 別名', val: item.alias || item.oilDetails?.alias,},
+    {label: '🌿 植物種類／萃取部位', val: item.typePart || item.oilDetails?.typePart,},
+    {label: '🧪 萃取方法', val: item.method || item.oilDetails?.method,},
+    {label: '🧬 學名', val: item.latin || item.oilDetails?.latin,},
+    {label: '🌳 科名', val: item.family || item.oilDetails?.family,},
+    {label: '👅 性味', val: item.oilDetails?.nature,},
+    {label: '☯️ 五行', val: item.oilDetails?.property,},
+    {label: '🎯 歸經', val: item.oilDetails?.meridian,},
+    {label: '🩹 主治', val: item.oilDetails?.indications,},
+    {label: '🎵 音符', val: item.oilDetails?.noteAnalogy,},
+    {label: '🪐 星球', val: item.oilDetails?.planet,},
+    {label: '🌍 產地', val: item.oilDetails?.origin,},
   ];
 
   const effects = [
-    {
-      title: '心靈療效',
-      value: item.oilDetails?.mindEffect,
-      icon: '🧠',
-    },
-    {
-      title: '身體療效',
-      value: item.oilDetails?.bodyEffect,
-      icon: '🧍',
-    },
-    {
-      title: '皮膚療效',
-      value: item.oilDetails?.skinEffect,
-      icon: '💪',
-    },
+    {title: '心靈療效',value: item.oilDetails?.mindEffect,icon: '🧠',},
+    {title: '身體療效',value: item.oilDetails?.bodyEffect,icon: '🧍',},
+    {title: '皮膚療效',value: item.oilDetails?.skinEffect,icon: '💪',},
   ];
 
   return (
@@ -317,7 +259,7 @@ export default function OilModal({
       <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
   <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
     <div className="flex min-w-0 items-center gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B2B2A8] text-lg text-white">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
         🧴
       </div>
 
@@ -485,8 +427,8 @@ export default function OilModal({
                   </div>
                 )}
 
-                <div className="space-y-6 border-t border-[#E5E0D8] pt-6">
-                  <span className="block border-b border-[#E5E0D8] pb-2 font-bold text-[#3A4F3F]">
+                <div>
+                  <span className={`${UI.sectionLabel} text-base tracking-normal`}>
                     🩺 深度療效
                   </span>
 
@@ -516,7 +458,7 @@ export default function OilModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 border-t border-[#E5E0D8] pt-6">
+                <div>
                   <div>
                     <span className={UI.sectionLabel}>
                       🔗 適合調和的精油

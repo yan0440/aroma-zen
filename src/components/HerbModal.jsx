@@ -75,7 +75,7 @@ const UI = {
     'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
 
   sectionLabel:
-    'mb-2 block pb-1 text-sm font-bold uppercase tracking-[0.18em] text-[#4E6654]',
+  'mb-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
 };
 
 
@@ -230,81 +230,27 @@ export default function HerbModal({
       : '');
 
   const fields = [
-    {
-      label: '品種來源',
-      val: item.source,
-    },
-    {
-      label: '性狀',
-      val: item.traits,
-    },
-    {
-      label: '功效',
-      val: item.effect,
-    },
-    {
-      label: '主治',
-      val: item.indications,
-    },
-    {
-      label: '用法用量',
-      val: item.dosage,
-    },
-    {
-      label: '現代藥理',
-      val: item.pharmacology,
-    },
-    {
-      label: '現代應用',
-      val: item.contemporary,
-    },
-    {
-      label: '選方',
-      val: item.medicine,
-    },
-    {
-      label: '文獻別錄',
-      val: item.literature,
-    },
-    {
-      label: '注意禁忌',
-      val: item.contraindication,
-    },
-    {
-      label: '炮製儲藏',
-      val: item.preparation,
-    },
-    {
-      label: '附藥說明',
-      val: item.directions,
-    },
-    {
-      label: '註',
-      val: item.note,
-    },
+    {label: '🌱 品種來源', val: item.source,},
+    {label: '🔍 性狀', val: item.traits,},
+    {label: '✨ 功效', val: item.effect,},
+    {label: '🎯 主治', val: item.indications,},
+    {label: '⚖️ 用法用量', val: item.dosage,},
+    {label: '🧬 現代藥理', val: item.pharmacology,},
+    {label: '🏥 現代應用', val: item.contemporary,},
+    {label: '📜 選方', val: item.medicine,},
+    {label: '📚 文獻別錄', val: item.literature,},
+    {label: '⚠️ 注意禁忌', val: item.contraindication,},
+    {label: '🔥 炮製儲藏', val: item.preparation,},
+    {label: '💡 附藥說明', val: item.directions,},
+    {label: '📝註', val: item.note,}
   ];
 
   const rows = [
-    {
-      label: '別名',
-      val: item.alias,
-    },
-    {
-      label: '類別',
-      val: item.tag || item.category,
-    },
-    {
-      label: '科屬',
-      val: item.family,
-    },
-    {
-      label: '性味',
-      val: item.nature,
-    },
-    {
-      label: '歸經',
-      val: item.meridian,
-    },
+    {label: '🏷️ 別名', val: item.alias,},
+    {label: '🗂️ 類別', val: item.tag || item.category,},
+    {label: '🌿 科屬', val: item.family,},
+    {label: '👅 性味', val: item.nature,},
+    {label: '🎯 歸經', val: item.meridian,}
   ];
 
   return (
@@ -312,7 +258,7 @@ export default function HerbModal({
       <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
         <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
           <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B2B2A8] text-lg text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
               🌿
             </div>
 

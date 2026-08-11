@@ -78,7 +78,7 @@ const UI = {
     'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
 
   sectionLabel:
-    'mb-2 block pb-1 text-sm font-bold uppercase tracking-[0.18em] text-[#4E6654]',
+  'mb-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
 };
 
 
@@ -300,65 +300,24 @@ export default function FormulaModal({
       : '');
 
   const fields = [
-    {
-      label: '製法用量',
-      val: item.preparation,
-    },
-    {
-      label: '主治',
-      val: item.indications,
-    },
-    {
-      label: '文獻別錄',
-      val: item.literature,
-    },
-    {
-      label: '方義分析',
-      val: item.analysis,
-    },
-    {
-      label: '方論',
-      val: item.discussion,
-    },
-    {
-      label: '辨證要點',
-      val: item.syndrome,
-    },
-    {
-      label: '加減變化',
-      val: item.modifications,
-    },
-    {
-      label: '注意禁忌',
-      val: item.contraindication,
-    },
-    {
-      label: '現代應用',
-      val: item.modernApp,
-    },
-    {
-      label: '現代藥理',
-      val: item.modernPharmacology,
-    },
-    {
-      label: '附方',
-      val: item.prescription,
-    },
+    
+    {label: '🏺 製法用量', val: item.preparation,},
+    {label: '🎯 主治', val: item.indications,},
+    {label: '📚 文獻別錄', val: item.literature,},
+    {label: '🧮 方義分析', val: item.analysis,},
+    {label: '🗣️ 方論', val: item.discussion,},
+    {label: '👁️ 辨證要點', val: item.syndrome,},
+    {label: '➕ 加減變化', val: item.modifications,},
+    {label: '⚠️ 注意禁忌', val: item.contraindication,},
+    {label: '🏥 現代應用', val: item.modernApp,},
+    {label: '🧬 現代藥理', val: item.modernPharmacology,},
+    {label: '📎 附方', val: item.prescription,}
   ];
 
   const rows = [
-    {
-      label: '別名',
-      val: item.alias,
-    },
-    {
-      label: '來源',
-      val: item.source,
-    },
-    {
-      label: '功效',
-      val: item.effect,
-    },
+    {label: '🏷️ 別名', val: item.alias,},
+    {label: '🌱 來源', val: item.source,},
+    {label: '✨ 功效', val: item.effect,}
   ];
 
   return (
@@ -366,7 +325,7 @@ export default function FormulaModal({
       <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
         <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
           <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B2B2A8] text-lg text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
               🧫
             </div>
 

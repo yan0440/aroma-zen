@@ -191,7 +191,6 @@ const DataCard = memo(function DataCard({
         </span>
 
         <span className="text-xs font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
-          →
         </span>
       </div>
     </div>
