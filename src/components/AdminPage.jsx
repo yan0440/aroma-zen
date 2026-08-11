@@ -10,8 +10,10 @@ import React, {
 
 import {
   signInWithEmailAndPassword,
-  onAuthStateChanged,
   signOut,
+  setPersistence,
+  browserSessionPersistence,
+  onAuthStateChanged,
 } from 'firebase/auth';
 
 import {
@@ -23,8 +25,13 @@ import { auth, db } from '../firebase';
 import AddEntryPage from './AddEntryPage';
 import { APP_VERSION } from '../generatedVersion.js';
 
-const EncyclopediaViewer = lazy(() => import('./EncyclopediaViewer'));
-const CardViewer = lazy(() => import('./CardViewer'));
+const EncyclopediaViewer = lazy(
+  () => import('./EncyclopediaViewer')
+);
+
+const CardViewer = lazy(
+  () => import('./CardViewer')
+);
 
 const normalizeText = (value = '') =>
   String(value)
@@ -64,7 +71,9 @@ const buildBookSearchText = (item) => {
           .filter(Boolean)
           .join(' ');
 
-        return `${current} ${walkChapters(chapter.children)}`;
+        return `${current} ${walkChapters(
+          chapter.children
+        )}`;
       })
       .join(' ');
   };
@@ -121,7 +130,10 @@ const getAuthErrorMessage = (error) => {
       return 'Firebase 尚未啟用 Email/Password 登入。';
 
     default:
-      return error?.message || '登入失敗，請稍後再試。';
+      return (
+        error?.message ||
+        '登入失敗，請稍後再試。'
+      );
   }
 };
 
@@ -176,7 +188,10 @@ const EntryRow = React.memo(function EntryRow({
   );
 });
 
-export default function AdminPage({ allData, onBack }) {
+export default function AdminPage({
+  allData,
+  onBack,
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -190,7 +205,8 @@ export default function AdminPage({ allData, onBack }) {
   const [viewingItem, setViewingItem] = useState(null);
   const [viewingCard, setViewingCard] = useState(null);
 
-  const [filterCategory, setFilterCategory] = useState('全部');
+  const [filterCategory, setFilterCategory] =
+    useState('全部');
   const [searchName, setSearchName] = useState('');
   const [displayCount, setDisplayCount] = useState(10);
 
@@ -201,9 +217,6 @@ export default function AdminPage({ allData, onBack }) {
 
   const version = APP_VERSION;
 
-  /*
-   * 監聽 Firebase Authentication 登入狀態
-   */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -212,8 +225,15 @@ export default function AdminPage({ allData, onBack }) {
         setAuthLoading(false);
       },
       (error) => {
-        console.error('Authentication 狀態讀取失敗:', error);
-        setAuthError('無法確認登入狀態，請重新整理頁面。');
+        console.error(
+          'Authentication 狀態讀取失敗:',
+          error
+        );
+
+        setAuthError(
+          '無法確認登入狀態，請重新整理頁面。'
+        );
+
         setAuthLoading(false);
       }
     );
@@ -221,23 +241,14 @@ export default function AdminPage({ allData, onBack }) {
     return () => unsubscribe();
   }, []);
 
-  /*
-   * 切換頁面時回到頂端
-   */
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [viewState]);
 
-  /*
-   * 搜尋或分類變更時，回到前 10 筆
-   */
   useEffect(() => {
     setDisplayCount(10);
   }, [filterCategory, searchName]);
 
-  /*
-   * 成功或失敗通知 3 秒後自動消失
-   */
   useEffect(() => {
     if (!deleteMessage) {
       return undefined;
@@ -254,10 +265,17 @@ export default function AdminPage({ allData, onBack }) {
 
   const indexedData = useMemo(() => {
     return (allData || [])
-      .filter((item) => item && item.name && item.category)
+      .filter(
+        (item) =>
+          item &&
+          item.name &&
+          item.category
+      )
       .map((item) => ({
         ...item,
-        _searchText: item._searchText || buildSearchText(item),
+        _searchText:
+          item._searchText ||
+          buildSearchText(item),
       }));
   }, [allData]);
 
@@ -267,7 +285,8 @@ export default function AdminPage({ allData, onBack }) {
     }
 
     return indexedData.filter(
-      (item) => item.category === filterCategory
+      (item) =>
+        item.category === filterCategory
     );
   }, [indexedData, filterCategory]);
 
@@ -284,7 +303,8 @@ export default function AdminPage({ allData, onBack }) {
   }, [filteredByCategory, searchName]);
 
   const displayedEntries = useMemo(
-    () => filteredEntries.slice(0, displayCount),
+    () =>
+      filteredEntries.slice(0, displayCount),
     [filteredEntries, displayCount]
   );
 
@@ -305,6 +325,11 @@ export default function AdminPage({ allData, onBack }) {
       setAuthError('');
 
       try {
+        await setPersistence(
+          auth,
+          browserSessionPersistence
+        );
+
         await signInWithEmailAndPassword(
           auth,
           normalizedEmail,
@@ -314,7 +339,9 @@ export default function AdminPage({ allData, onBack }) {
         setPassword('');
       } catch (error) {
         console.error('登入失敗:', error);
-        setAuthError(getAuthErrorMessage(error));
+        setAuthError(
+          getAuthErrorMessage(error)
+        );
       } finally {
         setIsSigningIn(false);
       }
@@ -322,92 +349,119 @@ export default function AdminPage({ allData, onBack }) {
     [email, password, isSigningIn]
   );
 
-  const handleLogout = useCallback(async () => {
-    try {
-      await signOut(auth);
+  const handleLogout = useCallback(
+    async () => {
+      try {
+        await signOut(auth);
 
-      setViewState('list');
-      setEditingItem(null);
-      setViewingItem(null);
-      setViewingCard(null);
-      setEmail('');
-      setPassword('');
-      setAuthError('');
-    } catch (error) {
-      console.error('登出失敗:', error);
-      alert('登出失敗，請稍後再試。');
-    }
-  }, []);
+        setViewState('list');
+        setEditingItem(null);
+        setViewingItem(null);
+        setViewingCard(null);
+        setEmail('');
+        setPassword('');
+        setAuthError('');
+      } catch (error) {
+        console.error('登出失敗:', error);
+        alert('登出失敗，請稍後再試。');
+      }
+    },
+    []
+  );
 
   const handleLoadMore = useCallback(() => {
-    setDisplayCount((previous) => previous + 10);
+    setDisplayCount(
+      (previous) => previous + 10
+    );
   }, []);
 
-  const handleDelete = useCallback(async (item) => {
-    if (deletingRef.current) return;
+  const handleDelete = useCallback(
+    async (item) => {
+      if (deletingRef.current) return;
 
-    const confirmed = window.confirm(
-      `確定要刪除「${item?.name || ''}」嗎？`
-    );
-
-    if (!confirmed) return;
-
-    deletingRef.current = true;
-    setIsDeleting(true);
-    setDeleteMessage('');
-
-    const entryKey =
-      item?.entryKey ||
-      getEntryKey(
-        item?.category || '',
-        item?.name || ''
+      const confirmed = window.confirm(
+        `確定要刪除「${item?.name || ''}」嗎？`
       );
 
-    try {
-      const batch = writeBatch(db);
+      if (!confirmed) return;
 
-      batch.delete(doc(db, 'entries', entryKey));
-      batch.delete(doc(db, 'entryKeys', entryKey));
+      deletingRef.current = true;
+      setIsDeleting(true);
+      setDeleteMessage('');
 
-      await batch.commit();
-
-      setDeleteMessage('刪除成功。');
-    } catch (error) {
-      console.error('刪除失敗:', error);
-
-      if (error?.code === 'permission-denied') {
-        setDeleteMessage(
-          '刪除失敗：目前帳號沒有 Firestore 寫入權限。'
+      const entryKey =
+        item?.entryKey ||
+        getEntryKey(
+          item?.category || '',
+          item?.name || ''
         );
-      } else if (error?.code === 'unauthenticated') {
-        setDeleteMessage(
-          '登入狀態已失效，請重新登入。'
+
+      try {
+        const batch = writeBatch(db);
+
+        batch.delete(
+          doc(db, 'entries', entryKey)
         );
-      } else {
-        setDeleteMessage('刪除失敗，請稍後再試。');
+
+        batch.delete(
+          doc(db, 'entryKeys', entryKey)
+        );
+
+        await batch.commit();
+
+        setDeleteMessage('刪除成功。');
+      } catch (error) {
+        console.error('刪除失敗:', error);
+
+        if (
+          error?.code ===
+          'permission-denied'
+        ) {
+          setDeleteMessage(
+            '刪除失敗：目前帳號沒有 Firestore 寫入權限。'
+          );
+        } else if (
+          error?.code ===
+          'unauthenticated'
+        ) {
+          setDeleteMessage(
+            '登入狀態已失效，請重新登入。'
+          );
+        } else {
+          setDeleteMessage(
+            '刪除失敗，請稍後再試。'
+          );
+        }
+      } finally {
+        deletingRef.current = false;
+        setIsDeleting(false);
       }
-    } finally {
-      deletingRef.current = false;
-      setIsDeleting(false);
-    }
-  }, []);
+    },
+    []
+  );
 
-  const handleViewItem = useCallback((item) => {
-    setViewingItem(item);
-  }, []);
+  const handleViewItem = useCallback(
+    (item) => {
+      setViewingItem(item);
+    },
+    []
+  );
 
-  const handleViewCard = useCallback((item) => {
-    setViewingCard(item);
-  }, []);
+  const handleViewCard = useCallback(
+    (item) => {
+      setViewingCard(item);
+    },
+    []
+  );
 
-  const handleEdit = useCallback((item) => {
-    setEditingItem(item);
-    setViewState('add');
-  }, []);
+  const handleEdit = useCallback(
+    (item) => {
+      setEditingItem(item);
+      setViewState('add');
+    },
+    []
+  );
 
-  /*
-   * Authentication 狀態確認中
-   */
   if (authLoading) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F7F5F0]">
@@ -418,9 +472,6 @@ export default function AdminPage({ allData, onBack }) {
     );
   }
 
-  /*
-   * 尚未登入
-   */
   if (!currentUser) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F7F5F0] px-4">
@@ -474,7 +525,9 @@ export default function AdminPage({ allData, onBack }) {
               disabled={isSigningIn}
               className="w-full bg-[#3A4F3F] text-white py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSigningIn ? '登入中...' : '登入開發者專區'}
+              {isSigningIn
+                ? '登入中...'
+                : '登入開發者專區'}
             </button>
           </form>
 
@@ -490,9 +543,6 @@ export default function AdminPage({ allData, onBack }) {
     );
   }
 
-  /*
-   * 新增或編輯頁面
-   */
   if (viewState === 'add') {
     return (
       <AddEntryPage
@@ -519,14 +569,18 @@ export default function AdminPage({ allData, onBack }) {
         {viewingItem && (
           <EncyclopediaViewer
             item={viewingItem}
-            onClose={() => setViewingItem(null)}
+            onClose={() =>
+              setViewingItem(null)
+            }
           />
         )}
 
         {viewingCard && (
           <CardViewer
             item={viewingCard}
-            onClose={() => setViewingCard(null)}
+            onClose={() =>
+              setViewingCard(null)
+            }
           />
         )}
       </Suspense>
@@ -582,7 +636,11 @@ export default function AdminPage({ allData, onBack }) {
               <input
                 type="text"
                 value={searchName}
-                onChange={(event) => setSearchName(event.target.value)}
+                onChange={(event) =>
+                  setSearchName(
+                    event.target.value
+                  )
+                }
                 placeholder="搜尋名稱"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#E5E0D8] bg-white outline-none text-[#3A4F3F] placeholder:text-[#B8A99A]"
               />
@@ -601,7 +659,9 @@ export default function AdminPage({ allData, onBack }) {
               {categories.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setFilterCategory(category)}
+                  onClick={() =>
+                    setFilterCategory(category)
+                  }
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                     filterCategory === category
                       ? 'bg-[#3A4F3F] text-white'
@@ -619,7 +679,9 @@ export default function AdminPage({ allData, onBack }) {
               <span>{deleteMessage}</span>
 
               <button
-                onClick={() => setDeleteMessage('')}
+                onClick={() =>
+                  setDeleteMessage('')
+                }
                 className="shrink-0 text-lg leading-none text-[#A39284] hover:text-[#3A4F3F]"
                 aria-label="關閉通知"
               >
@@ -635,24 +697,27 @@ export default function AdminPage({ allData, onBack }) {
               </div>
             ) : (
               <div className="grid gap-3">
-                {displayedEntries.map((item, index) => (
-                  <EntryRow
-                    key={
-                      item.id ||
-                      `${item.category}-${item.name}-${index}`
-                    }
-                    item={item}
-                    onViewItem={handleViewItem}
-                    onViewCard={handleViewCard}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    disabled={isDeleting}
-                  />
-                ))}
+                {displayedEntries.map(
+                  (item, index) => (
+                    <EntryRow
+                      key={
+                        item.id ||
+                        `${item.category}-${item.name}-${index}`
+                      }
+                      item={item}
+                      onViewItem={handleViewItem}
+                      onViewCard={handleViewCard}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      disabled={isDeleting}
+                    />
+                  )
+                )}
               </div>
             )}
 
-            {filteredEntries.length > displayCount && (
+            {filteredEntries.length >
+              displayCount && (
               <div className="pt-4 pb-2 flex justify-center print:hidden">
                 <button
                   onClick={handleLoadMore}
