@@ -1,190 +1,489 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const parseBoldSyntax = (str) => {
-  if (!str) return str;
-  const lineStartRegex = /^(肌肉|神經|血管)([：:])/;
-  const parts = str.split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g);
 
-  return parts.map((part, i) => {
-    if (!part) return null;
-    if (part.startsWith('==') && part.endsWith('==')) {
+const parseBoldSyntax = (str) => {
+  if (!str) {
+    return null;
+  }
+
+  const parts = String(str).split(
+    /(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g
+  );
+
+  return parts.map((part, index) => {
+    if (!part) {
+      return null;
+    }
+
+    if (
+      part.startsWith('==') &&
+      part.endsWith('==')
+    ) {
       return (
-        <mark key={i} className="bg-[#F3E1C5] text-[#2C3C30] px-1 py-0.5 rounded-md font-bold mx-0.5 shadow-sm">
+        <mark
+          key={index}
+          className="mx-0.5 rounded-md bg-[#F3E1C5] px-1 py-0.5 font-bold text-[#2C3C30] shadow-sm"
+        >
           {part.slice(2, -2)}
         </mark>
       );
     }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part.slice(2, -2)}</strong>;
+
+    if (
+      part.startsWith('**') &&
+      part.endsWith('**')
+    ) {
+      return (
+        <strong
+          key={index}
+          className="font-bold text-[#1A261C]"
+        >
+          {part.slice(2, -2)}
+        </strong>
+      );
     }
-    if ((part.startsWith('《') && part.endsWith('》')) || (part.startsWith('【') && part.endsWith('】'))) {
-      return <strong key={i} className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{part}</strong>;
+
+    if (
+      (part.startsWith('《') &&
+        part.endsWith('》')) ||
+      (part.startsWith('【') &&
+        part.endsWith('】'))
+    ) {
+      return (
+        <strong
+          key={index}
+          className="font-bold text-[#1A261C]"
+        >
+          {part}
+        </strong>
+      );
     }
-    if (lineStartRegex.test(part)) {
-      return part.replace(lineStartRegex, (match, keyword, colon) => (
-        <React.Fragment key={i}>
-          <strong className="text-[#1A261C]" style={{ fontWeight: 'bold' }}>{keyword}</strong>{colon}
-        </React.Fragment>
-      ));
-    }
+
     return part;
   });
 };
 
+
 const UI = {
-  text: "text-[15px] leading-8 text-[#6B7A6E]",
-  title: "text-4xl font-bold text-[#2F4638] mb-2",
-  sectionLabel: "font-bold text-[#4E6654] block pb-1 mb-2 text-sm tracking-widest uppercase"
+  text: 'text-[15px] leading-8 text-[#6B7A6E]',
+
+  title:
+    'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
+
+  sectionLabel:
+    'mb-2 block pb-1 text-sm font-bold uppercase tracking-[0.18em] text-[#4E6654]',
 };
 
-const AutoHeightTextarea = ({ value, placeholder, className = "" }) => {
+
+const AutoHeightTextarea = ({
+  value,
+  placeholder,
+  className = '',
+}) => {
   const ref = useRef(null);
   const [height, setHeight] = useState('auto');
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current) {
+      return;
+    }
+
     ref.current.style.height = 'auto';
-    setHeight(`${ref.current.scrollHeight}px`);
+
+    setHeight(
+      `${ref.current.scrollHeight}px`
+    );
   }, [value]);
 
   return (
     <textarea
       ref={ref}
       readOnly
-      value={value || placeholder}
+      value={
+        value ||
+        placeholder ||
+        '此條目目前尚未填寫簡介。'
+      }
       rows={1}
-      className={`w-full resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-sm leading-7 text-[#5F6F66] outline-none focus:outline-none focus:ring-0 whitespace-pre-wrap ${className}`}
+      className={`w-full resize-none overflow-hidden whitespace-pre-wrap border-0 bg-transparent px-0 py-0 text-sm leading-7 text-[#5F6F66] outline-none focus:outline-none focus:ring-0 ${className}`}
       style={{ height }}
     />
   );
 };
 
-export default function FormulaModal({ item, onClose }) {
-  if (!item) return null;
+
+export default function FormulaModal({
+  item,
+  onClose,
+  backLabel = '返回列表',
+}) {
+  if (!item) {
+    return null;
+  }
+
+  const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
 
   const renderFormattedText = (text) => {
-    if (!text) return <span className="italic text-gray-400">無記載</span>;
-    const lines = typeof text === 'string' ? text.split('\n').filter(l => l.trim() !== '') : [text];
+    if (!text) {
+      return (
+        <span className="italic text-gray-400">
+          無記載
+        </span>
+      );
+    }
+
+    const lines =
+      typeof text === 'string'
+        ? text
+            .split('\n')
+            .filter(
+              (line) => line.trim() !== ''
+            )
+        : [text];
 
     return (
       <div className={UI.text}>
-        {lines.map((line, i) => {
-          const trimmed = typeof line === 'string' ? line.trim() : line;
-          const isTable = typeof trimmed === 'string' && trimmed.includes('|');
+        {lines.map((line, index) => {
+          const trimmed =
+            typeof line === 'string'
+              ? line.trim()
+              : line;
+
+          const isTable =
+            typeof trimmed === 'string' &&
+            trimmed.includes('|');
 
           if (isTable) {
             return (
-              <div key={i} className="my-2 overflow-x-auto">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <div
+                key={index}
+                className="my-3 overflow-x-auto rounded-xl border border-[#EAE4DB] bg-[#FBFBFA]/70 p-3"
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: ({
+                      children,
+                    }) => (
+                      <table className="w-full min-w-[520px] border-collapse text-sm">
+                        {children}
+                      </table>
+                    ),
+
+                    thead: ({
+                      children,
+                    }) => (
+                      <thead className="bg-[#F3E1C5] text-[#2C3C30]">
+                        {children}
+                      </thead>
+                    ),
+
+                    tbody: ({
+                      children,
+                    }) => (
+                      <tbody className="divide-y divide-[#EAE4DB]">
+                        {children}
+                      </tbody>
+                    ),
+
+                    th: ({
+                      children,
+                    }) => (
+                      <th className="border border-[#EAE4DB] px-3 py-2 text-left font-bold">
+                        {children}
+                      </th>
+                    ),
+
+                    td: ({
+                      children,
+                    }) => (
+                      <td className="border border-[#EAE4DB] px-3 py-2 align-top">
+                        {children}
+                      </td>
+                    ),
+                  }}
+                >
                   {trimmed}
                 </ReactMarkdown>
               </div>
             );
           }
 
-          const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
-          const isIndented = trimmed.startsWith('●');
+          const isNumbered =
+            typeof trimmed === 'string' &&
+            /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(
+              trimmed
+            );
+
+          const isIndented =
+            typeof trimmed === 'string' &&
+            trimmed.startsWith('●');
 
           if (isNumbered) {
-            const splitIndex = trimmed.search(/[.、]/) + 1;
+            const splitIndex =
+              trimmed.search(/[.、]/) + 1;
+
             return (
-              <div key={i} className="grid grid-cols-[auto_1fr] gap-x-2 mb-1">
-                <span className="font-bold shrink-0 text-[#3A4F3F]">{trimmed.substring(0, splitIndex)}</span>
-                <span>{parseBoldSyntax(trimmed.substring(splitIndex).trim())}</span>
+              <div
+                key={index}
+                className="mb-1 grid grid-cols-[auto_1fr] gap-x-2"
+              >
+                <span className="shrink-0 font-bold text-[#3A4F3F]">
+                  {trimmed.substring(
+                    0,
+                    splitIndex
+                  )}
+                </span>
+
+                <span>
+                  {parseBoldSyntax(
+                    trimmed
+                      .substring(splitIndex)
+                      .trim()
+                  )}
+                </span>
               </div>
             );
           }
 
           if (isIndented) {
             return (
-              <div key={i} className="grid grid-cols-[1rem_1fr] gap-x-2 mb-1">
-                <span className="text-[#A39284]">●</span>
-                <span>{parseBoldSyntax(trimmed.replace('●', '').trim())}</span>
+              <div
+                key={index}
+                className="mb-1 grid grid-cols-[1rem_1fr] gap-x-2"
+              >
+                <span className="text-[#A39284]">
+                  ●
+                </span>
+
+                <span>
+                  {parseBoldSyntax(
+                    trimmed
+                      .replace('●', '')
+                      .trim()
+                  )}
+                </span>
               </div>
             );
           }
 
-          return <div key={i} className="mb-1">{parseBoldSyntax(trimmed)}</div>;
+          return (
+            <div
+              key={index}
+              className="mb-1"
+            >
+              {parseBoldSyntax(trimmed)}
+            </div>
+          );
         })}
       </div>
     );
   };
 
-  const alertContent = item.alert || (['中藥', '方劑', '穴道'].includes(item.category)
-    ? "本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非專業人士請勿擅自處方服藥。"
-    : "");
+  const alertContent =
+    item.alert ||
+    (['中藥', '方劑', '穴道'].includes(
+      item.category
+    )
+      ? '本資料庫的內容僅供學術參考，不作商業用途。有病請尋求合法的醫師，非專業人士請勿擅自處方服藥。'
+      : '');
 
   const fields = [
-    { label: '製法用量', val: item.preparation },
-    { label: '主治', val: item.indications },
-    { label: '文獻別錄', val: item.literature },
-    { label: '方義分析', val: item.analysis },
-    { label: '方論', val: item.discussion },
-    { label: '辨證要點', val: item.syndrome },
-    { label: '加減變化', val: item.modifications },
-    { label: '注意禁忌', val: item.contraindication },
-    { label: '現代應用', val: item.modernApp },
-    { label: '現代藥理', val: item.modernPharmacology },
-    { label: '附方', val: item.prescription }
+    {
+      label: '製法用量',
+      val: item.preparation,
+    },
+    {
+      label: '主治',
+      val: item.indications,
+    },
+    {
+      label: '文獻別錄',
+      val: item.literature,
+    },
+    {
+      label: '方義分析',
+      val: item.analysis,
+    },
+    {
+      label: '方論',
+      val: item.discussion,
+    },
+    {
+      label: '辨證要點',
+      val: item.syndrome,
+    },
+    {
+      label: '加減變化',
+      val: item.modifications,
+    },
+    {
+      label: '注意禁忌',
+      val: item.contraindication,
+    },
+    {
+      label: '現代應用',
+      val: item.modernApp,
+    },
+    {
+      label: '現代藥理',
+      val: item.modernPharmacology,
+    },
+    {
+      label: '附方',
+      val: item.prescription,
+    },
+  ];
+
+  const rows = [
+    {
+      label: '別名',
+      val: item.alias,
+    },
+    {
+      label: '來源',
+      val: item.source,
+    },
+    {
+      label: '功效',
+      val: item.effect,
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)] py-8 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white/70 p-8 rounded-[1.6rem] shadow-[0_10px_30px_rgba(63,81,68,0.06)] backdrop-blur-md sticky top-8">
-            <div className="mb-4 flex flex-wrap gap-1.5">
-              {item.category && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F3E1C5] text-[#2C3C30]">
-                  {item.category}
-                </span>
-              )}
-              {item.tag && item.tag !== item.category && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F7F5F0] text-[#6B7A6E]">
-                  {item.tag}
-                </span>
-              )}
+    <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
+      <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
+        <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B2B2A8] text-lg text-white">
+              🧫
             </div>
 
-            <h2 className={UI.title}>{item.name}</h2>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
+                Herbal Formula
+              </p>
 
-            <div className="space-y-4 text-sm text-[#6B7A6E] pt-6">
-              <p><strong className="text-[#3A4F3F]">別名：</strong> {item.alias || '無別名'}</p>
-              <p><strong className="text-[#3A4F3F]">來源：</strong> {item.source || '無記載'}</p>
-              <p><strong className="text-[#3A4F3F]">功效：</strong> {item.effect || '無記載'}</p>
-            </div>
+              <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">
+                {item.name}
+              </h1>
 
-            <div className="mt-6">
-              <h3 className="text-sm font-bold text-[#2F4638] mb-2">簡介</h3>
-              <AutoHeightTextarea
-                value={item.description}
-                placeholder="此條目目前尚未填寫簡介。"
-              />
+              <p className="hidden text-xs text-[#8C725F] sm:block">
+                方劑百科詳細資料
+              </p>
             </div>
           </div>
+
+          <button
+  type="button"
+  onClick={handleClose}
+  className="shrink-0 rounded-lg border border-[#B2B2A8] bg-[#B2B2A8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5F7568]"
+>
+  {backLabel}
+</button>
         </div>
+      </header>
 
-        <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white/70 p-8 md:p-10 rounded-[1.6rem] shadow-[0_10px_30px_rgba(63,81,68,0.06)] backdrop-blur-md">
-            <div className="space-y-8">
-              {fields.map((field, i) => (
-                <div key={i}>
-                  <h4 className={UI.sectionLabel}>{field.label}</h4>
-                  {renderFormattedText(field.val)}
-                </div>
-              ))}
-            </div>
+      <main className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)]">
+        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 md:px-7 md:py-8 lg:grid-cols-12 lg:gap-8 lg:px-10">
+          <section className="lg:col-span-4">
+            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-8 lg:sticky lg:top-6">
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {item.category && (
+                  <span className="rounded-full bg-[#F3E1C5] px-2 py-0.5 text-xs font-medium text-[#2C3C30]">
+                    {item.category}
+                  </span>
+                )}
 
-            {alertContent && (
-              <div className="mt-12 p-5 bg-red-50/80 rounded-[1rem] text-red-700 text-xs font-medium">
-                <strong>⚠️ 重要提醒：</strong> {alertContent}
+                {item.tag &&
+                  item.tag !== item.category && (
+                    <span className="rounded-full bg-[#F7F5F0] px-2 py-0.5 text-xs font-medium text-[#6B7A6E]">
+                      {item.tag}
+                    </span>
+                  )}
               </div>
-            )}
-          </div>
+
+              <h2 className={UI.title}>
+                {item.name}
+              </h2>
+
+              <p className="mb-6 mt-1 border-b border-[#F0E8DE] pb-4 font-serif text-base italic text-[#A39284]">
+                {item.alias || '方劑百科'}
+              </p>
+
+              <div className="overflow-hidden rounded-xl border border-[#EAE4DB] shadow-[0_4px_14px_rgba(63,81,68,0.04)]">
+                <table className="w-full border-collapse text-[14px]">
+                  <tbody className="divide-y divide-[#EAE4DB] text-[#3A4F3F]">
+                    {rows.map((row, index) => (
+                      <tr
+                        key={index}
+                        className="bg-[#FBFBFA]/60"
+                      >
+                        <td className="w-[35%] bg-[#FBFBFA] px-3 py-2 font-bold text-[#3A4F3F]">
+                          {row.label}
+                        </td>
+
+                        <td className="px-3 py-2">
+                          {row.val || '無記載'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-6">
+                <h3 className="mb-2 text-sm font-bold text-[#2F4638]">
+                  簡介
+                </h3>
+
+                <AutoHeightTextarea
+                  value={item.description}
+                  placeholder="此條目目前尚未填寫簡介。"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-6 lg:col-span-8">
+            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10">
+              <div className="space-y-8 text-[#3A4F3F]">
+                {fields.map((field, index) => (
+                  <div key={index}>
+                    <h4 className={UI.sectionLabel}>
+                      {field.label}
+                    </h4>
+
+                    {renderFormattedText(
+                      field.val
+                    )}
+                  </div>
+                ))}
+
+                {alertContent && (
+                  <div className="mt-12 rounded-[1rem] bg-red-50/80 p-5 text-xs font-medium text-red-700">
+                    <strong>
+                      ⚠️ 重要提醒：
+                    </strong>{' '}
+                    {alertContent}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

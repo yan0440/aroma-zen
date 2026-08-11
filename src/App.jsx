@@ -5,11 +5,13 @@ import React, {
   memo,
 } from 'react';
 
+
 import { oilData } from './data/oilData.js';
 import { acuData } from './data/acuData.js';
 import { herbData } from './data/herbData.js';
 import { formulaData } from './data/formulaData.js';
 import { bookData } from './data/bookData.js';
+
 
 import OilModal from './components/OilModal';
 import AcuModal from './components/AcuModal';
@@ -19,12 +21,14 @@ import BookModal from './components/BookModal';
 import AdminPage from './components/AdminPage';
 import OtherCategoryView from './components/OtherCategoryView';
 
+
 import { db } from './firebase';
 import {
   collection,
   onSnapshot,
   query,
 } from 'firebase/firestore';
+
 
 const CATEGORIES = [
   '書籍',
@@ -35,14 +39,18 @@ const CATEGORIES = [
   '其他',
 ];
 
+
 const BOLD_KEYWORDS = [
   '肌肉',
   '神經',
   '血管',
 ];
 
+
 function parseBoldSyntax(str) {
-  if (typeof str !== 'string') return str;
+  if (typeof str !== 'string') {
+    return str;
+  }
 
   const regex =
     /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
@@ -50,10 +58,12 @@ function parseBoldSyntax(str) {
   return str.split('\n').map((line, lineIndex) => (
     <span
       key={lineIndex}
-      className="block mb-1"
+      className="mb-1 block"
     >
-      {line.split(regex).map((part, i) => {
-        if (!part) return null;
+      {line.split(regex).map((part, index) => {
+        if (!part) {
+          return null;
+        }
 
         if (
           part.startsWith('==') &&
@@ -61,8 +71,8 @@ function parseBoldSyntax(str) {
         ) {
           return (
             <mark
-              key={i}
-              className="bg-[#F3E1C5] px-1 rounded"
+              key={index}
+              className="rounded bg-[#F3E1C5] px-1"
             >
               {part.slice(2, -2)}
             </mark>
@@ -75,8 +85,8 @@ function parseBoldSyntax(str) {
         ) {
           return (
             <strong
-              key={i}
-              className="text-[#2F4638] font-semibold"
+              key={index}
+              className="font-semibold text-[#2F4638]"
             >
               {part.replace(/\*\*/g, '')}
             </strong>
@@ -86,8 +96,8 @@ function parseBoldSyntax(str) {
         if (BOLD_KEYWORDS.includes(part)) {
           return (
             <strong
-              key={i}
-              className="text-[#2F4638] font-semibold"
+              key={index}
+              className="font-semibold text-[#2F4638]"
             >
               {part}
             </strong>
@@ -99,8 +109,8 @@ function parseBoldSyntax(str) {
         ) {
           return (
             <span
-              key={i}
-              className="text-[#6B9080] font-medium"
+              key={index}
+              className="font-medium text-[#6B9080]"
             >
               {part}
             </span>
@@ -112,6 +122,7 @@ function parseBoldSyntax(str) {
     </span>
   ));
 }
+
 
 const DataCard = memo(function DataCard({
   item,
@@ -127,18 +138,28 @@ const DataCard = memo(function DataCard({
   return (
     <div
       onClick={onClick}
-      className="group relative cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/70 bg-white p-6 md:p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Enter' ||
+          event.key === ' '
+        ) {
+          onClick();
+        }
+      }}
+      className="group relative cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md md:p-7"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#6B9080] via-[#C8A97E] to-[#D9C6B0] opacity-70" />
 
-      <div className="flex flex-wrap gap-2 items-center mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold tracking-wider text-[#3A4F3F]">
           {item.category}
         </span>
 
-        {tags.map((tag, idx) => (
+        {tags.map((tag, index) => (
           <span
-            key={`tag-${idx}`}
+            key={`tag-${index}`}
             className="rounded-full border border-[#E7DED4] bg-white px-3 py-1 text-[11px] font-medium text-[#7C8A80]"
           >
             {tag}
@@ -146,14 +167,16 @@ const DataCard = memo(function DataCard({
         ))}
       </div>
 
-      <h3 className="text-2xl md:text-[1.7rem] font-black tracking-tight text-[#2F4638] group-hover:text-[#6B9080] transition-colors">
+      <h3 className="text-2xl font-black tracking-tight text-[#2F4638] transition-colors group-hover:text-[#6B9080] md:text-[1.7rem]">
         {item.name}
       </h3>
 
-      <p className="mt-2 mb-4 text-sm italic text-[#A39284] font-serif">
+      <p className="mb-4 mt-2 font-serif text-sm italic text-[#A39284]">
         {item.category === '精油'
           ? item.englishName
-          : item.acuTable?.code || ''}
+          : item.category === '穴道'
+            ? item.acuTable?.code || ''
+            : item.alias || ''}
       </p>
 
       <div className="text-sm leading-7 text-[#5F6F65]">
@@ -162,12 +185,12 @@ const DataCard = memo(function DataCard({
         )}
       </div>
 
-      <div className="mt-5 flex items-center justify-between pt-4 border-t border-[#EEE6DC]">
+      <div className="mt-5 flex items-center justify-between border-t border-[#EEE6DC] pt-4">
         <span className="text-xs text-[#A39284]">
           點擊查看詳細內容
         </span>
 
-        <span className="text-xs font-semibold text-[#6B9080] group-hover:translate-x-1 transition-transform">
+        <span className="text-xs font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
           →
         </span>
       </div>
@@ -175,28 +198,35 @@ const DataCard = memo(function DataCard({
   );
 });
 
+
 const getBookSearchText = (item) => {
-  if (item._searchText) return item._searchText;
+  if (item._searchText) {
+    return item._searchText;
+  }
 
   const walkChapters = (chapters) => {
-    if (!chapters) return '';
+    if (!chapters) {
+      return '';
+    }
 
-    const arr = Array.isArray(chapters)
+    const array = Array.isArray(chapters)
       ? chapters
       : Object.values(chapters);
 
-    return arr
-      .map((ch) => {
+    return array
+      .map((chapter) => {
         const current = [
-          ch.title,
-          ch.alias,
-          ch.name,
-          ch.text,
+          chapter.title,
+          chapter.alias,
+          chapter.name,
+          chapter.text,
         ]
           .filter(Boolean)
           .join(' ');
 
-        return `${current} ${walkChapters(ch.children)}`;
+        return `${current} ${walkChapters(
+          chapter.children
+        )}`;
       })
       .join(' ');
   };
@@ -204,12 +234,15 @@ const getBookSearchText = (item) => {
   return [
     item.name,
     item.bookDetails?.author,
-    walkChapters(item.bookDetails?.chapters),
+    walkChapters(
+      item.bookDetails?.chapters
+    ),
   ]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
 };
+
 
 const getSearchText = (item) => {
   const fields = [
@@ -231,9 +264,12 @@ const getSearchText = (item) => {
     item.acuTable?.effectModern,
     item.acuTable?.function,
     item.acuTable?.combination,
-    item.acuDetails?.indications,
     item.acuTable?.matchingPoints,
     item.acuTable?.code,
+    item.acuDetails?.indications,
+    item.acuDetails?.effectAncient,
+    item.acuDetails?.effectModern,
+    item.acuDetails?.matchingPoints,
     item.oilDetails?.mindEffect,
     item.oilDetails?.bodyEffect,
     item.oilDetails?.skinEffect,
@@ -251,6 +287,7 @@ const getSearchText = (item) => {
     .join(' ')
     .toLowerCase();
 };
+
 
 function StatusMessage({
   isOnline,
@@ -284,10 +321,13 @@ function StatusMessage({
   return null;
 }
 
+
 export default function App() {
   const [dbData, setDbData] = useState([]);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
   const [
     debouncedSearchQuery,
     setDebouncedSearchQuery,
@@ -298,9 +338,14 @@ export default function App() {
     setSelectedCategory,
   ] = useState('書籍');
 
-  const [activeItem, setActiveItem] = useState(null);
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [activeItem, setActiveItem] =
+    useState(null);
+
+  const [isAdminMode, setIsAdminMode] =
+    useState(false);
+
+  const [visibleCount, setVisibleCount] =
+    useState(20);
 
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== 'undefined'
@@ -308,9 +353,15 @@ export default function App() {
       : true
   );
 
-  const [isUsingCache, setIsUsingCache] = useState(false);
-  const [dataError, setDataError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isUsingCache, setIsUsingCache] =
+    useState(false);
+
+  const [dataError, setDataError] =
+    useState('');
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
 
   useEffect(() => {
     const entriesQuery = query(
@@ -337,14 +388,17 @@ export default function App() {
         console.log(
           'Firestore 讀取成功'
         );
+
         console.log(
           '資料筆數:',
           entries.length
         );
+
         console.log(
           '是否使用快取:',
           snapshot.metadata.fromCache
         );
+
         console.log(
           '資料內容:',
           entries
@@ -362,10 +416,12 @@ export default function App() {
           'Firestore 讀取錯誤:',
           error
         );
+
         console.error(
           '錯誤代碼:',
           error.code
         );
+
         console.error(
           '錯誤訊息:',
           error.message
@@ -385,9 +441,11 @@ export default function App() {
       console.log(
         '取消 Firestore 監聽'
       );
+
       unsubscribe();
     };
   }, []);
+
 
   useEffect(() => {
     const handleOnline = () => {
@@ -423,6 +481,7 @@ export default function App() {
     };
   }, []);
 
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(
@@ -433,12 +492,14 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+
   useEffect(() => {
     setVisibleCount(20);
   }, [
     selectedCategory,
     debouncedSearchQuery,
   ]);
+
 
   const staticData = useMemo(
     () => [
@@ -450,6 +511,7 @@ export default function App() {
     ],
     []
   );
+
 
   const allData = useMemo(() => {
     const merged = [
@@ -487,6 +549,7 @@ export default function App() {
       return true;
     });
   }, [staticData, dbData]);
+
 
   const filteredData = useMemo(() => {
     const normalizedQuery =
@@ -528,10 +591,21 @@ export default function App() {
     selectedCategory,
   ]);
 
+
   const visibleData = useMemo(
-    () => filteredData.slice(0, visibleCount),
+    () =>
+      filteredData.slice(
+        0,
+        visibleCount
+      ),
     [filteredData, visibleCount]
   );
+
+
+  const handleCloseDetail = () => {
+    setActiveItem(null);
+  };
+
 
   if (isAdminMode) {
     return (
@@ -544,11 +618,14 @@ export default function App() {
 
         <AdminPage
           allData={allData}
-          onBack={() => setIsAdminMode(false)}
+          onBack={() =>
+            setIsAdminMode(false)
+          }
         />
       </>
     );
   }
+
 
   if (activeItem) {
     const modalMap = {
@@ -562,6 +639,15 @@ export default function App() {
     const ModalComponent =
       modalMap[activeItem.category];
 
+    if (ModalComponent) {
+      return (
+        <ModalComponent
+          item={activeItem}
+          onClose={handleCloseDetail}
+        />
+      );
+    }
+
     return (
       <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
         <StatusMessage
@@ -570,27 +656,25 @@ export default function App() {
           dataError={dataError}
         />
 
-        <div className="max-w-6xl mx-auto px-4 pt-8">
+        <div className="mx-auto max-w-6xl px-4 pt-8">
           <button
-            onClick={() => setActiveItem(null)}
-            className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-sm text-[#7F6D5F] shadow-sm hover:text-[#3A4F3F] hover:shadow-md transition-all"
+            type="button"
+            onClick={handleCloseDetail}
+            className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-sm text-[#7F6D5F] shadow-sm transition-all hover:text-[#3A4F3F] hover:shadow-md"
           >
             ← 返回列表
           </button>
         </div>
 
         <div className="px-4 pb-12">
-          {ModalComponent ? (
-            <ModalComponent item={activeItem} />
-          ) : (
-            <div className="mx-auto mt-8 max-w-2xl rounded-3xl border border-[#E5E0D8] bg-white px-6 py-12 text-center text-[#A39284] shadow-sm">
-              找不到此百科的詳細頁面。
-            </div>
-          )}
+          <div className="mx-auto mt-8 max-w-2xl rounded-3xl border border-[#E5E0D8] bg-white px-6 py-12 text-center text-[#A39284] shadow-sm">
+            找不到此百科的詳細頁面。
+          </div>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-[#3A4F3F]">
@@ -601,29 +685,32 @@ export default function App() {
       />
 
       <button
-        onClick={() => setIsAdminMode(true)}
-        className="fixed top-3 left-3 z-50 rounded-full bg-white px-3 py-1 text-[10px] font-medium text-[#A39284] shadow-sm border border-white hover:text-[#3A4F3F] hover:bg-white transition-all"
+        type="button"
+        onClick={() =>
+          setIsAdminMode(true)
+        }
+        className="fixed left-3 top-3 z-50 rounded-full border border-white bg-white px-3 py-1 text-[10px] font-medium text-[#A39284] shadow-sm transition-all hover:bg-white hover:text-[#3A4F3F]"
       >
         開發者專區
       </button>
 
-      <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
-        <header className="text-center mb-12 md:mb-14">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-xs tracking-[0.28em] text-[#A39284] shadow-sm mb-5">
+      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <header className="mb-12 text-center md:mb-14">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-xs tracking-[0.28em] text-[#A39284] shadow-sm">
             東方經絡 × 西方芳療
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-[#2F4638] mb-4">
+          <h1 className="mb-4 text-4xl font-black tracking-tight text-[#2F4638] md:text-6xl">
             本草與芳香數位百科
           </h1>
 
-          <p className="text-sm md:text-base text-[#8E7B6A] tracking-wide">
+          <p className="text-sm tracking-wide text-[#8E7B6A] md:text-base">
             結合東方經絡與西方芳療的健康數位誌
           </p>
         </header>
 
-        <section className="mb-10 rounded-[2rem] border border-white bg-white p-4 md:p-5 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <section className="mb-10 rounded-[2rem] border border-white bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="relative w-full md:max-w-xs">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#B19C8A]">
                 ⌕
@@ -634,23 +721,26 @@ export default function App() {
                 placeholder="搜尋名稱、英文、經絡或功效標籤..."
                 value={searchQuery}
                 onChange={(event) =>
-                  setSearchQuery(event.target.value)
+                  setSearchQuery(
+                    event.target.value
+                  )
                 }
-                className="w-full rounded-2xl border border-[#E6DDD3] bg-white py-3 pl-8 pr-4 text-sm outline-none ring-0 transition focus:border-[#3A4F3F]/30 focus:bg-white"
+                className="w-full rounded-2xl border border-[#E6DDD3] bg-white py-3 pl-8 pr-4 text-sm outline-none transition focus:border-[#3A4F3F]/30 focus:bg-white"
               />
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 md:flex-wrap md:justify-end">
+            <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 md:justify-end md:pb-0">
               {CATEGORIES.map((category) => (
                 <button
+                  type="button"
                   key={category}
                   onClick={() =>
                     setSelectedCategory(category)
                   }
-                  className={`shrink-0 rounded-full px-4.5 py-2 text-sm font-medium transition-all ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     selectedCategory === category
                       ? 'bg-[#2F4638] text-white shadow-md'
-                      : 'bg-white text-[#5F6F65] border border-[#E6DDD3] hover:text-[#2F4638]'
+                      : 'border border-[#E6DDD3] bg-white text-[#5F6F65] hover:text-[#2F4638]'
                   }`}
                 >
                   {category}
@@ -667,7 +757,7 @@ export default function App() {
             />
           ) : filteredData.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                 {visibleData.map((item, index) => (
                   <DataCard
                     key={
@@ -686,12 +776,13 @@ export default function App() {
                 filteredData.length && (
                 <div className="mt-8 text-center">
                   <button
+                    type="button"
                     onClick={() =>
                       setVisibleCount(
                         (count) => count + 20
                       )
                     }
-                    className="rounded-full bg-[#2F4638] px-5 py-2.5 text-sm font-medium text-white shadow-md hover:opacity-90 transition-all"
+                    className="rounded-full bg-[#2F4638] px-5 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:opacity-90"
                   >
                     載入更多
                   </button>

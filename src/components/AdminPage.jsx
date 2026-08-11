@@ -8,6 +8,7 @@ import React, {
   useRef,
 } from 'react';
 
+
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -16,22 +17,38 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 
+
 import {
   doc,
   writeBatch,
 } from 'firebase/firestore';
 
+
 import { auth, db } from '../firebase';
+
 import AddEntryPage from './AddEntryPage';
+import OilModal from './OilModal';
+import AcuModal from './AcuModal';
+import HerbModal from './HerbModal';
+import FormulaModal from './FormulaModal';
+import BookModal from './BookModal';
+
 import { APP_VERSION } from '../generatedVersion.js';
 
-const EncyclopediaViewer = lazy(
-  () => import('./EncyclopediaViewer')
-);
 
 const CardViewer = lazy(
   () => import('./CardViewer')
 );
+
+
+const MODAL_MAP = {
+  書籍: BookModal,
+  精油: OilModal,
+  穴道: AcuModal,
+  中藥: HerbModal,
+  方劑: FormulaModal,
+};
+
 
 const normalizeText = (value = '') =>
   String(value)
@@ -40,8 +57,13 @@ const normalizeText = (value = '') =>
     .replace(/\s+/g, ' ')
     .toLowerCase();
 
-const getEntryKey = (category = '', name = '') =>
+
+const getEntryKey = (
+  category = '',
+  name = ''
+) =>
   `${normalizeText(category)}__${normalizeText(name)}`;
+
 
 const categories = [
   '全部',
@@ -52,9 +74,12 @@ const categories = [
   '方劑',
 ];
 
+
 const buildBookSearchText = (item) => {
   const walkChapters = (chapters) => {
-    if (!chapters) return '';
+    if (!chapters) {
+      return '';
+    }
 
     const array = Array.isArray(chapters)
       ? chapters
@@ -82,12 +107,15 @@ const buildBookSearchText = (item) => {
     [
       item.name,
       item.bookDetails?.author,
-      walkChapters(item.bookDetails?.chapters),
+      walkChapters(
+        item.bookDetails?.chapters
+      ),
     ]
       .filter(Boolean)
       .join(' ')
   );
 };
+
 
 const buildSearchText = (item) => {
   if (item.category === '書籍') {
@@ -103,11 +131,20 @@ const buildSearchText = (item) => {
       item.source,
       item.effect,
       item.indications,
+      item.description,
+      item.syndrome,
+      item.modifications,
+      item.modernApp,
+      item.pharmacology,
+      item.contemporary,
+      item.directions,
+      item.note,
     ]
       .filter(Boolean)
       .join(' ')
   );
 };
+
 
 const getAuthErrorMessage = (error) => {
   switch (error?.code) {
@@ -137,6 +174,7 @@ const getAuthErrorMessage = (error) => {
   }
 };
 
+
 const EntryRow = React.memo(function EntryRow({
   item,
   onViewItem,
@@ -146,40 +184,44 @@ const EntryRow = React.memo(function EntryRow({
   disabled,
 }) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-[#E5E0D8]/60 flex justify-between items-center shadow-sm print:break-inside-avoid">
+    <div className="flex items-center justify-between rounded-2xl border border-[#E5E0D8]/60 bg-white p-5 shadow-sm print:break-inside-avoid">
       <span className="font-semibold text-[#3A4F3F]">
         {item.name}
       </span>
 
-      <div className="flex gap-2 flex-wrap justify-end print:hidden">
+      <div className="flex flex-wrap justify-end gap-2 print:hidden">
         <button
+          type="button"
           onClick={() => onViewItem(item)}
           disabled={disabled}
-          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-[#F7F5F0] px-4 py-2 text-sm font-medium text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           檢視
         </button>
 
         <button
+          type="button"
           onClick={() => onViewCard(item)}
           disabled={disabled}
-          className="px-4 py-2 text-sm text-[#3A4F3F] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-[#F7F5F0] px-4 py-2 text-sm font-medium text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           圖卡
         </button>
 
         <button
+          type="button"
           onClick={() => onEdit(item)}
           disabled={disabled}
-          className="px-4 py-2 text-sm text-[#6B9080] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-[#F7F5F0] px-4 py-2 text-sm font-medium text-[#6B9080] hover:bg-[#E5E0D8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           編輯
         </button>
 
         <button
+          type="button"
           onClick={() => onDelete(item)}
           disabled={disabled}
-          className="px-4 py-2 text-sm text-[#D4A373] font-medium bg-[#F7F5F0] rounded-lg hover:bg-[#E5E0D8] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-[#F7F5F0] px-4 py-2 text-sm font-medium text-[#D4A373] hover:bg-[#E5E0D8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           刪除
         </button>
@@ -188,6 +230,7 @@ const EntryRow = React.memo(function EntryRow({
   );
 });
 
+
 export default function AdminPage({
   allData,
   onBack,
@@ -195,27 +238,53 @@ export default function AdminPage({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState('');
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [currentUser, setCurrentUser] =
+    useState(null);
 
-  const [viewState, setViewState] = useState('list');
-  const [editingItem, setEditingItem] = useState(null);
-  const [viewingItem, setViewingItem] = useState(null);
-  const [viewingCard, setViewingCard] = useState(null);
+  const [authLoading, setAuthLoading] =
+    useState(true);
 
-  const [filterCategory, setFilterCategory] =
-    useState('全部');
-  const [searchName, setSearchName] = useState('');
-  const [displayCount, setDisplayCount] = useState(10);
+  const [authError, setAuthError] =
+    useState('');
 
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteMessage, setDeleteMessage] = useState('');
+  const [isSigningIn, setIsSigningIn] =
+    useState(false);
+
+  const [viewState, setViewState] =
+    useState('list');
+
+  const [editingItem, setEditingItem] =
+    useState(null);
+
+  const [viewingItem, setViewingItem] =
+    useState(null);
+
+  const [viewingCard, setViewingCard] =
+    useState(null);
+
+  const [
+    filterCategory,
+    setFilterCategory,
+  ] = useState('全部');
+
+  const [searchName, setSearchName] =
+    useState('');
+
+  const [displayCount, setDisplayCount] =
+    useState(10);
+
+  const [isDeleting, setIsDeleting] =
+    useState(false);
+
+  const [
+    deleteMessage,
+    setDeleteMessage,
+  ] = useState('');
 
   const deletingRef = useRef(false);
 
   const version = APP_VERSION;
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -241,13 +310,16 @@ export default function AdminPage({
     return () => unsubscribe();
   }, []);
 
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [viewState]);
 
+
   useEffect(() => {
     setDisplayCount(10);
   }, [filterCategory, searchName]);
+
 
   useEffect(() => {
     if (!deleteMessage) {
@@ -262,6 +334,7 @@ export default function AdminPage({
       window.clearTimeout(timer);
     };
   }, [deleteMessage]);
+
 
   const indexedData = useMemo(() => {
     return (allData || [])
@@ -279,6 +352,7 @@ export default function AdminPage({
       }));
   }, [allData]);
 
+
   const filteredByCategory = useMemo(() => {
     if (filterCategory === '全部') {
       return indexedData;
@@ -289,6 +363,7 @@ export default function AdminPage({
         item.category === filterCategory
     );
   }, [indexedData, filterCategory]);
+
 
   const filteredEntries = useMemo(() => {
     const query = normalizeText(searchName);
@@ -302,17 +377,24 @@ export default function AdminPage({
     );
   }, [filteredByCategory, searchName]);
 
+
   const displayedEntries = useMemo(
     () =>
-      filteredEntries.slice(0, displayCount),
+      filteredEntries.slice(
+        0,
+        displayCount
+      ),
     [filteredEntries, displayCount]
   );
+
 
   const handleLogin = useCallback(
     async (event) => {
       event.preventDefault();
 
-      if (isSigningIn) return;
+      if (isSigningIn) {
+        return;
+      }
 
       const normalizedEmail = email.trim();
 
@@ -339,6 +421,7 @@ export default function AdminPage({
         setPassword('');
       } catch (error) {
         console.error('登入失敗:', error);
+
         setAuthError(
           getAuthErrorMessage(error)
         );
@@ -348,6 +431,7 @@ export default function AdminPage({
     },
     [email, password, isSigningIn]
   );
+
 
   const handleLogout = useCallback(
     async () => {
@@ -369,21 +453,37 @@ export default function AdminPage({
     []
   );
 
+
+  const handleCloseAdminDetail =
+    useCallback(() => {
+      setViewingItem(null);
+      setViewingCard(null);
+      setEditingItem(null);
+      setViewState('list');
+      setDeleteMessage('');
+    }, []);
+
+
   const handleLoadMore = useCallback(() => {
     setDisplayCount(
       (previous) => previous + 10
     );
   }, []);
 
+
   const handleDelete = useCallback(
     async (item) => {
-      if (deletingRef.current) return;
+      if (deletingRef.current) {
+        return;
+      }
 
       const confirmed = window.confirm(
         `確定要刪除「${item?.name || ''}」嗎？`
       );
 
-      if (!confirmed) return;
+      if (!confirmed) {
+        return;
+      }
 
       deletingRef.current = true;
       setIsDeleting(true);
@@ -440,12 +540,14 @@ export default function AdminPage({
     []
   );
 
+
   const handleViewItem = useCallback(
     (item) => {
       setViewingItem(item);
     },
     []
   );
+
 
   const handleViewCard = useCallback(
     (item) => {
@@ -454,6 +556,7 @@ export default function AdminPage({
     []
   );
 
+
   const handleEdit = useCallback(
     (item) => {
       setEditingItem(item);
@@ -461,6 +564,7 @@ export default function AdminPage({
     },
     []
   );
+
 
   if (authLoading) {
     return (
@@ -472,15 +576,16 @@ export default function AdminPage({
     );
   }
 
+
   if (!currentUser) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F7F5F0] px-4">
-        <div className="bg-white p-8 rounded-3xl shadow-xl border border-[#E5E0D8] w-full max-w-sm text-center">
-          <h2 className="text-xl font-bold text-[#3A4F3F] mb-2 tracking-widest">
+        <div className="w-full max-w-sm rounded-3xl border border-[#E5E0D8] bg-white p-8 text-center shadow-xl">
+          <h2 className="mb-2 text-xl font-bold tracking-widest text-[#3A4F3F]">
             開發者專區
           </h2>
 
-          <p className="text-sm text-[#A39284] mb-6">
+          <p className="mb-6 text-sm text-[#A39284]">
             請使用管理員帳號登入
           </p>
 
@@ -495,7 +600,7 @@ export default function AdminPage({
                 setEmail(event.target.value);
                 setAuthError('');
               }}
-              className="w-full px-4 py-3 rounded-xl border border-[#E5E0D8] outline-none text-[#3A4F3F]"
+              className="w-full rounded-xl border border-[#E5E0D8] px-4 py-3 text-[#3A4F3F] outline-none"
               placeholder="管理員 Email"
               autoComplete="email"
               disabled={isSigningIn}
@@ -508,14 +613,14 @@ export default function AdminPage({
                 setPassword(event.target.value);
                 setAuthError('');
               }}
-              className="w-full px-4 py-3 rounded-xl border border-[#E5E0D8] outline-none text-[#3A4F3F]"
+              className="w-full rounded-xl border border-[#E5E0D8] px-4 py-3 text-[#3A4F3F] outline-none"
               placeholder="管理員密碼"
               autoComplete="current-password"
               disabled={isSigningIn}
             />
 
             {authError && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {authError}
               </div>
             )}
@@ -523,7 +628,7 @@ export default function AdminPage({
             <button
               type="submit"
               disabled={isSigningIn}
-              className="w-full bg-[#3A4F3F] text-white py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-[#3A4F3F] py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSigningIn
                 ? '登入中...'
@@ -532,16 +637,18 @@ export default function AdminPage({
           </form>
 
           <button
+            type="button"
             onClick={onBack}
             disabled={isSigningIn}
-            className="mt-6 text-[#A39284] text-sm hover:underline disabled:opacity-50"
+            className="mt-6 text-sm text-[#A39284] hover:underline disabled:opacity-50"
           >
-            返回首頁
+            返回列表
           </button>
         </div>
       </div>
     );
   }
+
 
   if (viewState === 'add') {
     return (
@@ -555,23 +662,29 @@ export default function AdminPage({
     );
   }
 
+
+  const AdminModal =
+    viewingItem
+      ? MODAL_MAP[viewingItem.category]
+      : null;
+
+
   return (
-    <div className="w-screen h-dvh bg-[#F7F5F0] flex flex-col overflow-hidden">
+    <div className="flex h-dvh w-screen flex-col overflow-hidden bg-[#F7F5F0]">
       <Suspense
         fallback={
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#F7F5F0]/80">
-            <div className="rounded-2xl bg-white px-5 py-3 shadow-lg text-[#3A4F3F] font-medium">
+            <div className="rounded-2xl bg-white px-5 py-3 font-medium text-[#3A4F3F] shadow-lg">
               載入中...
             </div>
           </div>
         }
       >
-        {viewingItem && (
-          <EncyclopediaViewer
+        {viewingItem && AdminModal && (
+          <AdminModal
             item={viewingItem}
-            onClose={() =>
-              setViewingItem(null)
-            }
+            onClose={handleCloseAdminDetail}
+            backLabel="返回後臺列表"
           />
         )}
 
@@ -585,43 +698,47 @@ export default function AdminPage({
         )}
       </Suspense>
 
-      <header className="shrink-0 bg-[#F7F5F0] px-6 md:px-10 py-6 border-b border-[#E5E0D8] print:hidden">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+
+      <header className="shrink-0 border-b border-[#E5E0D8] bg-[#F7F5F0] px-6 py-6 print:hidden md:px-10">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-[#3A4F3F]">
               開發者專區
             </h1>
 
-            <p className="text-[#A39284] text-sm mt-1">
+            <p className="mt-1 text-sm text-[#A39284]">
               目前版本：{version}
             </p>
 
-            <p className="text-[#A39284] text-xs mt-1">
+            <p className="mt-1 text-xs text-[#A39284]">
               登入帳號：{currentUser.email}
             </p>
           </div>
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex flex-wrap gap-3">
             <button
+              type="button"
               onClick={onBack}
-              className="px-5 py-2.5 rounded-xl bg-white border border-[#E5E0D8] text-[#3A4F3F] font-medium hover:bg-[#F0EDE6]"
+              className="rounded-xl border border-[#E5E0D8] bg-white px-5 py-2.5 font-medium text-[#3A4F3F] hover:bg-[#F0EDE6]"
             >
-              返回首頁
+              首頁
             </button>
 
             <button
+              type="button"
               onClick={handleLogout}
-              className="px-5 py-2.5 rounded-xl bg-white border border-[#D4A373] text-[#D4A373] font-medium hover:bg-[#F0EDE6]"
+              className="rounded-xl border border-[#D76B66] bg-white px-5 py-2.5 font-medium text-[#D76B66] hover:bg-[#F0EDE6]"
             >
               登出
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 setEditingItem(null);
                 setViewState('add');
               }}
-              className="px-5 py-2.5 rounded-xl bg-[#6B9080] text-white font-medium hover:bg-[#5a7d6e]"
+              className="rounded-xl bg-[#6B9080] px-5 py-2.5 font-medium text-white hover:bg-[#5A7D6E]"
             >
               + 新增百科
             </button>
@@ -629,9 +746,10 @@ export default function AdminPage({
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-hidden px-6 md:px-10 py-6 print:p-0">
-        <div className="h-full flex flex-col min-h-0 gap-6">
-          <div className="shrink-0 flex flex-col md:flex-row md:items-center md:justify-between gap-3 print:hidden">
+
+      <main className="min-h-0 flex-1 overflow-hidden px-6 py-6 print:p-0 md:px-10">
+        <div className="flex h-full min-h-0 flex-col gap-6">
+          <div className="flex shrink-0 flex-col gap-3 print:hidden md:flex-row md:items-center md:justify-between">
             <div className="relative w-full md:max-w-md">
               <input
                 type="text"
@@ -642,30 +760,34 @@ export default function AdminPage({
                   )
                 }
                 placeholder="搜尋名稱"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E5E0D8] bg-white outline-none text-[#3A4F3F] placeholder:text-[#B8A99A]"
+                className="w-full rounded-xl border border-[#E5E0D8] bg-white px-4 py-2.5 text-[#3A4F3F] outline-none placeholder:text-[#B8A99A]"
               />
 
               {searchName && (
                 <button
-                  onClick={() => setSearchName('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D8] text-[#6B7A6E] hover:bg-[#F0EDE6]"
+                  type="button"
+                  onClick={() =>
+                    setSearchName('')
+                  }
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-[#E5E0D8] bg-white px-3 py-1.5 text-[#6B7A6E] hover:bg-[#F0EDE6]"
                 >
                   清除
                 </button>
               )}
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 md:justify-end">
+            <div className="flex gap-2 overflow-x-auto pb-1 md:justify-end md:pb-0">
               {categories.map((category) => (
                 <button
+                  type="button"
                   key={category}
                   onClick={() =>
                     setFilterCategory(category)
                   }
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  className={`whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
                     filterCategory === category
                       ? 'bg-[#3A4F3F] text-white'
-                      : 'bg-white text-[#6B7A6E] border border-[#E5E0D8]'
+                      : 'border border-[#E5E0D8] bg-white text-[#6B7A6E]'
                   }`}
                 >
                   {category}
@@ -674,11 +796,13 @@ export default function AdminPage({
             </div>
           </div>
 
+
           {deleteMessage && (
-            <div className="flex items-center justify-between gap-4 text-sm text-[#6B7A6E] bg-white px-4 py-2 rounded-xl border border-[#E5E0D8]">
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-sm text-[#6B7A6E]">
               <span>{deleteMessage}</span>
 
               <button
+                type="button"
                 onClick={() =>
                   setDeleteMessage('')
                 }
@@ -690,9 +814,10 @@ export default function AdminPage({
             </div>
           )}
 
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {displayedEntries.length === 0 ? (
-              <div className="rounded-2xl bg-white border border-[#E5E0D8] px-6 py-12 text-center text-[#A39284]">
+              <div className="rounded-2xl border border-[#E5E0D8] bg-white px-6 py-12 text-center text-[#A39284]">
                 目前沒有符合條件的百科資料。
               </div>
             ) : (
@@ -718,10 +843,11 @@ export default function AdminPage({
 
             {filteredEntries.length >
               displayCount && (
-              <div className="pt-4 pb-2 flex justify-center print:hidden">
+              <div className="flex justify-center pb-2 pt-4 print:hidden">
                 <button
+                  type="button"
                   onClick={handleLoadMore}
-                  className="rounded-full bg-[#2F4638] px-5 py-2.5 text-sm font-medium text-white shadow-md hover:opacity-90 transition-all"
+                  className="rounded-full bg-[#2F4638] px-5 py-2.5 text-sm font-medium text-white shadow-md transition hover:opacity-90"
                 >
                   載入更多
                 </button>

@@ -575,13 +575,13 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
                     {renderField('🔬 化學結構', 'oilDetails.chemistry', '', true)}
                     {renderField('⚖️ 屬性補充', 'oilDetails.attribute', '', true)}
                     {renderField('⚠️ 注意事項', 'oilDetails.caution', '', true)}
-                    {renderField('心靈療效', 'oilDetails.mindEffect', '', true)}
-                    {renderField('身體療效', 'oilDetails.bodyEffect', '', true)}
-                    {renderField('皮膚療效', 'oilDetails.skinEffect', '', true)}
-                    {renderField('適合調和的精油', 'oilDetails.blendingOils', '', true)}
-                    {renderField('精油配方', 'oilDetails.formulas', '', true)}
-                    {renderField('按摩基底油', 'oilDetails.carrierOil', '', true)}
-                    {renderField('使用方法', 'oilDetails.usage', '', true)}
+                    {renderField('🧠 心靈療效', 'oilDetails.mindEffect', '', true)}
+                    {renderField('🧍 身體療效', 'oilDetails.bodyEffect', '', true)}
+                    {renderField('💪 皮膚療效', 'oilDetails.skinEffect', '', true)}
+                    {renderField('🔗 適合調和的精油', 'oilDetails.blendingOils', '', true)}
+                    {renderField('🧪精油配方', 'oilDetails.formulas', '', true)}
+                    {renderField('🧴 按摩基底油', 'oilDetails.carrierOil', '', true)}
+                    {renderField('🚀 使用方法', 'oilDetails.usage', '', true)}
                   </div>
                 </div>
               )}

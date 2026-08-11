@@ -1,282 +1,547 @@
-import React, { useState, useRef } from 'react';
+import React, {
+  useState,
+  useRef,
+} from 'react';
 
-const LEVEL_TYPES = ['篇', '章', '節', '目', '子目'];
+const LEVEL_TYPES = ['篇','章','節','目','子目',];
 const CONTENT_TYPE = '內文';
-
 function normalizeType(type, level = 0) {
-  if (type === 'folder') return LEVEL_TYPES[Math.min(level, LEVEL_TYPES.length - 1)];
-  if (type === 'content') return CONTENT_TYPE;
-  if (LEVEL_TYPES.includes(type) || type === CONTENT_TYPE) return type;
-  return level === 0 ? '篇' : LEVEL_TYPES[Math.min(level, LEVEL_TYPES.length - 1)];
+  if (type === 'folder') {
+    return LEVEL_TYPES[
+      Math.min(level, LEVEL_TYPES.length - 1)
+    ];
+  }
+
+  if (type === 'content') {return CONTENT_TYPE;
+  }
+  if (LEVEL_TYPES.includes(type) ||type === CONTENT_TYPE
+  ) {
+    return type;
+  }
+
+  return level === 0 ? '篇'
+    : LEVEL_TYPES[
+        Math.min(
+          level,
+          LEVEL_TYPES.length - 1
+        )
+      ];
 }
 
-function getLevelLabel(type, level) {
-  if (type === CONTENT_TYPE) return CONTENT_TYPE;
-  return LEVEL_TYPES[Math.min(level, LEVEL_TYPES.length - 1)];
+function getLevelLabel(type, level = 0) {
+  if (type === CONTENT_TYPE) {return CONTENT_TYPE;
+  }
+return LEVEL_TYPES[Math.min(
+      level,
+      LEVEL_TYPES.length - 1
+    )
+  ];
 }
 
 function getRawTitle(fullTitle = '') {
-  const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
-  return match ? match[1].trim() : fullTitle;
+  const match = fullTitle.match(
+    /(.*?)[（\(]別名[：:](.*?)[）\)]/
+  );
+
+  return match
+    ? match[1].trim()
+    : fullTitle;
 }
 
 function getAliasTitle(fullTitle = '') {
-  const match = fullTitle.match(/(.*?)[（\(]別名[：:](.*?)[）\)]/);
-  return match ? match[2].trim() : '';
+  const match = fullTitle.match(
+    /(.*?)[（\(]別名[：:](.*?)[）\)]/
+  );
+
+  return match
+    ? match[2].trim()
+    : '';
 }
 
-export default function BookModal({ item, onClose }) {
-  const [selectedContent, setSelectedContent] = useState(null);
+export default function BookModal({
+  item,
+  onClose,
+  backLabel = '← 返回列表',
+}) {
+  const [
+    selectedContent,
+    setSelectedContent,
+  ] = useState(null);
+
   const contentRef = useRef(null);
 
-  if (!item) return null;
+  if (!item) {
+    return null;
+  }
 
   const restoreArray = (obj) => {
-    if (!obj) return [];
-    if (Array.isArray(obj)) return obj;
+    if (!obj) {
+      return [];
+    }
+
+    if (Array.isArray(obj)) {
+      return obj;
+    }
+
     return Object.keys(obj)
       .filter((key) => !isNaN(key))
-      .sort((a, b) => Number(a) - Number(b))
+      .sort(
+        (a, b) => Number(a) - Number(b)
+      )
       .map((key) => obj[key]);
   };
 
   const deepRestore = (node, level = 0) => {
-    if (!node) return node;
-
-    const normalizedType = normalizeType(node.type, level);
+    if (!node) {
+      return node;
+    }
 
     return {
       ...node,
-      type: normalizedType,
+      type: normalizeType(node.type, level),
       children: Array.isArray(node.children)
-        ? node.children.map((child, idx) => deepRestore(child, level + 1))
-        : restoreArray(node.children || []).map((child, idx) => deepRestore(child, level + 1)),
+        ? node.children.map((child) =>
+            deepRestore(child, level + 1)
+          )
+        : restoreArray(
+            node.children || []
+          ).map((child) =>
+            deepRestore(child, level + 1)
+          ),
     };
   };
 
-  const rawChapters = item.bookDetails?.chapters;
-  const processedChapters = restoreArray(rawChapters).map((node, idx) => deepRestore(node, 0));
+  const processedChapters = restoreArray(
+    item.bookDetails?.chapters
+  ).map((node) => deepRestore(node, 0));
 
   const renderTable = (rows) => (
-    <div className="overflow-x-auto my-5 rounded-[1.2rem] bg-[#FFFCF8] shadow-[0_6px_20px_rgba(63,81,68,0.05)]">
-      <table className="w-full text-left border-collapse text-[12px]">
-        <tbody>
-          {rows.map((row, i) => {
-            const cells = row
-              .split('|')
-              .map((c) => c.trim())
-              .filter((c, idx, arr) => {
-                if (idx === 0 && c === '') return false;
-                if (idx === arr.length - 1 && c === '') return false;
-                return true;
-              });
+    <div className="my-7 overflow-hidden rounded-2xl border border-[#E5E0D8] bg-[#FFFCF8] shadow-[0_8px_22px_rgba(63,81,68,0.06)]">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px] border-collapse text-left text-[13px]">
+          <tbody>
+            {rows.map((row, rowIndex) => {
+              const cells = row
+                .split('|')
+                .map((cell) => cell.trim())
+                .filter(
+                  (cell, index, array) => {
+                    if (
+                      index === 0 &&
+                      cell === ''
+                    ) {
+                      return false;
+                    }
 
-            if (cells.every((c) => c.includes('-'))) return null;
+                    if (
+                      index === array.length - 1 &&
+                      cell === ''
+                    ) {
+                      return false;
+                    }
 
-            return (
-              <tr
-                key={i}
-                className={`border-b border-[#E8E0D6] ${
-                  i === 0 ? 'bg-[#F7F5F0] font-bold text-[#2F4638]' : 'text-[#45584B]'
-                }`}
-              >
-                {cells.map((cell, j) => (
-                  <td
-                    key={j}
-                    className="p-3.5 border-r border-[#E8E0D6] last:border-r-0 whitespace-pre-wrap align-top"
-                  >
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    return true;
+                  }
+                );
+
+              if (
+                cells.every((cell) =>
+                  cell.includes('-')
+                )
+              ) {
+                return null;
+              }
+
+              return (
+                <tr
+                  key={rowIndex}
+                  className={`border-b border-[#EEE8DF] last:border-b-0 ${
+                    rowIndex === 0
+                      ? 'bg-[#3A4F3F] text-white'
+                      : 'text-[#45584B] hover:bg-[#FCFAF6]'
+                  }`}
+                >
+                  {cells.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className={`px-4 py-3.5 align-top whitespace-pre-wrap ${
+                        cellIndex !== cells.length - 1
+                          ? 'border-r border-[#EEE8DF]'
+                          : ''
+                      } ${
+                        rowIndex === 0
+                          ? 'font-bold tracking-wide'
+                          : 'leading-7'
+                      }`}
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
   const parseModalSyntax = (str) => {
-    if (typeof str !== 'string') return null;
+    if (typeof str !== 'string') {
+      return null;
+    }
 
     const lines = str.split('\n');
     let tableBuffer = [];
     const result = [];
 
     const processInlineSyntax = (text) => {
-      const regex = /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》)/g;
-      return text.split(regex).map((part, idx) => {
-        if (!part) return null;
+      const regex =
+        /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》)/g;
 
-        if (part.startsWith('==') && part.endsWith('==')) {
-          return (
-            <mark key={idx} className="bg-[#EFD8B8] px-1.5 py-0.5 rounded-md text-[#243126] font-semibold">
-              {part.slice(2, -2)}
-            </mark>
-          );
-        }
+      return text
+        .split(regex)
+        .map((part, index) => {
+          if (!part) {
+            return null;
+          }
 
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={idx} className="text-[#243126] font-bold">{part.replace(/\*\*/g, '')}</strong>;
-        }
-
-        if (part.startsWith('《') && part.endsWith('》')) {
-          return <span key={idx} className="text-[#5E7263] font-semibold">{part}</span>;
-        }
-
-        if (part.startsWith('【') && part.endsWith('】')) {
-          const hasAlias = part.match(/\(([^)]+)\)/);
-          const raw = part.replace(/\([^)]+\)/, '').replace(/[【】]/g, '');
-          const isSubheading = ['概念', '辨證分析', '文獻別錄'].includes(raw);
-
-          if (isSubheading) {
+          if (
+            part.startsWith('==') &&
+            part.endsWith('==')
+          ) {
             return (
-              <div key={idx} className="relative w-full flex items-center gap-3 my-5">
-                <div className="absolute left-0 top-0 h-10 w-full bg-[#6B9080]/10 rounded-xl" />
-                <div className="relative z-10 flex items-center gap-2 pl-3">
-                  <span className="text-lg md:text-xl font-extrabold text-[#2F4638] tracking-tight translate-y-[6px]">
-                    {raw}
-                  </span>
-                  {hasAlias && (
-                    <span className="text-xs font-medium bg-[#6B9080]/20 text-[#6B9080] px-2 py-0.5 rounded-md">
-                      {hasAlias[1]}
-                    </span>
-                  )}
-                </div>
-              </div>
+              <mark
+                key={index}
+                className="rounded-md bg-[#EFD8B8] px-1.5 py-0.5 font-semibold text-[#243126]"
+              >
+                {part.slice(2, -2)}
+              </mark>
             );
           }
 
-          return (
-            <span
-              key={idx}
-              className="flex flex-wrap items-center gap-2 text-sm font-bold text-[#2F4638] pl-1 mt-2 mb-2 py-1.5 rounded-lg w-full"
-            >
-              <span>[{raw}]</span>
-              {hasAlias && (
-                <span className="text-xs font-medium bg-[#6B9080]/10 text-[#6B9080] px-2 py-0.5 rounded-md">
-                  {hasAlias[1]}
-                </span>
-              )}
-            </span>
-          );
-        }
+          if (
+            part.startsWith('**') &&
+            part.endsWith('**')
+          ) {
+            return (
+              <strong
+                key={index}
+                className="font-bold text-[#243126]"
+              >
+                {part.replace(/\*\*/g, '')}
+              </strong>
+            );
+          }
 
-        return part;
-      });
+          if (
+            part.startsWith('《') &&
+            part.endsWith('》')
+          ) {
+            return (
+              <span
+                key={index}
+                className="font-semibold text-[#5E7263]"
+              >
+                {part}
+              </span>
+            );
+          }
+
+          if (
+            part.startsWith('【') &&
+            part.endsWith('】')
+          ) {
+            const hasAlias = part.match(
+              /\(([^)]+)\)/
+            );
+
+            const raw = part
+              .replace(/\([^)]+\)/, '')
+              .replace(/[【】]/g, '');
+
+            const isSubheading = [
+              '概念',
+              '辨證分析',
+              '文獻別錄',
+            ].includes(raw);
+
+            if (isSubheading) {
+              return (
+                <div
+                  key={index}
+                  className="relative my-6 flex w-full items-center gap-3"
+                >
+                  <div className="absolute left-0 top-0 h-11 w-full rounded-xl bg-[#6B9080]/10" />
+
+                  <div className="relative z-10 flex items-center gap-2 pl-3">
+                    <span className="translate-y-[4px] text-lg font-extrabold tracking-tight text-[#2F4638] md:text-xl">
+                      {raw}
+                    </span>
+
+                    {hasAlias && (
+                      <span className="rounded-md bg-[#D9C6B0]/40 px-2 py-0.5 text-xs font-medium text-[#8C725F]">
+                        {hasAlias[1]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <span
+                key={index}
+                className="my-2 flex w-full flex-wrap items-center gap-2 rounded-lg py-1.5 pl-1 text-sm font-bold text-[#2F4638]"
+              >
+                <span>[{raw}]</span>
+
+                {hasAlias && (
+                  <span className="rounded-md bg-[#D9C6B0]/35 px-2 py-0.5 text-xs font-medium text-[#8C725F]">
+                    {hasAlias[1]}
+                  </span>
+                )}
+              </span>
+            );
+          }
+
+          return part;
+        });
     };
 
-    lines.forEach((line, i) => {
+    lines.forEach((line, lineIndex) => {
       const trimmed = line.trim();
 
       if (trimmed.startsWith('|')) {
         tableBuffer.push(trimmed);
-      } else {
-        if (tableBuffer.length > 0) {
-          result.push(<div key={`t-${i}`}>{renderTable(tableBuffer)}</div>);
-          tableBuffer = [];
-        }
-
-        if (trimmed) {
-          const isNumbered = /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(trimmed);
-          const isIndented = trimmed.startsWith('●');
-
-          if (isNumbered) {
-            const splitIndex = trimmed.search(/[.、]/) + 1;
-            result.push(
-              <div key={i} className="grid grid-cols-[auto_1fr] gap-x-2">
-                <span className="font-bold text-[#2F4638] shrink-0">
-                  {trimmed.substring(0, splitIndex)}
-                </span>
-                <span>{processInlineSyntax(trimmed.substring(splitIndex).trim())}</span>
-              </div>
-            );
-          } else if (isIndented) {
-            result.push(
-              <div key={i} className="flex items-baseline pl-0 mb-1">
-                <span className="text-[#7C6E60] mr-2 inline-block shrink-0 translate-y-[-1px]">●</span>
-                <span className="leading-relaxed text-left flex-1">
-                  {processInlineSyntax(trimmed.replace('●', '').trim())}
-                </span>
-              </div>
-            );
-          } else {
-            result.push(<div key={i}>{processInlineSyntax(trimmed)}</div>);
-          }
-        }
+        return;
       }
+
+      if (tableBuffer.length > 0) {
+        result.push(
+          <div key={`table-${lineIndex}`}>
+            {renderTable(tableBuffer)}
+          </div>
+        );
+
+        tableBuffer = [];
+      }
+
+      if (!trimmed) {
+        return;
+      }
+
+      const isNumbered =
+        /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(
+          trimmed
+        );
+
+      const isIndented =
+        trimmed.startsWith('●');
+
+      if (isNumbered) {
+        const splitIndex =
+          trimmed.search(/[.、]/) + 1;
+
+        result.push(
+          <div
+            key={lineIndex}
+            className="grid grid-cols-[auto_1fr] gap-x-2"
+          >
+            <span className="shrink-0 font-bold text-[#2F4638]">
+              {trimmed.substring(
+                0,
+                splitIndex
+              )}
+            </span>
+
+            <span>
+              {processInlineSyntax(
+                trimmed
+                  .substring(splitIndex)
+                  .trim()
+              )}
+            </span>
+          </div>
+        );
+
+        return;
+      }
+
+      if (isIndented) {
+        result.push(
+          <div
+            key={lineIndex}
+            className="mb-1 flex items-baseline"
+          >
+            <span className="mr-2 shrink-0 text-[#7C6E60]">
+              ●
+            </span>
+
+            <span className="flex-1 leading-relaxed">
+              {processInlineSyntax(
+                trimmed
+                  .replace('●', '')
+                  .trim()
+              )}
+            </span>
+          </div>
+        );
+
+        return;
+      }
+
+      result.push(
+        <div key={lineIndex}>
+          {processInlineSyntax(trimmed)}
+        </div>
+      );
     });
 
-    if (tableBuffer.length > 0) result.push(<div key="final-table">{renderTable(tableBuffer)}</div>);
-    return <div className="space-y-3 text-[15px] leading-8 text-[#3A4F3F]">{result}</div>;
-  };
+    if (tableBuffer.length > 0) {
+      result.push(
+        <div key="final-table">
+          {renderTable(tableBuffer)}
+        </div>
+      );
+    }
 
-  const renderTitleWithAlias = (fullTitle) => {
-    const alias = getAliasTitle(fullTitle);
-    const raw = getRawTitle(fullTitle);
-
-    return alias ? (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full">
-        <span className="text-2xl md:text-3xl font-black text-[#2F4638]">{raw}</span>
-        <span className="text-xs bg-[#6B9080]/10 text-[#6B9080] font-medium px-2 py-1 rounded-full">
-          別名：{alias}
-        </span>
+    return (
+      <div className="space-y-3 text-[15px] leading-8 text-[#3A4F3F]">
+        {result}
       </div>
-    ) : (
-      <span className="text-2xl md:text-3xl font-black text-[#2F4638]">{fullTitle}</span>
     );
   };
 
-  const renderDirectory = (items, level = 0) => (
-    <div className="w-full space-y-2">
-      {items.map((item) => {
-        if (!item || !item.id) return null;
+  const renderTitleWithAlias = (
+    fullTitle = ''
+  ) => {
+    const alias = getAliasTitle(fullTitle);
+    const raw = getRawTitle(fullTitle);
 
-        const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-        const isActive = selectedContent?.id === item.id;
-        const canOpenAsContent = !!item.text;
-        const isFolderLike = item.type !== CONTENT_TYPE;
+    if (alias) {
+      return (
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="text-2xl font-black tracking-tight text-[#2F4638] md:text-3xl">
+            {raw}
+          </span>
+
+          <span className="rounded-full bg-[#D9C6B0]/35 px-2.5 py-1 text-xs font-medium text-[#8C725F]">
+            別名：{alias}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <span className="text-2xl font-black tracking-tight text-[#2F4638] md:text-3xl">
+        {fullTitle}
+      </span>
+    );
+  };
+
+  const renderDirectory = (
+    items,
+    level = 0
+  ) => (
+    <div className="w-full space-y-1.5">
+      {items.map((directoryItem) => {
+        if (
+          !directoryItem ||
+          !directoryItem.id
+        ) {
+          return null;
+        }
+
+        const hasChildren =
+          Array.isArray(
+            directoryItem.children
+          ) &&
+          directoryItem.children.length > 0;
+
+        const isActive =
+          selectedContent?.id ===
+          directoryItem.id;
+
+        const canOpenAsContent =
+          Boolean(directoryItem.text);
+
+        const isFolderLike =
+          directoryItem.type !== CONTENT_TYPE;
 
         return (
-          <div key={item.id} className="w-full">
+          <div
+            key={directoryItem.id}
+            className="w-full"
+          >
             <button
+              type="button"
               onClick={() => {
-                if (isFolderLike && !canOpenAsContent && hasChildren) return;
-                setSelectedContent(item);
+                if (
+                  isFolderLike &&
+                  !canOpenAsContent &&
+                  hasChildren
+                ) {
+                  return;
+                }
+
+                setSelectedContent(
+                  directoryItem
+                );
+
                 requestAnimationFrame(() => {
-                  if (contentRef.current) contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                  if (contentRef.current) {
+                    contentRef.current.scrollTo({
+                      top: 0,
+                      behavior: 'smooth',
+                    });
+                  }
                 });
               }}
-              className={`group relative w-full overflow-hidden rounded-[0.95rem] px-3 py-2.5 text-left transition-all duration-200 ${
+              className={`group relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left transition-all duration-200 ${
                 isActive
-                  ? 'bg-[#2F4638] text-white shadow-[0_10px_24px_rgba(47,70,56,0.18)]'
-                  : 'bg-white/70 text-[#5E7263] hover:-translate-y-0.5 hover:bg-[#FBFAF7] hover:shadow-[0_8px_18px_rgba(63,81,68,0.05)]'
+                  ? 'border-[#3A4F3F] bg-[#3A4F3F] text-white'
+                  : 'border-transparent bg-[#FDFBF7] text-[#5E7263] hover:border-[#E5E0D8] hover:bg-white'
               }`}
             >
               <div
-                className={`absolute left-0 top-0 h-full w-1 ${
-                  isActive ? 'bg-[#C8A97E]' : 'bg-transparent group-hover:bg-[#6B9080]/30'
+                className={`absolute left-0 top-2 h-[calc(100%-1rem)] w-1 rounded-r-full ${
+                  isActive
+                    ? 'bg-[#D9C6B0]'
+                    : 'bg-transparent group-hover:bg-[#6B9080]/40'
                 }`}
               />
-              <div className="flex items-center gap-2 pl-1">
-                <span className="text-sm opacity-75">{isFolderLike ? '📁' : '📄'}</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#6B9080]/10 text-[#6B9080] shrink-0">
-                  {item.type}
+
+              <div className="flex min-w-0 items-center gap-2 pl-1">
+                <span className="shrink-0 text-xs opacity-75">
+                  {isFolderLike ? '📁' : '📄'}
                 </span>
-                <span className="truncate text-sm font-medium">
-                  {getRawTitle(item.title || '無標題內容')}
+
+                <span
+                  className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                    isActive
+                      ? 'bg-white/15 text-[#F5E6D1]'
+                      : 'bg-[#6B9080]/10 text-[#6B9080]'
+                  }`}
+                >
+                  {directoryItem.type}
                 </span>
-                {item.type !== CONTENT_TYPE && item.text ? (
-                  <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#6B9080]/10 text-[#6B9080]">
-                    有內文
-                  </span>
-                ) : null}
+
+                <span className="min-w-0 truncate text-sm font-medium">
+                  {getRawTitle(
+                    directoryItem.title ||
+                      '無標題內容'
+                  )}
+                </span>
               </div>
             </button>
 
             {isFolderLike && hasChildren && (
-              <div className="mt-2 pl-2 border-l border-[#E8E0D6]/50 space-y-2">
-                {renderDirectory(item.children, level + 1)}
+              <div className="mt-1.5 space-y-1.5 border-l border-[#E5E0D8] pl-2">
+                {renderDirectory(
+                  directoryItem.children,
+                  level + 1
+                )}
               </div>
             )}
           </div>
@@ -286,52 +551,166 @@ export default function BookModal({ item, onClose }) {
   );
 
   return (
-    <div className="h-screen w-full bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)] overflow-hidden">
-      <div className="border-b border-[#E8E0D6]/50 bg-white/70 backdrop-blur-md px-8 py-6">
-        <div className="max-w-6xl mx-auto flex items-center gap-6">
-          <div>
-            <span className="text-[11px] font-bold text-[#6B9080] uppercase tracking-[0.28em] block mb-0.5">
-              {item.category} 百科閱讀器
-            </span>
-            <h2 className="text-xl md:text-2xl font-black text-[#2F4638]">{item.name}</h2>
+    <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
+      <header className="w-full shrink-0 border-b border-[#D8C8B8] bg-[#718678] shadow-[0_4px_16px_rgba(88,102,94,0.18)]">
+        <div className="flex w-full items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#D9C6B0] text-lg text-[#718678]">
+              📖
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F3E5D6]">
+                Book Reader
+              </p>
+
+              <h2 className="truncate text-lg font-black text-white md:text-xl">
+                {item.name}
+              </h2>
+
+              <p className="hidden text-xs text-[#E9DCCF] sm:block">
+                {item.category} · 百科閱讀器
+              </p>
+            </div>
           </div>
+
+          <button
+  type="button"
+  onClick={() => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  }}
+  className="shrink-0 rounded-lg border border-[#F3E5D6]/60 bg-[#D9C6B0]/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-[#D9C6B0]/45"
+>
+  {backLabel}
+</button>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8 px-6 py-8 h-[calc(100vh-88px)] min-h-0">
-        <aside className="w-full md:w-72 shrink-0 h-full overflow-y-auto pr-1">
-          <div className="bg-white/60 p-4 shadow-[0_12px_30px_rgba(63,81,68,0.05)] backdrop-blur-md">
-            <div className="flex items-center justify-between px-1 mb-3">
-              <h4 className="text-[11px] font-bold text-[#A39284] tracking-[0.28em] uppercase">
-                目錄架構
-              </h4>
-              <span className="text-[10px] text-[#B7A89A]">Book Tree</span>
-            </div>
-            {renderDirectory(processedChapters)}
-          </div>
-        </aside>
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-4 bg-[#F5EEE5] p-4 md:p-6">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)]">
+          <aside className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#D8C8B8] bg-[#FBF7F1] shadow-[0_8px_24px_rgba(63,81,68,0.08)]">
+            <div className="shrink-0 border-b border-[#D8C8B8] px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#AD9683]">
+                Contents
+              </p>
 
-        <main ref={contentRef} className="flex-1 min-w-0 h-full overflow-y-auto pr-1">
-          {selectedContent ? (
-            <div className="space-y-6 pb-8">
-              <div className="border-b border-[#E8E0D6]/70 pb-5">
-                {renderTitleWithAlias(selectedContent.title)}
+              <div className="mt-1 flex items-center justify-between">
+                <h3 className="text-base font-black text-[#3A4F3F]">
+                  目錄架構
+                </h3>
+
+                <span className="text-xs text-[#AD9683]">
+                  Book Tree
+                </span>
               </div>
 
-              <div className="rounded-[1.6rem] bg-[#FFFCF8] p-8 md:p-10 shadow-[0_10px_30px_rgba(63,81,68,0.06)]">
-                {selectedContent.text ? (
-                  parseModalSyntax(selectedContent.text)
-                ) : (
-                  <span className="text-[#A39284] italic">尚無內容。</span>
-                )}
+              <div className="mt-3 h-1 w-10 rounded-full bg-[#6B9080]" />
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+              {processedChapters.length > 0 ? (
+                renderDirectory(
+                  processedChapters
+                )
+              ) : (
+                <div className="rounded-xl border border-dashed border-[#D8C8B8] bg-[#FCF8F2] px-4 py-8 text-center">
+                  <div className="mb-3 text-2xl">
+                    📚
+                  </div>
+
+                  <p className="text-sm text-[#AD9683]">
+                    目前沒有目錄內容
+                  </p>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          <main
+            ref={contentRef}
+            className="min-h-0 min-w-0 overflow-y-auto rounded-2xl border border-[#D8C8B8] bg-[#F7EFE5] p-4 shadow-[0_8px_24px_rgba(63,81,68,0.08)] md:p-6"
+          >
+            {selectedContent ? (
+              <div className="w-full pb-6">
+                <div className="mb-4 border-b border-[#D8C8B8] px-2 pb-4 md:px-4">
+                  <div className="mb-3 flex items-center gap-2 text-xs text-[#AD9683]">
+                    <span>目錄</span>
+
+                    <span className="text-[#D9C6B0]">
+                      /
+                    </span>
+
+                    <span className="truncate text-[#6B9080]">
+                      {getLevelLabel(
+                        selectedContent.type,
+                        0
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="hidden h-12 w-1 shrink-0 rounded-full bg-[#6B9080] sm:block" />
+
+                    <div className="min-w-0 flex-1">
+                      {renderTitleWithAlias(
+                        selectedContent.title ||
+                          '無標題內容'
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <article className="w-full rounded-xl bg-[#FFFCF8] px-6 py-7 shadow-[0_6px_18px_rgba(63,81,68,0.06)] md:px-10 md:py-9 lg:px-14">
+                  {selectedContent.text ? (
+                    parseModalSyntax(
+                      selectedContent.text
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F2E9DE] text-2xl">
+                        ✦
+                      </div>
+
+                      <p className="text-base font-semibold text-[#756A63]">
+                        尚無內容
+                      </p>
+
+                      <p className="mt-2 text-sm text-[#AD9683]">
+                        此章節目前還沒有編輯內容。
+                      </p>
+                    </div>
+                  )}
+                </article>
+
+                <div className="mt-5 flex items-center justify-center gap-2 text-xs text-[#B59A82]">
+                  <span className="h-px w-10 bg-[#D8C8B8]" />
+                  <span>本草與芳香數位百科</span>
+                  <span className="h-px w-10 bg-[#D8C8B8]" />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="p-20 text-center border-2 border-dashed border-[#E8E0D6] rounded-2xl text-[#A39284] bg-white/50">
-              請從左側目錄選擇項目。
-            </div>
-          )}
-        </main>
+            ) : (
+              <div className="flex h-full min-h-[420px] items-center justify-center rounded-xl border border-dashed border-[#D8C8B8] bg-[#FCF8F2] px-6 text-center">
+                <div>
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-xl bg-[#F2E9DE] text-3xl">
+                    📖
+                  </div>
+
+                  <h3 className="text-xl font-black text-[#3A4F3F]">
+                    開始閱讀
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-7 text-[#AD9683]">
+                    請從左側目錄選擇一個篇章
+                    <br />
+                    閱讀完整百科內容
+                  </p>
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
