@@ -252,7 +252,6 @@ export default function AcuModal({
     {label: '🆔 穴位代碼', val: acuTable.code,},
     {label: '🎯 經絡', val: acuTable.meridian,},
     {label: '🏷️ 別名', val: acuTable.alias,},
-    {label: '🗂️ 類別', val: acuDetails.type,},
   ];
 
   return (
@@ -348,9 +347,9 @@ export default function AcuModal({
 
           <section className="space-y-6 lg:col-span-8">
             <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10"><div className="space-y-8 text-[#3A4F3F]"><div><span className={UI.sectionLabel}>🎯 主治</span>
+                  {renderFormattedText(acuDetails.location)}</div><div><span className={UI.sectionLabel}>🧩 類別</span>
                   {renderFormattedText(acuDetails.indications)}</div><div><span className={UI.sectionLabel}>📖 釋名</span>
                   {renderFormattedText(acuDetails.nameExpl)}</div><div><span className={UI.sectionLabel}>📍 位置</span>
-                  {renderFormattedText(acuDetails.location)}</div><div><span className={UI.sectionLabel}>🧩 類別</span>
                   {renderFormattedText(acuDetails.type)}</div>{acuDetails.anatomy && (<div><span className={UI.sectionLabel}>💀 解剖</span>
 
                     <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
