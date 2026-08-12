@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
+
 import { db } from '../firebase';
 import { doc, runTransaction } from 'firebase/firestore';
+
 import BookStructureEditor from './BookStructureEditor';
+import AiImageImporter from './AiImageImporter';
 
 const normalizeText = (v = '') =>
   String(v)
@@ -18,7 +26,16 @@ const getDefaultFormData = () => ({
   name: '',
   tag: '',
   description: '',
+
   englishName: '',
+  latin: '',
+  typePart: '',
+  method: '',
+  property: '',
+  noteAnalogy: '',
+  planet: '',
+  origin: '',
+
   constitutionTag: '',
   chemicalTag: '',
   alias: '',
@@ -45,13 +62,13 @@ const getDefaultFormData = () => ({
   modernApp: '',
   modernPharmacology: '',
   prescription: '',
-  typePart: '',
-  method: '',
-  property: '',
-  planet: '',
-  origin: '',
-  noteAnalogy: '',
-  acuTable: { code: '', meridian: '', alias: '' },
+
+  acuTable: {
+    code: '',
+    meridian: '',
+    alias: '',
+  },
+
   acuDetails: {
     location: '',
     operation: '',
@@ -63,6 +80,7 @@ const getDefaultFormData = () => ({
     effectModern: '',
     matchingPoints: '',
   },
+
   oilDetails: {
     scent: '',
     appearance: '',
@@ -73,12 +91,18 @@ const getDefaultFormData = () => ({
     mindEffect: '',
     bodyEffect: '',
     skinEffect: '',
+    constitution: '',
     blendingOils: '',
     formulas: '',
     carrierOils: '',
     usage: '',
   },
-  bookDetails: { author: '', chapters: [] },
+
+  bookDetails: {
+    author: '',
+    chapters: [],
+  },
+
   entryKey: '',
   searchKey: '',
   createdAt: '',
@@ -147,7 +171,6 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState(getDefaultFormData());
-
   useEffect(() => {
     if (!editingItem) {
       setFormData(getDefaultFormData());
@@ -273,6 +296,7 @@ export default function AddEntryPage({ onClose, editingItem, isViewOnly = false 
       )}
     </div>
   ), [formData, getValueByPath, updateValueByPath, isViewOnly, isSaving]);
+
 
   const handleSave = useCallback(async () => {
     if (isSaving || isViewOnly) return;
@@ -449,23 +473,55 @@ const baseCreatedAt =oldEntrySnap.data()?.createdAt ||editingItem?.createdAt ||n
         </h2>
 
         <div className="flex gap-4 shrink-0">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 text-[#A39284] font-bold hover:text-[#3A4F3F] transition-colors"
-          >
-            {isViewOnly ? '關閉' : '取消'}
-          </button>
+  <AiImageImporter
+  category={formData.category}
+  disabled={isViewOnly || isSaving}
+  onData={(aiData) => {
+    setFormData((prev) => ({
+      ...prev,
+      ...aiData,
+      oilDetails: {
+        ...prev.oilDetails,
+        ...(aiData.oilDetails || {}),
+      },
+      acuTable: {
+        ...prev.acuTable,
+        ...(aiData.acuTable || {}),
+      },
+      acuDetails: {
+        ...prev.acuDetails,
+        ...(aiData.acuDetails || {}),
+      },
+      bookDetails: {
+        ...prev.bookDetails,
+        ...(aiData.bookDetails || {}),
+        chapters: Array.isArray(aiData.bookDetails?.chapters)
+          ? aiData.bookDetails.chapters
+          : prev.bookDetails.chapters,
+      },
+    }));
+  }}
+/>
 
-          {!isViewOnly && (
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-8 py-2 bg-[#3A4F3F] text-white rounded-full font-bold hover:bg-[#2C3C30] shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isSaving ? '儲存中...' : '儲存資料'}
-            </button>
-          )}
-        </div>
+  <button
+    type="button"
+    onClick={onClose}
+    className="px-6 py-2 text-[#A39284] font-bold hover:text-[#3A4F3F] transition-colors"
+  >
+    {isViewOnly ? '關閉' : '取消'}
+  </button>
+
+  {!isViewOnly && (
+    <button
+      type="button"
+      onClick={handleSave}
+      disabled={isSaving}
+      className="px-8 py-2 bg-[#3A4F3F] text-white rounded-full font-bold hover:bg-[#2C3C30] shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {isSaving ? '儲存中...' : '儲存資料'}
+    </button>
+  )}
+</div>
       </header>
 
       <main className="flex-1 min-h-0 overflow-hidden">

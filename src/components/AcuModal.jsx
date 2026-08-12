@@ -249,7 +249,7 @@ export default function AcuModal({
   };
 
   const rows = [
-    {label: '🆔 穴位代碼', val: acuTable.code,},
+    {label: '🆔 國際代碼', val: acuTable.code,},
     {label: '🎯 經絡', val: acuTable.meridian,},
     {label: '🏷️ 別名', val: acuTable.alias,},
   ];
