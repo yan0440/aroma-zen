@@ -59,6 +59,34 @@ const getDataKey = (item) =>
   `${normalizeText(item?.category)}__${normalizeText(item?.name)}`;
 
 
+const mergeNonEmpty = (
+  base = {},
+  incoming = {}
+) => {
+  const result = {
+    ...base,
+  };
+
+  Object.entries(incoming || {}).forEach(
+    ([key, value]) => {
+      const isEmptyString =
+        typeof value === 'string' &&
+        value.trim() === '';
+
+      if (
+        value !== undefined &&
+        value !== null &&
+        !isEmptyString
+      ) {
+        result[key] = value;
+      }
+    }
+  );
+
+  return result;
+};
+
+
 function parseBoldSyntax(str) {
   if (typeof str !== 'string') {
     return str;
@@ -289,6 +317,8 @@ const getSearchText = (item) => {
     item.oilDetails?.usage,
     item.oilDetails?.nature,
     item.oilDetails?.attribute,
+    item.oilDetails?.meridian,
+    item.oilDetails?.origin,
     item.pharmacology,
     item.contemporary,
     item.directions,
@@ -426,6 +456,14 @@ export default function App() {
             entryKey: entry.entryKey,
             description:
               entry.description || '',
+            nature:
+              entry.oilDetails?.nature || '',
+            property:
+              entry.oilDetails?.property || '',
+            meridian:
+              entry.oilDetails?.meridian || '',
+            origin:
+              entry.oilDetails?.origin || '',
           }))
         );
 
@@ -541,7 +579,7 @@ export default function App() {
   const allData = useMemo(() => {
     const dataMap = new Map();
 
-    const addItem = (item, source) => {
+    staticData.forEach((item) => {
       if (
         !item ||
         !item.name ||
@@ -552,53 +590,88 @@ export default function App() {
 
       const key = getDataKey(item);
 
-      const normalizedItem =
-        item.category === '書籍'
-          ? {
-              ...item,
-              _searchText:
-                getBookSearchText(item),
-            }
-          : item;
+      dataMap.set(key, {
+        ...item,
+        _source: 'static',
+      });
+    });
 
-      const existingItem =
-        dataMap.get(key);
+    dbData.forEach((dbItem) => {
+      if (
+        !dbItem ||
+        !dbItem.name ||
+        !dbItem.category
+      ) {
+        return;
+      }
 
-      if (!existingItem) {
+      const key = getDataKey(dbItem);
+      const staticItem = dataMap.get(key);
+
+      if (!staticItem) {
         dataMap.set(key, {
-          ...normalizedItem,
-          _source: source,
+          ...dbItem,
+          _source: 'firestore',
         });
 
         return;
       }
 
-      if (source === 'firestore') {
-        dataMap.set(key, {
-          ...normalizedItem,
-          _source: source,
-        });
-      }
-    };
+      const mergedItem = {
+        ...mergeNonEmpty(
+          staticItem,
+          dbItem
+        ),
 
-    staticData.forEach((item) => {
-      addItem(item, 'static');
+        oilDetails: mergeNonEmpty(
+          staticItem.oilDetails,
+          dbItem.oilDetails
+        ),
+
+        acuTable: mergeNonEmpty(
+          staticItem.acuTable,
+          dbItem.acuTable
+        ),
+
+        acuDetails: mergeNonEmpty(
+          staticItem.acuDetails,
+          dbItem.acuDetails
+        ),
+
+        bookDetails: {
+          ...staticItem.bookDetails,
+          ...dbItem.bookDetails,
+        },
+
+        _source: 'firestore',
+      };
+
+      dataMap.set(key, mergedItem);
     });
 
-    dbData.forEach((item) => {
-      addItem(item, 'firestore');
-    });
-
-    return Array.from(dataMap.values()).map(
-      (item) => {
+    return Array.from(dataMap.values())
+      .filter(
+        (item) =>
+          item &&
+          item.name &&
+          item.category
+      )
+      .map((item) => {
         const {
           _source,
           ...cleanItem
         } = item;
 
+        if (cleanItem.category === '書籍') {
+          return {
+            ...cleanItem,
+            _searchText:
+              getBookSearchText(cleanItem),
+          };
+        }
+
         return cleanItem;
-      }
-    );
+      });
   }, [staticData, dbData]);
 
 

@@ -257,10 +257,10 @@ export default function AcuModal({
   return (
     <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
       <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
-        <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B2B2A8] text-lg text-white">
-              🪡
+  <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
+    <div className="flex min-w-0 items-center gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center text-3xl leading-none md:text-4xl">
+              🧍
             </div>
 
             <div className="min-w-0">
@@ -346,159 +346,200 @@ export default function AcuModal({
           </section>
 
           <section className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10"><div className="space-y-8 text-[#3A4F3F]"><div><span className={UI.sectionLabel}>🎯 主治</span>
-                  {renderFormattedText(acuDetails.location)}</div><div><span className={UI.sectionLabel}>🧩 類別</span>
-                  {renderFormattedText(acuDetails.indications)}</div><div><span className={UI.sectionLabel}>📖 釋名</span>
-                  {renderFormattedText(acuDetails.nameExpl)}</div><div><span className={UI.sectionLabel}>📍 位置</span>
-                  {renderFormattedText(acuDetails.type)}</div>{acuDetails.anatomy && (<div><span className={UI.sectionLabel}>💀 解剖</span>
+  <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10">
+    <div className="space-y-8 text-[#3A4F3F]">
+      <div>
+        <span className={UI.sectionLabel}>
+          🎯 主治
+        </span>
 
-                    <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
-                      {acuDetails.anatomy
-                        .split('\n')
-                        .filter(
-                          (line) => line.trim() !== ''
-                        )
-                        .map((line, index) => {
-                          const colonIndex =
-                            line.indexOf('：');
+        {renderFormattedText(
+          acuDetails.indications
+        )}
+      </div>
 
-                          const isLabel =
-                            /^(肌肉|神經|血管)/.test(
-                              line
-                            ) &&
-                            colonIndex !== -1 &&
-                            colonIndex < 8;
+      <div>
+        <span className={UI.sectionLabel}>
+          🧩 類別
+        </span>
 
-                          return (
-                            <div
-                              key={index}
-                              className={`mb-1 ${
-                                isLabel
-                                  ? 'flex flex-wrap items-baseline'
-                                  : ''
-                              }`}
-                            >
-                              {isLabel ? (
-                                <>
-                                  <strong className="mr-1 font-bold text-[#2F4638]">
-                                    {line.substring(
-                                      0,
-                                      colonIndex + 1
-                                    )}
-                                  </strong>
+        {renderFormattedText(
+          acuDetails.type
+        )}
+      </div>
 
-                                  <span className="flex-1">
-                                    {parseBoldSyntax(
-                                      line.substring(
-                                        colonIndex + 1
-                                      )
-                                    )}
-                                  </span>
-                                </>
-                              ) : (
-                                parseBoldSyntax(line)
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
+      <div>
+        <span className={UI.sectionLabel}>
+          📖 釋名
+        </span>
 
-                <div>
-                  <span className={UI.sectionLabel}>
-                    🎯 操作
-                  </span>
+        {renderFormattedText(
+          acuDetails.nameExpl
+        )}
+      </div>
 
-                  <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
-                    {renderFormattedText(
-                      acuDetails.operation
-                    )}
-                  </div>
-                </div>
+      <div>
+        <span className={UI.sectionLabel}>
+          📍 位置
+        </span>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      ✨ 古代功效
-                    </span>
+        {renderFormattedText(
+          acuDetails.location
+        )}
+      </div>
 
-                    {renderFormattedText(
-                      acuDetails.effectAncient
-                    )}
-                  </div>
+      {acuDetails.anatomy && (
+        <div>
+          <span className={UI.sectionLabel}>
+            💀 解剖
+          </span>
 
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      ✨ 現代功效
-                    </span>
+          <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
+            {acuDetails.anatomy
+              .split('\n')
+              .filter(
+                (line) => line.trim() !== ''
+              )
+              .map((line, index) => {
+                const colonIndex =
+                  line.indexOf('：');
 
-                    {renderFormattedText(
-                      acuDetails.effectModern
-                    )}
-                  </div>
-                </div>
+                const isLabel =
+                  /^(肌肉|神經|血管)/.test(
+                    line
+                  ) &&
+                  colonIndex !== -1 &&
+                  colonIndex < 8;
 
-                <div>
-                  <span className={UI.sectionLabel}>
-                    🔗 配穴建議
-                  </span>
+                return (
+                  <div
+                    key={index}
+                    className={`mb-1 ${
+                      isLabel
+                        ? 'flex flex-wrap items-baseline'
+                        : ''
+                    }`}
+                  >
+                    {isLabel ? (
+                      <>
+                        <strong className="mr-1 font-bold text-[#2F4638]">
+                          {line.substring(
+                            0,
+                            colonIndex + 1
+                          )}
+                        </strong>
 
-                  <div className={`${UI.text} rounded-xl bg-[#F7F9F6]/70 p-5`}>
-                    {acuDetails.matchingPoints
-                      ? acuDetails.matchingPoints
-                          .split('\n')
-                          .filter(
-                            (line) =>
-                              line.trim() !== ''
-                          )
-                          .map((line, index) => {
-                            const colonIndex =
-                              line.indexOf('：');
-
-                            if (colonIndex !== -1) {
-                              return (
-                                <div
-                                  key={index}
-                                  className="mb-2 flex flex-wrap items-baseline"
-                                >
-                                  <strong className="mr-1 shrink-0 font-bold text-[#2F4638]">
-                                    {line.substring(
-                                      0,
-                                      colonIndex + 1
-                                    )}
-                                  </strong>
-
-                                  <span>
-                                    {parseBoldSyntax(
-                                      line.substring(
-                                        colonIndex + 1
-                                      )
-                                    )}
-                                  </span>
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <div
-                                key={index}
-                                className="mb-2"
-                              >
-                                {parseBoldSyntax(line)}
-                              </div>
-                            );
-                          })
-                      : (
-                        <span className="italic text-[#A39284]">
-                          無記載配穴資訊
+                        <span className="flex-1">
+                          {parseBoldSyntax(
+                            line.substring(
+                              colonIndex + 1
+                            )
+                          )}
                         </span>
-                      )}
+                      </>
+                    ) : (
+                      parseBoldSyntax(line)
+                    )}
                   </div>
-                </div>
-              </div>
-            </div>
-          </section>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <span className={UI.sectionLabel}>
+          🎯 操作
+        </span>
+
+        <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
+          {renderFormattedText(
+            acuDetails.operation
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div>
+          <span className={UI.sectionLabel}>
+            ✨ 古代功效
+          </span>
+
+          {renderFormattedText(
+            acuDetails.effectAncient
+          )}
+        </div>
+
+        <div>
+          <span className={UI.sectionLabel}>
+            ✨ 現代功效
+          </span>
+
+          {renderFormattedText(
+            acuDetails.effectModern
+          )}
+        </div>
+      </div>
+
+      <div>
+        <span className={UI.sectionLabel}>
+          🔗 配穴建議
+        </span>
+
+        <div className={`${UI.text} rounded-xl bg-[#F7F9F6]/70 p-5`}>
+          {acuDetails.matchingPoints ? (
+            acuDetails.matchingPoints
+              .split('\n')
+              .filter(
+                (line) => line.trim() !== ''
+              )
+              .map((line, index) => {
+                const colonIndex =
+                  line.indexOf('：');
+
+                if (colonIndex !== -1) {
+                  return (
+                    <div
+                      key={index}
+                      className="mb-2 flex flex-wrap items-baseline"
+                    >
+                      <strong className="mr-1 shrink-0 font-bold text-[#2F4638]">
+                        {line.substring(
+                          0,
+                          colonIndex + 1
+                        )}
+                      </strong>
+
+                      <span>
+                        {parseBoldSyntax(
+                          line.substring(
+                            colonIndex + 1
+                          )
+                        )}
+                      </span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={index}
+                    className="mb-2"
+                  >
+                    {parseBoldSyntax(line)}
+                  </div>
+                );
+              })
+          ) : (
+            <span className="italic text-[#A39284]">
+              無記載配穴資訊
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
         </div>
       </main>
     </div>

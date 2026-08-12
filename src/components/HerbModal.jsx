@@ -131,11 +131,15 @@ export default function HerbModal({
   const renderFormattedText = (text) => {
     if (!text) {
       return (
+    <div className={UI.text}>
+      <div className="mb-1">
         <span className="italic text-gray-400">
           無記載
         </span>
-      );
-    }
+      </div>
+    </div>
+  );
+}
 
     const lines =
       typeof text === 'string'

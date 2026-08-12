@@ -273,7 +273,7 @@ export default function BookModal({
                   <div className="absolute left-0 top-0 h-11 w-full rounded-xl bg-[#6B9080]/10" />
 
                   <div className="relative z-10 flex items-center gap-2 pl-3">
-                    <span className="translate-y-[4px] text-lg font-extrabold tracking-tight text-[#2F4638] md:text-xl">
+                    <span className="translate-y-[8px] text-lg font-extrabold tracking-tight text-[#2F4638] md:text-xl">
                       {raw}
                     </span>
 

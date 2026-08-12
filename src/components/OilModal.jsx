@@ -4,13 +4,11 @@ import React, {
   useState,
 } from 'react';
 
+
 const parseBoldSyntax = (str) => {
   if (!str) {
     return str;
   }
-
-  const lineStartRegex =
-    /^(肌肉|神經|血管)([：:])/;
 
   const parts = String(str).split(
     /(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g
@@ -65,30 +63,22 @@ const parseBoldSyntax = (str) => {
       );
     }
 
-    if (lineStartRegex.test(part)) {
-      return part.replace(
-        lineStartRegex,
-        (match, keyword, colon) => (
-          <React.Fragment key={index}>
-            <strong className="font-bold text-[#1A261C]">
-              {keyword}
-            </strong>
-            {colon}
-          </React.Fragment>
-        )
-      );
-    }
-
     return part;
   });
 };
 
+
 const UI = {
-  text: 'text-[15px] leading-8 text-[#55655B]',
-  title: 'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
+  text:
+    'text-[15px] leading-8 text-[#55655B]',
+
+  title:
+    'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
+
   sectionLabel:
-  'mb-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
+  'mb-3 mt-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
 };
+
 
 const AutoHeightTextarea = ({
   value,
@@ -124,6 +114,7 @@ const AutoHeightTextarea = ({
   );
 };
 
+
 export default function OilModal({
   item,
   onClose,
@@ -133,6 +124,37 @@ export default function OilModal({
     return null;
   }
 
+  const oilDetails =
+    item.oilDetails ||
+    item.oilTable ||
+    {};
+
+  const getOilValue = (key) => {
+    const nestedValue =
+      oilDetails?.[key];
+
+    const topLevelValue =
+      item?.[key];
+
+    if (
+      nestedValue !== undefined &&
+      nestedValue !== null &&
+      String(nestedValue).trim() !== ''
+    ) {
+      return nestedValue;
+    }
+
+    if (
+      topLevelValue !== undefined &&
+      topLevelValue !== null &&
+      String(topLevelValue).trim() !== ''
+    ) {
+      return topLevelValue;
+    }
+
+    return '';
+  };
+
   const handleClose = () => {
     if (typeof onClose === 'function') {
       onClose();
@@ -141,12 +163,16 @@ export default function OilModal({
 
   const renderFormattedText = (text) => {
     if (!text) {
-      return (
+  return (
+    <div className={UI.text}>
+      <div className="mb-3">
         <span className="italic text-gray-400">
           無記載
         </span>
-      );
-    }
+      </div>
+    </div>
+  );
+}
 
     const lines =
       typeof text === 'string'
@@ -224,7 +250,10 @@ export default function OilModal({
           }
 
           return (
-            <div key={index} className="mb-1">
+            <div
+              key={index}
+              className="mb-1"
+            >
               {parseBoldSyntax(trimmed)}
             </div>
           );
@@ -233,60 +262,63 @@ export default function OilModal({
     );
   };
 
+
   const rows = [
-    {label: '🏷️ 別名', val: item.alias || item.oilDetails?.alias,},
-    {label: '🌿 植物種類／萃取部位', val: item.typePart || item.oilDetails?.typePart,},
-    {label: '🧪 萃取方法', val: item.method || item.oilDetails?.method,},
-    {label: '🧬 學名', val: item.latin || item.oilDetails?.latin,},
-    {label: '🌳 科名', val: item.family || item.oilDetails?.family,},
-    {label: '👅 性味', val: item.oilDetails?.nature,},
-    {label: '☯️ 五行', val: item.oilDetails?.property,},
-    {label: '🎯 歸經', val: item.oilDetails?.meridian,},
-    {label: '🩹 主治', val: item.oilDetails?.indications,},
-    {label: '🎵 音符', val: item.oilDetails?.noteAnalogy,},
-    {label: '🪐 星球', val: item.oilDetails?.planet,},
-    {label: '🌍 產地', val: item.oilDetails?.origin,},
+    {label: '🏷️ 別名',val: getOilValue('alias'),},
+    {label: '🌿 植物種類／萃取部位',val: getOilValue('typePart'),},
+    {label: '🧪 萃取方法',val: getOilValue('method'),},
+    {label: '🧬 學名',val: getOilValue('latin'),},
+    {label: '🌳 科名',val: getOilValue('family'),},
+    {label: '👅 性味',val: getOilValue('nature'),},
+    {label: '☯️ 五行',val: getOilValue('property'),},
+    {label: '🎯 歸經',val: getOilValue('meridian'),},
+    {label: '🩹 主治',val: getOilValue('indications'),},
+    {label: '🎵 音符',val: getOilValue('noteAnalogy'),},
+    {label: '🪐 星球',val: getOilValue('planet'),},
+    {label: '🌍 產地',val: getOilValue('origin'),},
   ];
 
+
   const effects = [
-    {title: '心靈療效',value: item.oilDetails?.mindEffect,icon: '🧠',},
-    {title: '身體療效',value: item.oilDetails?.bodyEffect,icon: '🧍',},
-    {title: '皮膚療效',value: item.oilDetails?.skinEffect,icon: '💪',},
+    {title: '心靈療效',value: getOilValue('mindEffect'),icon: '🧠',},
+    {title: '身體療效',value: getOilValue('bodyEffect'),icon: '🧍',},
+    {title: '皮膚療效',value: getOilValue('skinEffect'),icon: '💪',},
   ];
+
 
   return (
     <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
       <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
-  <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
-    <div className="flex min-w-0 items-center gap-4">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
-        🧴
-      </div>
+        <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
+              🧴
+            </div>
 
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
-          Essential Oil
-        </p>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
+                Essential Oil
+              </p>
 
-        <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">
-          {item.name}
-        </h1>
+              <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">
+                {item.name}
+              </h1>
 
-        <p className="hidden text-xs text-[#8C725F] sm:block">
-          精油百科詳細資料
-        </p>
-      </div>
-    </div>
+              <p className="hidden text-xs text-[#8C725F] sm:block">
+                精油百科詳細資料
+              </p>
+            </div>
+          </div>
 
-    <button
-  type="button"
-  onClick={handleClose}
-  className="shrink-0 rounded-lg border border-[#B2B2A8] bg-[#B2B2A8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5F7568]"
->
-  {backLabel}
-</button>
-  </div>
-</header>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="shrink-0 rounded-lg border border-[#B2B2A8] bg-[#B2B2A8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5F7568]"
+          >
+            {backLabel}
+          </button>
+        </div>
+      </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)]">
         <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 md:px-7 md:py-8 lg:grid-cols-12 lg:gap-8 lg:px-10">
@@ -295,16 +327,14 @@ export default function OilModal({
               <div className="mb-3 flex flex-wrap gap-1.5">
                 <span className="rounded-full bg-[#EAE7E0] px-2 py-0.5 text-xs font-medium text-[#6B7A6E]">
                   {item.constitutionTag ||
-                    item.oilDetails
-                      ?.constitutionTag ||
+                    getOilValue('constitutionTag') ||
                     '無'}
                   體質
                 </span>
 
                 <span className="rounded-full bg-[#E5EAE6] px-2 py-0.5 text-xs font-medium text-[#4E6654]">
                   {item.chemicalTag ||
-                    item.oilDetails
-                      ?.chemicalTag ||
+                    getOilValue('chemicalTag') ||
                     '無'}
                   屬性
                 </span>
@@ -349,7 +379,7 @@ export default function OilModal({
                 <AutoHeightTextarea
                   value={
                     item.description ||
-                    item.oilDetails?.description
+                    getOilValue('description')
                   }
                 />
               </div>
@@ -366,7 +396,7 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.scent
+                      getOilValue('scent')
                     )}
                   </div>
 
@@ -376,19 +406,19 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.appearance
+                      getOilValue('appearance')
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <span className="mb-2 block text-base font-bold text-[#4E6654]">
+                  <span className={`${UI.sectionLabel} text-base tracking-normal`}>
                     📜 應用歷史與相關神話
                   </span>
 
                   <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
                     {renderFormattedText(
-                      item.oilDetails?.historyMyth
+                      getOilValue('historyMyth')
                     )}
                   </div>
                 </div>
@@ -400,7 +430,7 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.chemistry
+                      getOilValue('chemistry')
                     )}
                   </div>
 
@@ -410,19 +440,19 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.attribute
+                      getOilValue('attribute')
                     )}
                   </div>
                 </div>
 
-                {item.oilDetails?.caution && (
+                {getOilValue('caution') && (
                   <div className="rounded-xl bg-red-50/70 p-5">
                     <span className="mb-2 block text-sm font-bold text-red-800">
                       ⚠️ 注意事項
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails.caution
+                      getOilValue('caution')
                     )}
                   </div>
                 )}
@@ -461,11 +491,21 @@ export default function OilModal({
                 <div>
                   <div>
                     <span className={UI.sectionLabel}>
+                      🧬 體質適用
+                    </span>
+
+                    {renderFormattedText(
+                      getOilValue('constitution')
+                    )}
+                  </div>
+
+                  <div>
+                    <span className={UI.sectionLabel}>
                       🔗 適合調和的精油
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.blendingOils
+                      getOilValue('blendingOils')
                     )}
                   </div>
 
@@ -475,7 +515,7 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.formulas
+                      getOilValue('formulas')
                     )}
                   </div>
 
@@ -485,7 +525,8 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.carrierOil
+                      getOilValue('carrierOils') ||
+                      getOilValue('carrierOil')
                     )}
                   </div>
 
@@ -495,7 +536,7 @@ export default function OilModal({
                     </span>
 
                     {renderFormattedText(
-                      item.oilDetails?.usage
+                      getOilValue('usage')
                     )}
                   </div>
                 </div>

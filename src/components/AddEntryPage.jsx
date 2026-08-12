@@ -75,7 +75,7 @@ const getDefaultFormData = () => ({
     skinEffect: '',
     blendingOils: '',
     formulas: '',
-    carrierOil: '',
+    carrierOils: '',
     usage: '',
   },
   bookDetails: { author: '', chapters: [] },
@@ -611,9 +611,10 @@ const baseCreatedAt =oldEntrySnap.data()?.createdAt ||editingItem?.createdAt ||n
                     {renderField('🧠 心靈療效', 'oilDetails.mindEffect', '', true)}
                     {renderField('🧍 身體療效', 'oilDetails.bodyEffect', '', true)}
                     {renderField('💪 皮膚療效', 'oilDetails.skinEffect', '', true)}
+                    {renderField('🧬 體質適用', 'oilDetails.constitution', '', true)}
                     {renderField('🔗 適合調和的精油', 'oilDetails.blendingOils', '', true)}
                     {renderField('🧪精油配方', 'oilDetails.formulas', '', true)}
-                    {renderField('🧴 按摩基底油', 'oilDetails.carrierOil', '', true)}
+                    {renderField('🧴 按摩基底油', 'oilDetails.carrierOils', '', true)}
                     {renderField('🚀 使用方法', 'oilDetails.usage', '', true)}
                   </div>
                 </div>
