@@ -824,7 +824,7 @@ export default function App() {
             東方經絡 × 西方芳療
           </div>
 
-          <h1 className="mb-4 text-4xl font-black tracking-tight text-[#2F4638] md:text-6xl">
+          <h1 className="mb-4 text-4xl font-black tracking-tight text-[#2F4638] md:text-5xl">
             本草與芳香數位百科
           </h1>
 
