@@ -304,7 +304,7 @@ function TableBlockEditor({
   return (
     <div className="rounded-2xl border border-[#D8C8B8] bg-[#FFFDF8] p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h4 className="text-sm font-bold text-[#3A4F3F]">
+        <h4 className="text-base font-bold text-[#3A4F3F]">
           📋 雙欄表格
         </h4>
 
@@ -312,7 +312,7 @@ function TableBlockEditor({
           <button
             type="button"
             onClick={onDeleteBlock}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#D0766E] transition hover:bg-red-50"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
           >
             刪除表格
           </button>
@@ -323,16 +323,16 @@ function TableBlockEditor({
         <table className="w-full min-w-[620px] border-collapse">
           <thead>
             <tr>
-              <th className="w-[35%] border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-2 text-left text-xs font-bold text-[#4E6654]">
+              <th className="w-[35%] border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-3 text-left text-sm font-bold text-[#4E6654]">
                 左欄標題
               </th>
 
-              <th className="border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-2 text-left text-xs font-bold text-[#4E6654]">
+              <th className="border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-3 text-left text-sm font-bold text-[#4E6654]">
                 右欄內容
               </th>
 
               {!disabled && (
-                <th className="w-20 border border-[#E5E0D8] bg-[#F4EFE7] px-2 py-2 text-center text-xs font-bold text-[#4E6654]">
+                <th className="w-20 border border-[#E5E0D8] bg-[#F4EFE7] px-2 py-3 text-center text-sm font-bold text-[#4E6654]">
                   操作
                 </th>
               )}
@@ -386,7 +386,7 @@ function TableBlockEditor({
                       onClick={() =>
                         deleteRow(rowIndex)
                       }
-                      className="rounded-lg px-2 py-1 text-xs text-[#D0766E] hover:bg-red-50"
+                      className="rounded-lg px-2 py-1 text-sm text-[#D0766E] hover:bg-red-50"
                     >
                       刪除
                     </button>
@@ -402,7 +402,7 @@ function TableBlockEditor({
         <button
           type="button"
           onClick={addRow}
-          className="mt-4 rounded-xl border border-[#C8A97E] bg-white px-4 py-2 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
+          className="mt-4 rounded-xl border border-[#C8A97E] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
         >
           ＋ 新增表格列
         </button>
@@ -448,7 +448,7 @@ function KnowledgeBlockEditor({
             <button
               type="button"
               onClick={onDeleteBlock}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#D0766E] transition hover:bg-red-50"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
             >
               刪除副標題
             </button>
@@ -482,7 +482,7 @@ function KnowledgeBlockEditor({
           <button
             type="button"
             onClick={onDeleteBlock}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#D0766E] transition hover:bg-red-50"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
           >
             刪除文字
           </button>
@@ -585,7 +585,7 @@ function KnowledgeNodeEditor({
       }`}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-bold text-[#7C8A80]">
+        <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-bold text-[#7C8A80]">
           {level === 0
             ? '主要章節'
             : `子章節 ${level}`}
@@ -595,7 +595,7 @@ function KnowledgeNodeEditor({
           <button
             type="button"
             onClick={() => onDelete(path)}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#D0766E] transition hover:bg-red-50"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
           >
             刪除此章節
           </button>
@@ -651,7 +651,7 @@ function KnowledgeNodeEditor({
           <button
             type="button"
             onClick={() => addBlock('text')}
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
+            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
           >
             ＋ 新增文字
           </button>
@@ -661,7 +661,7 @@ function KnowledgeNodeEditor({
             onClick={() =>
               addBlock('subtitle')
             }
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
+            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
           >
             ＋ 新增副標題
           </button>
@@ -669,7 +669,7 @@ function KnowledgeNodeEditor({
           <button
             type="button"
             onClick={() => addBlock('table')}
-            className="rounded-xl border border-[#C8A97E] bg-[#FFFDF8] px-4 py-2 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
+            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
           >
             ＋ 新增表格
           </button>
@@ -677,7 +677,7 @@ function KnowledgeNodeEditor({
           <button
             type="button"
             onClick={() => onAddChild(path)}
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
+            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
           >
             ＋ 新增子章節
           </button>
@@ -744,7 +744,11 @@ export default function KnowledgeStructureEditor({
           ...previous,
           knowledgeDetails: {
             ...(previous.knowledgeDetails || {}),
-            sections: nextSections,
+            sections: Array.isArray(
+              nextSections
+            )
+              ? nextSections
+              : [],
           },
         };
       });
@@ -819,38 +823,34 @@ export default function KnowledgeStructureEditor({
     <div className="space-y-5">
       <div className="flex flex-col gap-3 rounded-2xl border border-[#E5E0D8] bg-[#FBF9F6] p-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-base font-bold text-[#3A4F3F]">
+          <h3 className="text-[20px] font-bold text-[#3A4F3F]">
             內容架構
           </h3>
 
-          <p className="mt-1 text-xs leading-6 text-[#A39284]">
+          <p className="mt-1 text-[14px] leading-7 text-[#A39284]">
             可建立章節、文字、副標題與雙欄表格。
           </p>
         </div>
 
-        {!isDisabled && (
-          <button
-            type="button"
-            onClick={handleAddRoot}
-            className="rounded-xl bg-[#3A4F3F] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#2C3C30]"
-          >
-            ＋ 新增主要章節
-          </button>
-        )}
+        <div className="hidden md:block">
+          <span className="text-[14px] text-[#A39284]">
+            可使用右下角按鈕新增主要章節
+          </span>
+        </div>
       </div>
 
       {sections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#D8C8B8] bg-[#FFFDF9] px-5 py-10 text-center text-sm leading-7 text-[#A39284]">
+        <div className="rounded-2xl border border-dashed border-[#D8C8B8] bg-[#FFFDF9] px-5 py-10 text-center text-[16px] leading-8 text-[#A39284]">
           尚未建立內容架構。
           <br />
 
           {isDisabled
             ? '目前沒有可顯示的章節內容。'
-            : '請按「新增主要章節」開始建立。'}
+            : '請使用右下角「新增主要章節」開始建立。'}
         </div>
       ) : (
         <div className="space-y-5">
-          {sections.map((node, index) => (
+  {sections.map((node, index) => (
             <KnowledgeNodeEditor
               key={
                 node.id ||
@@ -869,6 +869,19 @@ export default function KnowledgeStructureEditor({
           ))}
         </div>
       )}
+
+      {!isDisabled && (
+  <div className="pointer-events-none sticky bottom-5 z-40 flex justify-end pb-2 md:bottom-6">
+    <button
+      type="button"
+      onClick={handleAddRoot}
+      aria-label="新增主要章節"
+      className="pointer-events-auto rounded-full border border-white/40 bg-[#3A4F3F]/95 px-5 py-3 text-[15px] font-bold text-white shadow-[0_8px_24px_rgba(47,70,56,0.28)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-[#2C3C30] hover:shadow-xl"
+    >
+      ＋ 新增主要章節
+    </button>
+  </div>
+)}
     </div>
   );
 }

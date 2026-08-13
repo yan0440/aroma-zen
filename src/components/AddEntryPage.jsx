@@ -1081,7 +1081,7 @@ export default function AddEntryPage({
                     <option value="方劑">方劑
                     </option>
                     <option value="其他">
-                      名詞／用品
+                      名詞材料
                     </option>
                   </select>
                 </div>
@@ -1220,13 +1220,13 @@ export default function AddEntryPage({
     {renderField(
       '📖 詳細介紹',
       'knowledgeDetails.introduction',
-      '輸入這個名詞或用品的完整介紹',
+      '輸入這個名詞或材料的完整介紹',
       true
     )}
 
     <div className="rounded-2xl border border-[#E5E0D8]/60 bg-[#FBF9F6] p-5">
       <h3 className="mb-4 text-base font-bold text-[#3A4F3F]">
-        📚 內容架構
+        📚 內容
       </h3>
 
       <KnowledgeStructureEditor

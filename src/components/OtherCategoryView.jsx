@@ -142,7 +142,7 @@ function EntryCard({
           ))
         ) : (
           <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[13px] text-[#A39284]">
-            名詞／用品
+            名詞材料
           </span>
         )}
       </div>
@@ -224,7 +224,7 @@ export default function OtherCategoryView({
     <div>
       <div className="mb-6 flex items-center gap-4">
         <h3 className="text-[28px] font-black tracking-tight text-[#2F4638] md:text-[32px]">
-          名詞／用品總覽
+          名詞材料總覽
         </h3>
 
         <div className="h-[2px] flex-1 bg-gradient-to-r from-[#E8E0D6] to-transparent" />
@@ -269,7 +269,7 @@ export default function OtherCategoryView({
         <div className="rounded-[1.5rem] border border-[#E7DED4] bg-white px-6 py-16 text-center text-[16px] text-[#A39284] shadow-sm">
           {searchQuery
             ? '找不到符合的名詞或用品。'
-            : '目前還沒有名詞／用品資料。'}
+            : '目前還沒有名詞材料資料。'}
         </div>
       )}
     </div>

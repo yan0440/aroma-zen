@@ -63,7 +63,7 @@ const getEntryKey = (
 
 const getCategoryLabel = (category) =>
   category === '其他'
-    ? '名詞／用品'
+    ? '名詞材料'
     : category;
 
 const categories = [

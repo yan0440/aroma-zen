@@ -2,7 +2,7 @@ import React from 'react';
 
 const getCategoryLabel = (category) =>
   category === '其他'
-    ? '名詞／用品'
+    ? '名詞材料'
     : category;
 
 const detailFields = [
@@ -13,10 +13,10 @@ const detailFields = [
 ];
 
 const UI = {
-  text: 'text-[15px] leading-8 text-[#55655B]',
+  text: 'text-[17px] leading-9 text-[#55655B]',
 
   sectionLabel:
-    'mb-3 mt-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
+    'mb-4 mt-1 flex items-center gap-3 border-b border-[#E5E0D8] pb-3 text-[18px] font-bold tracking-[0.12em] text-[#4E6654] before:block before:h-6 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
 };
 
 const getFieldValue = (item, key) => {
@@ -121,11 +121,7 @@ const renderFormattedText = (text) => {
     text === null ||
     String(text).trim() === ''
   ) {
-    return (
-      <span className="italic text-gray-400">
-        無記載
-      </span>
-    );
+    return null;
   }
 
   const lines =
@@ -136,6 +132,10 @@ const renderFormattedText = (text) => {
             (line) => line.trim() !== ''
           )
       : [text];
+
+  if (lines.length === 0) {
+    return null;
+  }
 
   return (
     <div className={UI.text}>
@@ -186,7 +186,7 @@ const normalizeBlocks = (section) => {
   ) {
     return [
       {
-        id: `legacy_text_${Date.now()}`,
+        id: `legacy_text_${section.id || 'section'}`,
         type: 'text',
         text: section.text,
       },
@@ -194,6 +194,77 @@ const normalizeBlocks = (section) => {
   }
 
   return [];
+};
+
+const getSectionTitle = (
+  section,
+  index
+) =>
+  section?.title ||
+  section?.name ||
+  `第 ${index + 1} 節`;
+
+const getSectionId = (
+  section,
+  path = []
+) => {
+  if (section?.id) {
+    return `knowledge-section-${section.id}`;
+  }
+
+  return `knowledge-section-${path.join('-')}`;
+};
+
+const buildKnowledgeToc = (
+  sections,
+  parentNumber = '',
+  parentPath = []
+) => {
+  const sectionList =
+    normalizeSections(sections);
+
+  return sectionList.flatMap(
+    (section, index) => {
+      if (!section) {
+        return [];
+      }
+
+      const currentNumber = parentNumber
+        ? `${parentNumber}.${index + 1}`
+        : `${index + 1}`;
+
+      const currentPath = [
+        ...parentPath,
+        index,
+      ];
+
+      const currentId = getSectionId(
+        section,
+        currentPath
+      );
+
+      const currentItem = {
+        id: currentId,
+        number: currentNumber,
+        title: getSectionTitle(
+          section,
+          index
+        ),
+        level: parentNumber ? 1 : 0,
+      };
+
+      const children = buildKnowledgeToc(
+        section.children,
+        currentNumber,
+        currentPath
+      );
+
+      return [
+        currentItem,
+        ...children,
+      ];
+    }
+  );
 };
 
 const renderTableBlock = (
@@ -205,17 +276,7 @@ const renderTableBlock = (
     : [];
 
   if (rows.length === 0) {
-    return (
-      <div
-        key={
-          block?.id ||
-          `table-${blockIndex}`
-        }
-        className="rounded-xl border border-[#E7DED4] bg-[#FBF9F6] p-4 text-sm text-[#A39284]"
-      >
-        目前沒有表格內容。
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -226,31 +287,50 @@ const renderTableBlock = (
       }
       className="my-4 overflow-x-auto rounded-xl border border-[#E7DED4] bg-white"
     >
-      <table className="w-full min-w-[560px] border-collapse text-sm">
+      <table className="w-full min-w-[560px] border-collapse text-[16px]">
         <tbody>
-          {rows.map((row, rowIndex) => (
-            <tr
-              key={
-                row?.id ||
-                `table-row-${blockIndex}-${rowIndex}`
-              }
-              className="border-b border-[#E7DED4] last:border-b-0"
-            >
-              <td className="w-[32%] bg-[#F7F5F0] px-4 py-3 align-top font-bold text-[#3A4F3F]">
-                {row?.left || '—'}
-              </td>
+          {rows.map((row, rowIndex) => {
+            const leftValue =
+              row?.left !== undefined &&
+              row?.left !== null
+                ? String(row.left).trim()
+                : '';
 
-              <td className="px-4 py-3 align-top text-[#55655B]">
-                {row?.right ? (
-                  renderFormattedText(row.right)
-                ) : (
-                  <span className="italic text-gray-400">
-                    無記載
-                  </span>
-                )}
-              </td>
-            </tr>
-          ))}
+            const rightValue =
+              row?.right !== undefined &&
+              row?.right !== null
+                ? String(row.right).trim()
+                : '';
+
+            if (
+              leftValue === '' &&
+              rightValue === ''
+            ) {
+              return null;
+            }
+
+            return (
+              <tr
+                key={
+                  row?.id ||
+                  `table-row-${blockIndex}-${rowIndex}`
+                }
+                className="border-b border-[#E7DED4] last:border-b-0"
+              >
+                <td className="w-[32%] bg-[#F7F5F0] px-4 py-4 align-top text-[16px] font-bold leading-8 text-[#3A4F3F]">
+                  {leftValue}
+                </td>
+
+                <td className="px-4 py-4 align-top text-[16px] leading-8 text-[#55655B]">
+                  {rightValue
+                    ? renderFormattedText(
+                        rightValue
+                      )
+                    : null}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -276,17 +356,37 @@ const renderKnowledgeBlock = (
   }
 
   if (blockType === 'subtitle') {
+    const subtitle =
+      block.text ||
+      block.content ||
+      block.description ||
+      '';
+
+    if (String(subtitle).trim() === '') {
+      return null;
+    }
+
     return (
       <h4
         key={
           block.id ||
           `subtitle-${blockIndex}`
         }
-        className="mb-3 mt-5 border-l-4 border-[#6B9080] pl-3 text-lg font-bold text-[#2F4638]"
+        className="mb-4 mt-6 border-l-4 border-[#6B9080] pl-4 text-[21px] font-bold leading-tight text-[#2F4638]"
       >
-        {block.text || '未命名副標題'}
+        {subtitle}
       </h4>
     );
+  }
+
+  const text =
+    block.text ||
+    block.content ||
+    block.description ||
+    '';
+
+  if (String(text).trim() === '') {
+    return null;
   }
 
   return (
@@ -297,19 +397,15 @@ const renderKnowledgeBlock = (
       }
       className="mb-4"
     >
-      {renderFormattedText(
-        block.text ||
-          block.content ||
-          block.description ||
-          ''
-      )}
+      {renderFormattedText(text)}
     </div>
   );
 };
 
 const renderKnowledgeSections = (
   sections,
-  level = 0
+  level = 0,
+  parentPath = []
 ) => {
   const sectionList =
     normalizeSections(sections);
@@ -331,10 +427,20 @@ const renderKnowledgeSections = (
           return null;
         }
 
-        const title =
-          section.title ||
-          section.name ||
-          `第 ${index + 1} 節`;
+        const currentPath = [
+          ...parentPath,
+          index,
+        ];
+
+        const title = getSectionTitle(
+          section,
+          index
+        );
+
+        const sectionId = getSectionId(
+          section,
+          currentPath
+        );
 
         const blocks =
           normalizeBlocks(section);
@@ -346,17 +452,18 @@ const renderKnowledgeSections = (
 
         return (
           <article
+            id={sectionId}
             key={
               section.id ||
-              `${title}-${index}`
+              `${title}-${currentPath.join('-')}`
             }
-            className="rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] p-5"
+            className="scroll-mt-6 rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] p-5"
           >
             <h3
-              className={`mb-4 font-bold text-[#2F4638] ${
+              className={`mb-4 font-bold leading-tight text-[#2F4638] ${
                 level === 0
-                  ? 'text-lg'
-                  : 'text-base'
+                  ? 'text-[20px]'
+                  : 'text-[16px]'
               }`}
             >
               {title}
@@ -378,7 +485,8 @@ const renderKnowledgeSections = (
               <div className="mt-5">
                 {renderKnowledgeSections(
                   children,
-                  level + 1
+                  level + 1,
+                  currentPath
                 )}
               </div>
             )}
@@ -388,6 +496,74 @@ const renderKnowledgeSections = (
     </div>
   );
 };
+
+function KnowledgeTableOfContents({
+  sections,
+}) {
+  const tocItems = buildKnowledgeToc(
+    sections
+  );
+
+  if (tocItems.length === 0) {
+    return null;
+  }
+
+  const scrollToSection = (id) => {
+    const element =
+      document.getElementById(id);
+
+    if (!element) {
+      return;
+    }
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
+  return (
+    <div className="mt-6 rounded-2xl border border-[#E7DED4] bg-[#FBF9F6] p-5">
+      <label
+        htmlFor="knowledge-section-select"
+        className="mb-3 block text-[18px] font-bold text-[#2F4638]"
+      >
+        🧭 內容目錄
+      </label>
+
+      <select
+        id="knowledge-section-select"
+        defaultValue=""
+        onChange={(event) => {
+          const selectedId =
+            event.target.value;
+
+          if (!selectedId) {
+            return;
+          }
+
+          scrollToSection(selectedId);
+
+          event.target.value = '';
+        }}
+        className="w-full rounded-xl border border-[#D8C8B8] bg-white px-4 py-3 text-[16px] leading-7 text-[#3A4F3F] outline-none transition focus:border-[#6B9080] focus:ring-2 focus:ring-[#6B9080]/20"
+      >
+        <option value="">
+          請選擇要閱讀的內容
+        </option>
+
+        {tocItems.map((item) => (
+          <option
+            key={item.id}
+            value={item.id}
+          >
+            {`${item.number}　${item.title}`}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export default function OtherDetailPage({
   item,
@@ -430,12 +606,34 @@ export default function OtherDetailPage({
     );
 
   const knowledgeSections =
-    item?.knowledgeDetails?.sections ||[];
-const knowledgeIntroduction =
-  item?.knowledgeDetails?.introduction || '';
+    item?.knowledgeDetails?.sections ||
+    [];
+
+  const knowledgeIntroduction =
+    item?.knowledgeDetails?.introduction ||
+    '';
+
   const hasKnowledgeSections =
     normalizeSections(knowledgeSections)
       .length > 0;
+
+  const hasDescription =
+    item?.description !== undefined &&
+    item?.description !== null &&
+    String(item.description).trim() !== '';
+
+  const hasNote =
+    item?.note !== undefined &&
+    item?.note !== null &&
+    String(item.note).trim() !== '';
+
+  const cautionText =
+    item?.caution ||
+    item?.contraindication ||
+    '';
+
+  const hasCaution =
+    String(cautionText).trim() !== '';
 
   return (
     <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
@@ -451,7 +649,7 @@ const knowledgeIntroduction =
                 Glossary / Material
               </p>
 
-              <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">
+              <h1 className="truncate text-[20px] font-black text-[#718678] md:text-[24px]">
                 {item.name}
               </h1>
 
@@ -488,24 +686,33 @@ const knowledgeIntroduction =
                 )}
               </div>
 
-              <h2 className="mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl">
+              <h2 className="mb-2 text-[30px] font-bold leading-tight text-[#2F4638] md:text-[36px]">
                 {item.name}
               </h2>
 
-              {(item.alias ||
-                item.englishName) && (
-                <p className="mb-6 mt-1 border-b border-[#F0E8DE] pb-4 font-serif text-base italic text-[#A39284]">
-                  {item.alias ||
-                    item.englishName}
+              {item.alias && (
+                <p className="mb-2 mt-1 font-serif text-[17px] italic text-[#A39284]">
+                  {item.alias}
                 </p>
               )}
+
+              {item.englishName && (
+                <p className="mb-6 border-b border-[#F0E8DE] pb-4 font-serif text-[16px] italic text-[#A39284]">
+                  {item.englishName}
+                </p>
+              )}
+
+              {!item.alias &&
+                !item.englishName && (
+                  <div className="mb-6 border-b border-[#F0E8DE] pb-4" />
+                )}
 
               {tags.length > 0 && (
                 <div className="mb-6 flex flex-wrap gap-2">
                   {tags.map((tag, index) => (
                     <span
                       key={`${tag}-${index}`}
-                      className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-xs text-[#6B9080]"
+                      className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-[14px] text-[#6B9080]"
                     >
                       {tag}
                     </span>
@@ -513,42 +720,54 @@ const knowledgeIntroduction =
                 </div>
               )}
 
-              <div className="overflow-hidden rounded-xl border border-[#EAE4DB] shadow-[0_4px_14px_rgba(63,81,68,0.04)]">
-                <table className="w-full border-collapse text-[14px]">
-                  <tbody className="divide-y divide-[#EAE4DB] text-[#3A4F3F]">
-                    {fields
-                      .slice(0, 6)
-                      .map((field) => (
-                        <tr
-                          key={field.key}
-                          className="bg-[#FBFBFA]/60"
-                        >
-                          <td className="w-[35%] bg-[#FBFBFA] px-3 py-2 font-bold text-[#3A4F3F]">
-                            {field.label}
-                          </td>
+              {fields.length > 0 && (
+                <div className="overflow-hidden rounded-xl border border-[#EAE4DB] shadow-[0_4px_14px_rgba(63,81,68,0.04)]">
+                  <table className="w-full border-collapse text-[16px]">
+                    <tbody className="divide-y divide-[#EAE4DB] text-[#3A4F3F]">
+                      {fields
+                        .slice(0, 6)
+                        .map((field) => (
+                          <tr
+                            key={field.key}
+                            className="bg-[#FBFBFA]/60"
+                          >
+                            <td className="w-[35%] bg-[#FBFBFA] px-3 py-3 text-[16px] font-bold text-[#3A4F3F]">
+                              {field.label}
+                            </td>
 
-                          <td className="px-3 py-2">
-                            {renderFormattedText(
-                              field.value
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="mb-2 text-xl font-bold text-[#2F4638]">
-                  簡介
-                </h3>
-
-                <div className="text-[15px] leading-8 text-[#55655B]">
-                  {renderFormattedText(
-                    item.description
-                  )}
+                            <td className="px-3 py-3">
+                              {renderFormattedText(
+                                field.value
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
+              )}
+
+              {hasDescription && (
+  <div className="mt-6">
+    <h3 className="mb-3 text-[22px] font-bold text-[#2F4638]">
+      簡介
+    </h3>
+
+    <div className="text-[17px] leading-9 text-[#55655B]">
+      {renderFormattedText(
+        item.description
+      )}
+    </div>
+  </div>
+)}
+
+{hasKnowledgeSections && (
+  <div className="mt-6">
+    <KnowledgeTableOfContents
+      sections={knowledgeSections}
+    />
+  </div>
+)}
             </div>
           </section>
 
@@ -573,19 +792,22 @@ const knowledgeIntroduction =
                   </div>
                 )}
 
-{knowledgeIntroduction && (
-  <section>
-    <span className={UI.sectionLabel}>
-      📖 詳細介紹
-    </span>
+                {knowledgeIntroduction &&
+                  String(
+                    knowledgeIntroduction
+                  ).trim() !== '' && (
+                    <section>
+                      <span className={UI.sectionLabel}>
+                        📖 詳細介紹
+                      </span>
 
-    <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
-      {renderFormattedText(
-        knowledgeIntroduction
-      )}
-    </div>
-  </section>
-)}
+                      <div className="rounded-xl bg-[#F7F5F0]/60 p-6 md:p-7">
+                        {renderFormattedText(
+                          knowledgeIntroduction
+                        )}
+                      </div>
+                    </section>
+                  )}
 
                 {hasKnowledgeSections && (
                   <section>
@@ -601,13 +823,13 @@ const knowledgeIntroduction =
                   </section>
                 )}
 
-                {item.note && (
+                {hasNote && (
                   <div>
                     <span className={UI.sectionLabel}>
                       💡 補充說明
                     </span>
 
-                    <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
+                    <div className="rounded-xl bg-[#F7F5F0]/60 p-6 text-[17px] leading-9 text-[#55655B] md:p-7">
                       {renderFormattedText(
                         item.note
                       )}
@@ -615,24 +837,25 @@ const knowledgeIntroduction =
                   </div>
                 )}
 
-                {(item.caution ||
-                  item.contraindication) && (
+                {hasCaution && (
                   <div className="rounded-xl bg-red-50/70 p-5">
-                    <span className="mb-2 block text-sm font-bold text-red-800">
+                    <span className="mb-2 block text-[16px] font-bold text-red-800">
                       ⚠️ 注意事項
                     </span>
 
                     {renderFormattedText(
-                      item.caution ||
-                        item.contraindication
+                      cautionText
                     )}
                   </div>
                 )}
 
                 {!hasKnowledgeSections &&
-                  !item.description &&
+                  !knowledgeIntroduction &&
+                  !hasDescription &&
+                  !hasNote &&
+                  !hasCaution &&
                   fields.length === 0 && (
-                    <div className="rounded-xl bg-[#F7F5F0]/60 p-5 text-[15px] leading-8 text-[#55655B]">
+                    <div className="rounded-xl bg-[#F7F5F0]/60 p-5 text-[16px] leading-8 text-[#55655B]">
                       此項目目前尚未填寫詳細內容。
                     </div>
                   )}

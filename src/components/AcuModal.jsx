@@ -92,7 +92,7 @@ const UI = {
   text: 'text-[15px] leading-8 text-[#55655B]',
 
   title:
-    'mb-2 text-3xl font-bold text-[#2F4638] md:text-4xl',
+    'mb-2 text-3xl font-bold text-[#2F4638] md:text-3xl',
 
   sectionLabel:
   'mb-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',

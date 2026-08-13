@@ -48,7 +48,7 @@ const BOLD_KEYWORDS = [
 
 const getCategoryLabel = (category) =>
   category === '其他'
-    ? '名詞／用品'
+    ? '名詞材料'
     : category;
 
 const normalizeText = (value = '') =>
@@ -281,7 +281,7 @@ const DataCard = memo(function DataCard({
         ))}
       </div>
 
-      <h3 className="text-[26px] font-black leading-tight tracking-tight text-[#2F4638] transition-colors group-hover:text-[#6B9080] md:text-[28px]">
+      <h3 className="text-[22px] font-black leading-tight tracking-tight text-[#2F4638] transition-colors group-hover:text-[#6B9080] md:text-[26px]">
         {item.name}
       </h3>
 
