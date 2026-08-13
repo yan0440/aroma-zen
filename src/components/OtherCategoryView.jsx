@@ -41,11 +41,49 @@ const getCreatedTime = (item) => {
   return 0;
 };
 
+const collectSearchText = (value) => {
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return '';
+  }
+
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number'
+  ) {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        collectSearchText(item)
+      )
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  if (typeof value === 'object') {
+    return Object.values(value)
+      .map((item) =>
+        collectSearchText(item)
+      )
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  return '';
+};
+
 const getSearchText = (item) => {
   const fields = [
     item?.name,
+    item?.type,
     item?.tag,
     item?.alias,
+    item?.englishName,
     item?.description,
     item?.source,
     item?.effect,
@@ -62,160 +100,18 @@ const getSearchText = (item) => {
     item?.family,
     item?.traits,
     item?.directions,
+    item?.knowledgeDetails,
   ];
 
   return normalizeText(
     fields
+      .map((field) =>
+        collectSearchText(field)
+      )
       .filter(Boolean)
       .join(' ')
   );
 };
-
-const getVisibleFields = (item) => {
-  const fields = [
-    {
-      label: '核心標籤',
-      value: item?.tag,
-    },
-    {
-      label: '別名',
-      value: item?.alias,
-    },
-    {
-      label: '來源',
-      value: item?.source,
-    },
-    {
-      label: '功效',
-      value: item?.effect,
-    },
-    {
-      label: '主治',
-      value: item?.indications,
-    },
-    {
-      label: '性質／特徵',
-      value: item?.traits,
-    },
-    {
-      label: '注意禁忌',
-      value: item?.contraindication,
-    },
-    {
-      label: '文獻資料',
-      value: item?.literature,
-    },
-    {
-      label: '補充說明',
-      value: item?.note,
-    },
-    {
-      label: '現代應用',
-      value: item?.modernApp,
-    },
-    {
-      label: '現代藥理',
-      value: item?.modernPharmacology,
-    },
-  ];
-
-  return fields.filter(
-    (field) =>
-      field.value !== undefined &&
-      field.value !== null &&
-      String(field.value).trim() !== ''
-  );
-};
-
-function EntryDetail({
-  item,
-  onBack,
-}) {
-  const visibleFields =
-    getVisibleFields(item);
-
-  const tags = [
-    item?.tag,
-    item?.alias,
-  ].filter(Boolean);
-
-  return (
-    <div className="rounded-[1.5rem] border border-white/70 bg-white p-6 shadow-[0_8px_24px_rgba(122,106,90,0.06)] md:p-8">
-      <button
-        type="button"
-        onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-[#7F6D5F] transition-colors hover:text-[#3A4F3F]"
-      >
-        ← 返回名詞／用品列表
-      </button>
-
-      <div className="mb-5">
-        <span className="mb-3 inline-block rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold text-[#3A4F3F]">
-          名詞／用品
-        </span>
-
-        <h3 className="text-3xl font-black tracking-tight text-[#2F4638]">
-          {item?.name || '未命名資料'}
-        </h3>
-
-        {tags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {tags.map((tag, index) => (
-              <span
-                key={`${tag}-${index}`}
-                className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-xs text-[#6B9080]"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mb-6 h-[2px] w-full bg-[#E8E0D6]" />
-
-      {item?.description && (
-        <section className="mb-7">
-          <h4 className="mb-2 text-sm font-bold text-[#2F4638]">
-            簡介
-          </h4>
-
-          <p className="whitespace-pre-wrap text-sm leading-7 text-[#5F6F65]">
-            {item.description}
-          </p>
-        </section>
-      )}
-
-      {visibleFields.length > 0 && (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {visibleFields.map(
-            ({ label, value }) => (
-              <section
-                key={label}
-                className="rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] p-4"
-              >
-                <h4 className="mb-2 text-sm font-bold text-[#2F4638]">
-                  {label}
-                </h4>
-
-                <p className="whitespace-pre-wrap text-sm leading-7 text-[#5F6F65]">
-                  {value}
-                </p>
-              </section>
-            )
-          )}
-        </div>
-      )}
-
-      {!item?.description &&
-        visibleFields.length === 0 && (
-          <div className="rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] px-5 py-8 text-center text-sm text-[#A39284]">
-            這筆資料目前還沒有詳細介紹。
-          </div>
-        )}
-    </div>
-  );
-}
 
 function EntryCard({
   item,
@@ -239,34 +135,40 @@ function EntryCard({
           tags.map((tag, index) => (
             <span
               key={`${tag}-${index}`}
-              className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-2.5 py-1 text-[11px] text-[#7C8A80]"
+              className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-2.5 py-1 text-[13px] text-[#7C8A80]"
             >
               {tag}
             </span>
           ))
         ) : (
-          <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[11px] text-[#A39284]">
+          <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[13px] text-[#A39284]">
             名詞／用品
           </span>
         )}
       </div>
 
-      <h4 className="text-xl font-black text-[#2F4638] transition-colors group-hover:text-[#6B9080]">
+      <h4 className="text-[24px] font-black leading-tight text-[#2F4638] transition-colors group-hover:text-[#6B9080]">
         {item?.name || '未命名資料'}
       </h4>
 
+      {item?.type && (
+        <p className="mt-2 text-[14px] text-[#A39284]">
+          {item.type}
+        </p>
+      )}
+
       {item?.description && (
-        <p className="mt-3 line-clamp-3 text-sm leading-7 text-[#5F6F65]">
+        <p className="mt-3 line-clamp-3 text-[16px] leading-8 text-[#5F6F65]">
           {item.description}
         </p>
       )}
 
       <div className="mt-5 flex items-center justify-between border-t border-[#EEE6DC] pt-4">
-        <span className="text-xs text-[#A39284]">
-          點擊查看詳細介紹
+        <span className="text-[14px] text-[#A39284]">
+          點擊查看詳細內容
         </span>
 
-        <span className="text-sm font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
+        <span className="text-[16px] font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
           →
         </span>
       </div>
@@ -275,16 +177,14 @@ function EntryCard({
 }
 
 export default function OtherCategoryView({
-  allData = [],
+  allData,
+  onSelectItem,
 }) {
-  const [activeItem, setActiveItem] =
-    useState(null);
-
   const [searchQuery, setSearchQuery] =
     useState('');
 
   const otherItems = useMemo(() => {
-    return allData
+    return (allData || [])
       .filter(
         (item) =>
           item &&
@@ -320,19 +220,10 @@ export default function OtherCategoryView({
     );
   }, [otherItems, searchQuery]);
 
-  if (activeItem) {
-    return (
-      <EntryDetail
-        item={activeItem}
-        onBack={() => setActiveItem(null)}
-      />
-    );
-  }
-
   return (
     <div>
       <div className="mb-6 flex items-center gap-4">
-        <h3 className="text-2xl font-black tracking-tight text-[#2F4638] md:text-3xl">
+        <h3 className="text-[28px] font-black tracking-tight text-[#2F4638] md:text-[32px]">
           名詞／用品總覽
         </h3>
 
@@ -344,10 +235,12 @@ export default function OtherCategoryView({
           type="text"
           value={searchQuery}
           onChange={(event) =>
-            setSearchQuery(event.target.value)
+            setSearchQuery(
+              event.target.value
+            )
           }
           placeholder="搜尋名詞、用品或相關說明..."
-          className="w-full rounded-2xl border border-[#E6DDD3] bg-white px-4 py-3 text-sm text-[#3A4F3F] outline-none transition focus:border-[#3A4F3F]/30"
+          className="w-full rounded-2xl border border-[#E6DDD3] bg-white px-4 py-3 text-[15px] text-[#3A4F3F] outline-none transition focus:border-[#3A4F3F]/30"
         />
       </div>
 
@@ -358,17 +251,22 @@ export default function OtherCategoryView({
               key={
                 item.id ||
                 item.entryKey ||
-                `${item.name}-${index}`
+                `${item.category}-${item.name}-${index}`
               }
               item={item}
-              onClick={() =>
-                setActiveItem(item)
-              }
+              onClick={() => {
+                if (
+                  typeof onSelectItem ===
+                  'function'
+                ) {
+                  onSelectItem(item);
+                }
+              }}
             />
           ))}
         </div>
       ) : (
-        <div className="rounded-[1.5rem] border border-[#E7DED4] bg-white px-6 py-16 text-center text-[#A39284] shadow-sm">
+        <div className="rounded-[1.5rem] border border-[#E7DED4] bg-white px-6 py-16 text-center text-[16px] text-[#A39284] shadow-sm">
           {searchQuery
             ? '找不到符合的名詞或用品。'
             : '目前還沒有名詞／用品資料。'}

@@ -170,36 +170,6 @@ const getFriendlyTransactionError = (error) => {
   return '儲存失敗，請稍後再試一次。';
 };
 
-function toObjectArrays(obj) {
-  if (Array.isArray(obj)) {
-    const newObj = {};
-
-    obj.forEach((item, index) => {
-      newObj[index.toString()] =
-        toObjectArrays(item);
-    });
-
-    return newObj;
-  }
-
-  if (
-    obj !== null &&
-    typeof obj === 'object'
-  ) {
-    const newObj = {};
-
-    for (const key in obj) {
-      newObj[key] = toObjectArrays(
-        obj[key]
-      );
-    }
-
-    return newObj;
-  }
-
-  return obj;
-}
-
 function collectSearchText(value) {
   if (
     value === null ||
@@ -345,12 +315,18 @@ export default function AddEntryPage({
     if (!editingItem) { setFormData(getDefaultFormData()); setSaveError(''); return;}
     const normalized = convertObjectsToArrays(editingItem);
     const defaultData = getDefaultFormData();
-    const knowledgeSections =
-      Array.isArray(
-        normalized?.knowledgeDetails?.sections
-      )
-        ? normalized.knowledgeDetails.sections
-        : [];
+   const knowledgeSections =
+  Array.isArray(
+    normalized?.knowledgeDetails?.sections
+  )
+    ? normalized.knowledgeDetails.sections
+    : normalized?.knowledgeDetails?.sections &&
+        typeof normalized.knowledgeDetails.sections ===
+          'object'
+      ? Object.values(
+          normalized.knowledgeDetails.sections
+        )
+      : [];
 
     setFormData({
       ...defaultData,
@@ -374,10 +350,25 @@ export default function AddEntryPage({
           : [],
       },
 
-      knowledgeDetails: {...defaultData.knowledgeDetails,...(normalized?.knowledgeDetails || {}),introduction:normalized?.knowledgeDetails?.introduction ||'',
-      sections: Array.isArray(normalized?.knowledgeDetails?.sections)
+      knowledgeDetails: {
+  ...defaultData.knowledgeDetails,
+  ...(normalized?.knowledgeDetails || {}),
+
+  introduction:
+    normalized?.knowledgeDetails
+      ?.introduction || '',
+
+  sections: Array.isArray(
+    normalized?.knowledgeDetails?.sections
+  )
     ? normalized.knowledgeDetails.sections
-    : [],
+    : normalized?.knowledgeDetails?.sections &&
+        typeof normalized.knowledgeDetails.sections ===
+          'object'
+      ? Object.values(
+          normalized.knowledgeDetails.sections
+        )
+      : [],
 },
       acuTable: {...defaultData.acuTable,...(editingItem?.acuTable || {}),},
       acuDetails: {...defaultData.acuDetails,...(editingItem?.acuDetails || {}),},
@@ -411,59 +402,60 @@ export default function AddEntryPage({
     setSaveError('');
   }, [editingItem]);
 
-  const addNode = useCallback((path = []) => {
-    const newNode = {
-      id: `sub_${Date.now()}`,
-      title: '',
-      type: 'content',
-      text: '',
-      children: [],
-    };
+ const addNode = useCallback((path = []) => {
+  const newNodeId = `sub_${Date.now()}`;
 
-    setFormData((prev) => {
-      const newChapters =
-        JSON.parse(
-          JSON.stringify(
-            prev.bookDetails.chapters || []
-          )
-        );
+  const newNode = {
+    id: newNodeId,
+    title: '',
+    type: 'content',
+    text: '',
+    children: [],
+  };
 
-      if (path.length === 0) {
-        newChapters.push(newNode);
-      } else {
-        let target = newChapters;
+  setFormData((prev) => {
+    const newChapters = JSON.parse(
+      JSON.stringify(
+        prev.bookDetails?.chapters || []
+      )
+    );
 
-        for (
-          let i = 0;
-          i < path.length;
-          i++
-        ) {
-          target = target[path[i]];
-        }
+    if (path.length === 0) {
+      newChapters.push(newNode);
+    } else {
+      let target = newChapters;
 
-        if (target.type === 'folder') {
-          if (!target.children) {
-            target.children = [];
-          }
-
-          target.children.push(newNode);
-        } else {
-          target.type = 'folder';
-          target.children = [newNode];
-        }
+      for (
+        let i = 0;
+        i < path.length;
+        i++
+      ) {
+        target = target[path[i]];
       }
 
-      return {
-        ...prev,
-        bookDetails: {
-          ...prev.bookDetails,
-          chapters: newChapters,
-        },
-      };
-    });
+      if (target.type === 'folder') {
+        if (!target.children) {
+          target.children = [];
+        }
 
-    setLastNodeId(`node_${Date.now()}`);
-  }, []);
+        target.children.push(newNode);
+      } else {
+        target.type = 'folder';
+        target.children = [newNode];
+      }
+    }
+
+    return {
+      ...prev,
+      bookDetails: {
+        ...prev.bookDetails,
+        chapters: newChapters,
+      },
+    };
+  });
+
+  setLastNodeId(newNodeId);
+}, []);
 
   const inputClass = `w-full rounded-xl border border-[#E5E0D8] bg-white px-4 py-3 outline-none transition-all focus:border-[#3A4F3F] focus:ring-2 focus:ring-[#3A4F3F]/10 ${
     isViewOnly
@@ -660,8 +652,43 @@ export default function AddEntryPage({
           oldEntryKey
         );
 
-        const cleanData =
-          toObjectArrays(formData);
+       const cleanData = {
+  ...formData,
+  knowledgeDetails: {
+    ...formData.knowledgeDetails,
+    sections: Array.isArray(
+      formData.knowledgeDetails?.sections
+    )
+      ? formData.knowledgeDetails.sections
+      : [],
+  },
+
+  knowledgeDetails: {
+    ...formData.knowledgeDetails,
+
+    introduction:
+      formData.knowledgeDetails
+        ?.introduction || '',
+
+    sections: Array.isArray(
+      formData.knowledgeDetails?.sections
+    )
+      ? formData.knowledgeDetails.sections
+      : [],
+  },
+
+  acuTable: {
+    ...formData.acuTable,
+  },
+
+  acuDetails: {
+    ...formData.acuDetails,
+  },
+
+  oilDetails: {
+    ...formData.oilDetails,
+  },
+};
 
         const now = Date.now();
 
@@ -715,10 +742,17 @@ export default function AddEntryPage({
           chemicalTag:
             formData.chemicalTag || '',
 
-          knowledgeDetails:
-            formData.knowledgeDetails || {
-              sections: [],
-            },
+          knowledgeDetails: {
+  introduction:
+    formData.knowledgeDetails
+      ?.introduction || '',
+
+  sections: Array.isArray(
+    formData.knowledgeDetails?.sections
+  )
+    ? formData.knowledgeDetails.sections
+    : [],
+},
 
           acuTable: formData.acuTable || {
             code: '',
@@ -1116,7 +1150,7 @@ export default function AddEntryPage({
                     isViewOnly || isSaving
                   }
                   placeholder="簡介描述"
-                  value={formData.description}
+                  value={formData.description || ''}
                   className={textareaClass}
                   onChange={(event) =>
                     setFormData((prev) => ({

@@ -911,10 +911,11 @@ export default function App() {
 
         <main>
           {selectedCategory === '其他' ? (
-            <OtherCategoryView
-              allData={filteredData}
-            />
-          ) : filteredData.length > 0 ? (
+  <OtherCategoryView
+    allData={filteredData}
+    onSelectItem={setActiveItem}
+  />
+) : filteredData.length > 0 ? (
             <>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                 {visibleData.map(

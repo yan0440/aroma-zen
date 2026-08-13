@@ -610,7 +610,7 @@ function KnowledgeNodeEditor({
         <input
           disabled={disabled}
           value={normalizedNode.title || ''}
-          placeholder="例如：荷荷芭油是什麼、基本資料、使用方式"
+          placeholder="例如：荷荷芭油"
           className={inputClass}
           onChange={(event) =>
             updateNode(
