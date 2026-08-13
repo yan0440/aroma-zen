@@ -270,6 +270,9 @@ ${category}
 8. 如果只有一筆資料，回傳單一 JSON 物件。
 9. 如果有多筆資料，最外層回傳 JSON 陣列。
 10. 多筆資料時，每一筆都必須使用相同的完整欄位結構。
+11.文獻別錄遇到編號則可以忽略編號
+12.如果有編排符號"●"不省略，且要換行，配穴、功效、解剖除外且遇到開頭是"肌肉"、"神經"、"血管"就連內容一起換行；
+功效第一行會被視為主治，遇到"古典:":與"現代："則歸類到"古代功效"跟"現代功效"。
 
 單筆資料格式：
 
@@ -385,10 +388,16 @@ ${category}
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result?.error?.message || 'Gemini API 呼叫失敗'
-        );
-      }
+  if (response.status === 429) {
+    throw new Error(
+      'Gemini 免費額度已用完，請稍後再試。不要連續重複上傳。'
+    );
+  }
+
+  throw new Error(
+    result?.error?.message || 'Gemini API 呼叫失敗'
+  );
+}
 
       const text =
         result?.candidates?.[0]?.content?.parts?.[0]?.text || '';

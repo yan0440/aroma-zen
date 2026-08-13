@@ -1,291 +1,379 @@
-import React, { useState, useMemo } from 'react';
-import { allCategoryExplanations } from '../data/categoryData';
+import React, {
+  useMemo,
+  useState,
+} from 'react';
 
-function normalizeText(value) {
-  return String(value || '').replace(/\s+/g, '').toLowerCase();
-}
+const OTHER_CATEGORY = '其他';
 
-function tagIncludes(tag, keyword) {
-  return normalizeText(tag).includes(normalizeText(keyword));
-}
+const normalizeText = (value = '') =>
+  String(value)
+    .trim()
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
 
-function getItemTag(item) {
-  return item?.tag || item?.constitutionTag || item?.chemicalTag || item?.acuTable?.meridian || '';
-}
+const getCreatedTime = (item) => {
+  const value = item?.createdAt;
 
-function getMatchedNamesByTag(allData, categoryName, keywords) {
-  const keywordList = Array.isArray(keywords) ? keywords : [keywords];
-  const validKeywords = keywordList.filter(Boolean);
+  if (typeof value === 'number') {
+    return value;
+  }
 
-  return Array.from(
-    new Set(
-      allData
-        .filter((item) => item?.category === categoryName)
-        .filter((item) => validKeywords.some((keyword) => tagIncludes(getItemTag(item), keyword)))
-        .map((item) => item.name)
-        .filter(Boolean)
-    )
+  if (
+    value &&
+    typeof value.toMillis === 'function'
+  ) {
+    return value.toMillis();
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+
+    return Number.isNaN(parsed)
+      ? 0
+      : parsed;
+  }
+
+  return 0;
+};
+
+const getSearchText = (item) => {
+  const fields = [
+    item?.name,
+    item?.tag,
+    item?.alias,
+    item?.description,
+    item?.source,
+    item?.effect,
+    item?.indications,
+    item?.literature,
+    item?.contraindication,
+    item?.note,
+    item?.analysis,
+    item?.discussion,
+    item?.modernApp,
+    item?.modernPharmacology,
+    item?.property,
+    item?.nature,
+    item?.family,
+    item?.traits,
+    item?.directions,
+  ];
+
+  return normalizeText(
+    fields
+      .filter(Boolean)
+      .join(' ')
   );
-}
+};
 
-function DetailPanel({ categoryName, tagName, tagData, allData, onBack, matchKeyword }) {
-  const matchedItems = getMatchedNamesByTag(allData, categoryName, matchKeyword);
+const getVisibleFields = (item) => {
+  const fields = [
+    {
+      label: '核心標籤',
+      value: item?.tag,
+    },
+    {
+      label: '別名',
+      value: item?.alias,
+    },
+    {
+      label: '來源',
+      value: item?.source,
+    },
+    {
+      label: '功效',
+      value: item?.effect,
+    },
+    {
+      label: '主治',
+      value: item?.indications,
+    },
+    {
+      label: '性質／特徵',
+      value: item?.traits,
+    },
+    {
+      label: '注意禁忌',
+      value: item?.contraindication,
+    },
+    {
+      label: '文獻資料',
+      value: item?.literature,
+    },
+    {
+      label: '補充說明',
+      value: item?.note,
+    },
+    {
+      label: '現代應用',
+      value: item?.modernApp,
+    },
+    {
+      label: '現代藥理',
+      value: item?.modernPharmacology,
+    },
+  ];
+
+  return fields.filter(
+    (field) =>
+      field.value !== undefined &&
+      field.value !== null &&
+      String(field.value).trim() !== ''
+  );
+};
+
+function EntryDetail({
+  item,
+  onBack,
+}) {
+  const visibleFields =
+    getVisibleFields(item);
+
+  const tags = [
+    item?.tag,
+    item?.alias,
+  ].filter(Boolean);
 
   return (
-    <div className="rounded-[1.5rem] border border-white/70 bg-white p-6 md:p-8 shadow-[0_8px_24px_rgba(122,106,90,0.06)]">
+    <div className="rounded-[1.5rem] border border-white/70 bg-white p-6 shadow-[0_8px_24px_rgba(122,106,90,0.06)] md:p-8">
       <button
+        type="button"
         onClick={onBack}
-        className="mb-5 inline-flex items-center gap-2 text-sm text-[#7F6D5F] hover:text-[#3A4F3F] transition-colors"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-[#7F6D5F] transition-colors hover:text-[#3A4F3F]"
       >
-        ← 返回上一層
+        ← 返回名詞／用品列表
       </button>
 
-      <div className="mb-4">
-        <span className="inline-block rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold text-[#3A4F3F] mb-2">
-          {categoryName}
+      <div className="mb-5">
+        <span className="mb-3 inline-block rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold text-[#3A4F3F]">
+          名詞／用品
         </span>
-        <h4 className="text-2xl font-black text-[#2F4638]">{tagName}</h4>
-      </div>
 
-      <div className="h-[2px] w-full bg-[#E8E0D6] mb-5" />
+        <h3 className="text-3xl font-black tracking-tight text-[#2F4638]">
+          {item?.name || '未命名資料'}
+        </h3>
 
-      <div className="space-y-5">
-        <div>
-          <h5 className="text-sm font-bold text-[#2F4638] mb-2">標籤描述</h5>
-          <p className="text-sm text-[#5F6F65] leading-7">{tagData?.desc || ''}</p>
-        </div>
-
-        <div>
-          <h5 className="text-sm font-bold text-[#2F4638] mb-3">自動搜尋到的百科名稱</h5>
-          <div className="flex flex-wrap gap-2">
-            {matchedItems.length > 0 ? (
-              matchedItems.map((name) => (
-                <span
-                  key={name}
-                  className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-sm text-[#5F6F65]"
-                >
-                  {name}
-                </span>
-              ))
-            ) : (
-              <span className="text-sm text-[#A39284]">尚未搜尋到相關百科</span>
-            )}
+        {tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {tags.map((tag, index) => (
+              <span
+                key={`${tag}-${index}`}
+                className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-xs text-[#6B9080]"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
-        </div>
+        )}
       </div>
+
+      <div className="mb-6 h-[2px] w-full bg-[#E8E0D6]" />
+
+      {item?.description && (
+        <section className="mb-7">
+          <h4 className="mb-2 text-sm font-bold text-[#2F4638]">
+            簡介
+          </h4>
+
+          <p className="whitespace-pre-wrap text-sm leading-7 text-[#5F6F65]">
+            {item.description}
+          </p>
+        </section>
+      )}
+
+      {visibleFields.length > 0 && (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {visibleFields.map(
+            ({ label, value }) => (
+              <section
+                key={label}
+                className="rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] p-4"
+              >
+                <h4 className="mb-2 text-sm font-bold text-[#2F4638]">
+                  {label}
+                </h4>
+
+                <p className="whitespace-pre-wrap text-sm leading-7 text-[#5F6F65]">
+                  {value}
+                </p>
+              </section>
+            )
+          )}
+        </div>
+      )}
+
+      {!item?.description &&
+        visibleFields.length === 0 && (
+          <div className="rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] px-5 py-8 text-center text-sm text-[#A39284]">
+            這筆資料目前還沒有詳細介紹。
+          </div>
+        )}
     </div>
   );
 }
 
-export default function OtherCategoryView({ allData }) {
-  const [viewState, setViewState] = useState({
-    category: null,
-    tag: null,
-    childTag: null,
-  });
+function EntryCard({
+  item,
+  onClick,
+}) {
+  const tags = [
+    item?.tag,
+    item?.alias,
+  ].filter(Boolean);
 
-  const { category: activeCategory, tag: activeTag, childTag: activeChildTag } = viewState;
-  const categories = Object.keys(allCategoryExplanations);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-[1.5rem] border border-[#E7DED4] bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#C8A97E] hover:bg-[#FFFDF9] hover:shadow-md"
+    >
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#6B9080] via-[#C8A97E] to-[#D9C6B0] opacity-70" />
 
-  const categoryData = useMemo(
-    () => (activeCategory ? allCategoryExplanations[activeCategory] || {} : {}),
-    [activeCategory]
-  );
-
-  const tagData = useMemo(
-    () => (activeCategory && activeTag ? categoryData?.[activeTag] || null : null),
-    [activeCategory, activeTag, categoryData]
-  );
-
-  const childTagData = useMemo(
-    () =>
-      activeCategory && activeTag && activeChildTag
-        ? categoryData?.[activeTag]?.children?.[activeChildTag] || null
-        : null,
-    [activeCategory, activeTag, activeChildTag, categoryData]
-  );
-
-  const hasChildren = !!(tagData?.children && Object.keys(tagData.children).length > 0);
-
-  const parentMatchKeyword = useMemo(() => {
-    if (!tagData) return [];
-    if (activeCategory === '方劑' && activeTag === '解表劑') return ['解表'];
-    if (activeTag === '解表藥') return ['解表'];
-    return tagData.keywords?.length ? tagData.keywords : [activeTag];
-  }, [tagData, activeCategory, activeTag]);
-
-  const childMatchKeyword = useMemo(() => {
-    if (!childTagData) return [];
-    return childTagData.keywords?.length ? childTagData.keywords : [activeChildTag];
-  }, [childTagData, activeChildTag]);
-
-  const setCategoryView = (category) => {
-    setViewState({ category, tag: null, childTag: null });
-  };
-
-  const setTagView = (tag) => {
-    setViewState((prev) => ({ ...prev, tag, childTag: null }));
-  };
-
-  const setChildTagView = (childTag) => {
-    setViewState((prev) => ({ ...prev, childTag }));
-  };
-
-  const backToOverview = () => setViewState({ category: null, tag: null, childTag: null });
-  const backToCategory = () => setViewState((prev) => ({ category: prev.category, tag: null, childTag: null }));
-  const backToTag = () => setViewState((prev) => ({ ...prev, childTag: null }));
-
-  if (activeCategory && activeTag && activeChildTag) {
-    return (
-      <DetailPanel
-        categoryName={activeCategory}
-        tagName={activeChildTag}
-        tagData={childTagData}
-        allData={allData}
-        matchKeyword={childMatchKeyword}
-        onBack={backToTag}
-      />
-    );
-  }
-
-  if (activeCategory && activeTag) {
-    if (hasChildren) {
-      return (
-        <div className="rounded-[1.5rem] border border-white/70 bg-white p-6 md:p-8 shadow-[0_8px_24px_rgba(122,106,90,0.06)]">
-          <button
-            onClick={backToCategory}
-            className="mb-5 inline-flex items-center gap-2 text-sm text-[#7F6D5F] hover:text-[#3A4F3F] transition-colors"
-          >
-            ← 返回上一層
-          </button>
-
-          <div className="mb-4">
-            <span className="inline-block rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold text-[#3A4F3F] mb-2">
-              {activeCategory}
+      <div className="mb-3 flex flex-wrap gap-2">
+        {tags.length > 0 ? (
+          tags.map((tag, index) => (
+            <span
+              key={`${tag}-${index}`}
+              className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-2.5 py-1 text-[11px] text-[#7C8A80]"
+            >
+              {tag}
             </span>
-            <h4 className="text-2xl font-black text-[#2F4638]">{activeTag}</h4>
-          </div>
+          ))
+        ) : (
+          <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[11px] text-[#A39284]">
+            名詞／用品
+          </span>
+        )}
+      </div>
 
-          <div className="h-[2px] w-full bg-[#E8E0D6] mb-5" />
+      <h4 className="text-xl font-black text-[#2F4638] transition-colors group-hover:text-[#6B9080]">
+        {item?.name || '未命名資料'}
+      </h4>
 
-          <div className="space-y-5">
-            <div>
-              <h5 className="text-sm font-bold text-[#2F4638] mb-2">標籤描述</h5>
-              <p className="text-sm text-[#5F6F65] leading-7">{tagData?.desc || ''}</p>
-            </div>
+      {item?.description && (
+        <p className="mt-3 line-clamp-3 text-sm leading-7 text-[#5F6F65]">
+          {item.description}
+        </p>
+      )}
 
-            <div>
-              <h5 className="text-sm font-bold text-[#2F4638] mb-3">自動搜尋到的百科名稱</h5>
-              <div className="flex flex-wrap gap-2">
-                {getMatchedNamesByTag(allData, activeCategory, parentMatchKeyword).map((name) => (
-                  <span
-                    key={name}
-                    className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-sm text-[#5F6F65]"
-                  >
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
+      <div className="mt-5 flex items-center justify-between border-t border-[#EEE6DC] pt-4">
+        <span className="text-xs text-[#A39284]">
+          點擊查看詳細介紹
+        </span>
 
-            <div>
-              <h5 className="text-sm font-bold text-[#2F4638] mb-3">下一層分類</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(tagData.children).map(([childName]) => (
-                  <button
-                    key={childName}
-                    onClick={() => setChildTagView(childName)}
-                    className="rounded-2xl border border-[#E7DED4] bg-white px-4 py-5 text-left hover:bg-[#F3E1C5] hover:border-[#C8A97E] transition-all"
-                  >
-                    <h4 className="text-sm md:text-base font-bold text-[#2F4638]">
-                      {childName}
-                    </h4>
-                    <p className="text-xs text-[#A39284] mt-1">點擊查看詳細內容</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+        <span className="text-sm font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
+          →
+        </span>
+      </div>
+    </button>
+  );
+}
+
+export default function OtherCategoryView({
+  allData = [],
+}) {
+  const [activeItem, setActiveItem] =
+    useState(null);
+
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
+  const otherItems = useMemo(() => {
+    return allData
+      .filter(
+        (item) =>
+          item &&
+          item.category === OTHER_CATEGORY &&
+          item.name
+      )
+      .sort((a, b) => {
+        const timeA = getCreatedTime(a);
+        const timeB = getCreatedTime(b);
+
+        if (timeA !== timeB) {
+          return timeB - timeA;
+        }
+
+        return String(a.name).localeCompare(
+          String(b.name),
+          'zh-Hant'
+        );
+      });
+  }, [allData]);
+
+  const filteredItems = useMemo(() => {
+    const keyword = normalizeText(
+      searchQuery
+    );
+
+    if (!keyword) {
+      return otherItems;
     }
 
-    return (
-      <DetailPanel
-        categoryName={activeCategory}
-        tagName={activeTag}
-        tagData={tagData}
-        allData={allData}
-        matchKeyword={parentMatchKeyword}
-        onBack={backToCategory}
-      />
+    return otherItems.filter((item) =>
+      getSearchText(item).includes(keyword)
     );
-  }
+  }, [otherItems, searchQuery]);
 
-  if (activeCategory) {
-    const categoryDataOnly = allCategoryExplanations[activeCategory] || {};
-
+  if (activeItem) {
     return (
-      <div>
-        <button
-          onClick={backToOverview}
-          className="mb-5 inline-flex items-center gap-2 text-sm text-[#7F6D5F] hover:text-[#3A4F3F] transition-colors"
-        >
-          ← 返回分類總覽
-        </button>
-
-        <div className="rounded-[1.5rem] border border-white/70 bg-white p-6 md:p-8 shadow-[0_8px_24px_rgba(122,106,90,0.06)]">
-          <div className="mb-6">
-            <span className="inline-block rounded-full bg-[#F4EFE7] px-3 py-1 text-[11px] font-semibold text-[#3A4F3F] mb-2">
-              {activeCategory}
-            </span>
-            <h4 className="text-2xl font-black text-[#2F4638]">{activeCategory}</h4>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(categoryDataOnly).map(([tagName, tagDataItem]) => (
-              <button
-                key={tagName}
-                onClick={() => setTagView(tagName)}
-                className="rounded-2xl border border-[#E7DED4] bg-white px-4 py-5 text-left hover:bg-[#F3E1C5] hover:border-[#C8A97E] transition-all"
-              >
-                <h4 className="text-sm md:text-base font-bold text-[#2F4638]">
-                  {tagName}
-                </h4>
-                <p className="text-xs text-[#A39284] mt-1">
-                  {tagDataItem.children ? '點擊進入下一層' : '點擊查看詳細內容'}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <EntryDetail
+        item={activeItem}
+        onBack={() => setActiveItem(null)}
+      />
     );
   }
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <h3 className="text-2xl md:text-3xl font-black tracking-tight text-[#2F4638]">
-          類別解釋總覽
+      <div className="mb-6 flex items-center gap-4">
+        <h3 className="text-2xl font-black tracking-tight text-[#2F4638] md:text-3xl">
+          名詞／用品總覽
         </h3>
+
         <div className="h-[2px] flex-1 bg-gradient-to-r from-[#E8E0D6] to-transparent" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-        {categories.map((categoryName) => (
-          <button
-            key={categoryName}
-            onClick={() => setCategoryView(categoryName)}
-            className="rounded-2xl border border-[#E7DED4] bg-white px-4 py-5 text-left hover:bg-[#F3E1C5] hover:border-[#C8A97E] transition-all"
-          >
-            <h4 className="text-sm md:text-base font-bold text-[#2F4638]">
-              {categoryName}
-            </h4>
-            <p className="text-xs text-[#A39284] mt-1">點擊進入下一層</p>
-          </button>
-        ))}
+      <div className="mb-6 rounded-[1.5rem] border border-white/70 bg-white p-4 shadow-[0_8px_24px_rgba(122,106,90,0.06)]">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(event) =>
+            setSearchQuery(event.target.value)
+          }
+          placeholder="搜尋名詞、用品或相關說明..."
+          className="w-full rounded-2xl border border-[#E6DDD3] bg-white px-4 py-3 text-sm text-[#3A4F3F] outline-none transition focus:border-[#3A4F3F]/30"
+        />
       </div>
+
+      {filteredItems.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {filteredItems.map((item, index) => (
+            <EntryCard
+              key={
+                item.id ||
+                item.entryKey ||
+                `${item.name}-${index}`
+              }
+              item={item}
+              onClick={() =>
+                setActiveItem(item)
+              }
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[1.5rem] border border-[#E7DED4] bg-white px-6 py-16 text-center text-[#A39284] shadow-sm">
+          {searchQuery
+            ? '找不到符合的名詞或用品。'
+            : '目前還沒有名詞／用品資料。'}
+        </div>
+      )}
     </div>
   );
 }

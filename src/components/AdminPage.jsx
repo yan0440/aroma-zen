@@ -8,7 +8,6 @@ import React, {
   useRef,
 } from 'react';
 
-
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -17,12 +16,12 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 
-
 import {
+  collection,
   doc,
+  getDocs,
   writeBatch,
 } from 'firebase/firestore';
-
 
 import { auth, db } from '../firebase';
 
@@ -32,14 +31,13 @@ import AcuModal from './AcuModal';
 import HerbModal from './HerbModal';
 import FormulaModal from './FormulaModal';
 import BookModal from './BookModal';
+import OtherDetailPage from './OtherDetailPage';
 
 import { APP_VERSION } from '../generatedVersion.js';
-
 
 const CardViewer = lazy(
   () => import('./CardViewer')
 );
-
 
 const MODAL_MAP = {
   書籍: BookModal,
@@ -47,8 +45,8 @@ const MODAL_MAP = {
   穴道: AcuModal,
   中藥: HerbModal,
   方劑: FormulaModal,
+  其他: OtherDetailPage,
 };
-
 
 const normalizeText = (value = '') =>
   String(value)
@@ -57,13 +55,16 @@ const normalizeText = (value = '') =>
     .replace(/\s+/g, ' ')
     .toLowerCase();
 
-
 const getEntryKey = (
   category = '',
   name = ''
 ) =>
   `${normalizeText(category)}__${normalizeText(name)}`;
 
+const getCategoryLabel = (category) =>
+  category === '其他'
+    ? '名詞／用品'
+    : category;
 
 const categories = [
   '全部',
@@ -72,8 +73,8 @@ const categories = [
   '穴道',
   '中藥',
   '方劑',
+  '其他',
 ];
-
 
 const buildBookSearchText = (item) => {
   const walkChapters = (chapters) => {
@@ -116,7 +117,6 @@ const buildBookSearchText = (item) => {
   );
 };
 
-
 const buildSearchText = (item) => {
   if (item.category === '書籍') {
     return buildBookSearchText(item);
@@ -135,16 +135,54 @@ const buildSearchText = (item) => {
       item.syndrome,
       item.modifications,
       item.modernApp,
+      item.modernPharmacology,
       item.pharmacology,
       item.contemporary,
       item.directions,
       item.note,
+      item.literature,
+      item.contraindication,
+      item.traits,
+      item.nature,
+      item.family,
+      item.meridian,
+      item.property,
+      item.typePart,
+      item.method,
+
+      item.oilDetails?.scent,
+      item.oilDetails?.appearance,
+      item.oilDetails?.historyMyth,
+      item.oilDetails?.chemistry,
+      item.oilDetails?.attribute,
+      item.oilDetails?.caution,
+      item.oilDetails?.mindEffect,
+      item.oilDetails?.bodyEffect,
+      item.oilDetails?.skinEffect,
+      item.oilDetails?.constitution,
+      item.oilDetails?.blendingOils,
+      item.oilDetails?.formulas,
+      item.oilDetails?.carrierOils,
+      item.oilDetails?.usage,
+
+      item.acuTable?.code,
+      item.acuTable?.meridian,
+      item.acuTable?.alias,
+
+      item.acuDetails?.location,
+      item.acuDetails?.operation,
+      item.acuDetails?.indications,
+      item.acuDetails?.type,
+      item.acuDetails?.nameExpl,
+      item.acuDetails?.anatomy,
+      item.acuDetails?.effectAncient,
+      item.acuDetails?.effectModern,
+      item.acuDetails?.matchingPoints,
     ]
       .filter(Boolean)
       .join(' ')
   );
 };
-
 
 const getAuthErrorMessage = (error) => {
   switch (error?.code) {
@@ -174,7 +212,6 @@ const getAuthErrorMessage = (error) => {
   }
 };
 
-
 const EntryRow = React.memo(function EntryRow({
   item,
   onViewItem,
@@ -185,9 +222,17 @@ const EntryRow = React.memo(function EntryRow({
 }) {
   return (
     <div className="flex items-center justify-between rounded-2xl border border-[#E5E0D8]/60 bg-white p-5 shadow-sm print:break-inside-avoid">
-      <span className="font-semibold text-[#3A4F3F]">
-        {item.name}
-      </span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-[#3A4F3F]">
+            {item.name}
+          </span>
+
+          <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[11px] text-[#7C8A80]">
+            {getCategoryLabel(item.category)}
+          </span>
+        </div>
+      </div>
 
       <div className="flex flex-wrap justify-end gap-2 print:hidden">
         <button
@@ -229,7 +274,6 @@ const EntryRow = React.memo(function EntryRow({
     </div>
   );
 });
-
 
 export default function AdminPage({
   allData,
@@ -281,10 +325,19 @@ export default function AdminPage({
     setDeleteMessage,
   ] = useState('');
 
+  const [
+    firestoreEntries,
+    setFirestoreEntries,
+  ] = useState([]);
+
+  const [
+    isLoadingEntries,
+    setIsLoadingEntries,
+  ] = useState(false);
+
   const deletingRef = useRef(false);
 
   const version = APP_VERSION;
-
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -310,16 +363,61 @@ export default function AdminPage({
     return () => unsubscribe();
   }, []);
 
+  const loadAllFirestoreEntries =
+    useCallback(async () => {
+      if (!currentUser) {
+        return;
+      }
+
+      setIsLoadingEntries(true);
+
+      try {
+        const snapshot = await getDocs(
+          collection(db, 'entries')
+        );
+
+        const entries = snapshot.docs.map(
+          (entryDoc) => ({
+            id: entryDoc.id,
+            ...entryDoc.data(),
+          })
+        );
+
+        setFirestoreEntries(entries);
+      } catch (error) {
+        console.error(
+          '後臺讀取 Firestore 百科失敗:',
+          error
+        );
+
+        setDeleteMessage(
+          '後臺讀取雲端百科失敗，請重新整理頁面。'
+        );
+      } finally {
+        setIsLoadingEntries(false);
+      }
+    }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setFirestoreEntries([]);
+      return;
+    }
+
+    loadAllFirestoreEntries();
+  }, [
+    currentUser,
+    viewState,
+    loadAllFirestoreEntries,
+  ]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [viewState]);
 
-
   useEffect(() => {
     setDisplayCount(10);
   }, [filterCategory, searchName]);
-
 
   useEffect(() => {
     if (!deleteMessage) {
@@ -335,9 +433,79 @@ export default function AdminPage({
     };
   }, [deleteMessage]);
 
+  const adminData = useMemo(() => {
+    const dataMap = new Map();
+
+    (allData || []).forEach((item) => {
+      if (
+        !item ||
+        !item.name ||
+        !item.category
+      ) {
+        return;
+      }
+
+      const key =
+        item.entryKey ||
+        getEntryKey(
+          item.category,
+          item.name
+        );
+
+      dataMap.set(key, {
+        ...item,
+      });
+    });
+
+    firestoreEntries.forEach((item) => {
+      if (
+        !item ||
+        !item.name ||
+        !item.category
+      ) {
+        return;
+      }
+
+      const key =
+        item.entryKey ||
+        getEntryKey(
+          item.category,
+          item.name
+        );
+
+      const previous = dataMap.get(key);
+
+      dataMap.set(key, {
+        ...previous,
+        ...item,
+
+        oilDetails: {
+          ...previous?.oilDetails,
+          ...item.oilDetails,
+        },
+
+        acuTable: {
+          ...previous?.acuTable,
+          ...item.acuTable,
+        },
+
+        acuDetails: {
+          ...previous?.acuDetails,
+          ...item.acuDetails,
+        },
+
+        bookDetails: {
+          ...previous?.bookDetails,
+          ...item.bookDetails,
+        },
+      });
+    });
+
+    return Array.from(dataMap.values());
+  }, [allData, firestoreEntries]);
 
   const indexedData = useMemo(() => {
-    return (allData || [])
+    return adminData
       .filter(
         (item) =>
           item &&
@@ -350,8 +518,7 @@ export default function AdminPage({
           item._searchText ||
           buildSearchText(item),
       }));
-  }, [allData]);
-
+  }, [adminData]);
 
   const filteredByCategory = useMemo(() => {
     if (filterCategory === '全部') {
@@ -363,7 +530,6 @@ export default function AdminPage({
         item.category === filterCategory
     );
   }, [indexedData, filterCategory]);
-
 
   const filteredEntries = useMemo(() => {
     const query = normalizeText(searchName);
@@ -377,7 +543,6 @@ export default function AdminPage({
     );
   }, [filteredByCategory, searchName]);
 
-
   const displayedEntries = useMemo(
     () =>
       filteredEntries.slice(
@@ -386,7 +551,6 @@ export default function AdminPage({
       ),
     [filteredEntries, displayCount]
   );
-
 
   const handleLogin = useCallback(
     async (event) => {
@@ -432,7 +596,6 @@ export default function AdminPage({
     [email, password, isSigningIn]
   );
 
-
   const handleLogout = useCallback(
     async () => {
       try {
@@ -442,6 +605,7 @@ export default function AdminPage({
         setEditingItem(null);
         setViewingItem(null);
         setViewingCard(null);
+        setFirestoreEntries([]);
         setEmail('');
         setPassword('');
         setAuthError('');
@@ -453,7 +617,6 @@ export default function AdminPage({
     []
   );
 
-
   const handleCloseAdminDetail =
     useCallback(() => {
       setViewingItem(null);
@@ -463,13 +626,11 @@ export default function AdminPage({
       setDeleteMessage('');
     }, []);
 
-
   const handleLoadMore = useCallback(() => {
     setDisplayCount(
       (previous) => previous + 10
     );
   }, []);
-
 
   const handleDelete = useCallback(
     async (item) => {
@@ -509,6 +670,19 @@ export default function AdminPage({
 
         await batch.commit();
 
+        setFirestoreEntries((previous) =>
+          previous.filter((entry) => {
+            const currentKey =
+              entry.entryKey ||
+              getEntryKey(
+                entry.category || '',
+                entry.name || ''
+              );
+
+            return currentKey !== entryKey;
+          })
+        );
+
         setDeleteMessage('刪除成功。');
       } catch (error) {
         console.error('刪除失敗:', error);
@@ -540,14 +714,12 @@ export default function AdminPage({
     []
   );
 
-
   const handleViewItem = useCallback(
     (item) => {
       setViewingItem(item);
     },
     []
   );
-
 
   const handleViewCard = useCallback(
     (item) => {
@@ -556,7 +728,6 @@ export default function AdminPage({
     []
   );
 
-
   const handleEdit = useCallback(
     (item) => {
       setEditingItem(item);
@@ -564,7 +735,6 @@ export default function AdminPage({
     },
     []
   );
-
 
   if (authLoading) {
     return (
@@ -575,7 +745,6 @@ export default function AdminPage({
       </div>
     );
   }
-
 
   if (!currentUser) {
     return (
@@ -649,7 +818,6 @@ export default function AdminPage({
     );
   }
 
-
   if (viewState === 'add') {
     return (
       <AddEntryPage
@@ -662,12 +830,29 @@ export default function AdminPage({
     );
   }
 
+if (viewingItem) {
+  const DetailComponent =
+    MODAL_MAP[viewingItem.category];
 
-  const AdminModal =
-    viewingItem
-      ? MODAL_MAP[viewingItem.category]
-      : null;
+  if (DetailComponent) {
+    return (
+      <DetailComponent
+        item={viewingItem}
+        onClose={handleCloseAdminDetail}
+        backLabel="返回後臺列表"
+      />
+    );
+  }
 
+  return (
+  <AddEntryPage
+    editingItem={viewingItem}
+    isViewOnly
+    closeLabel="返回後臺列表"
+    onClose={handleCloseAdminDetail}
+  />
+);
+}
 
   return (
     <div className="flex h-dvh w-screen flex-col overflow-hidden bg-[#F7F5F0]">
@@ -680,13 +865,7 @@ export default function AdminPage({
           </div>
         }
       >
-        {viewingItem && AdminModal && (
-          <AdminModal
-            item={viewingItem}
-            onClose={handleCloseAdminDetail}
-            backLabel="返回後臺列表"
-          />
-        )}
+
 
         {viewingCard && (
           <CardViewer
@@ -697,7 +876,6 @@ export default function AdminPage({
           />
         )}
       </Suspense>
-
 
       <header className="shrink-0 border-b border-[#E5E0D8] bg-[#F7F5F0] px-6 py-6 print:hidden md:px-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -746,7 +924,6 @@ export default function AdminPage({
         </div>
       </header>
 
-
       <main className="min-h-0 flex-1 overflow-hidden px-6 py-6 print:p-0 md:px-10">
         <div className="flex h-full min-h-0 flex-col gap-6">
           <div className="flex shrink-0 flex-col gap-3 print:hidden md:flex-row md:items-center md:justify-between">
@@ -790,12 +967,11 @@ export default function AdminPage({
                       : 'border border-[#E5E0D8] bg-white text-[#6B7A6E]'
                   }`}
                 >
-                  {category}
+                  {getCategoryLabel(category)}
                 </button>
               ))}
             </div>
           </div>
-
 
           {deleteMessage && (
             <div className="flex items-center justify-between gap-4 rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-sm text-[#6B7A6E]">
@@ -814,9 +990,12 @@ export default function AdminPage({
             </div>
           )}
 
-
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            {displayedEntries.length === 0 ? (
+            {isLoadingEntries ? (
+              <div className="rounded-2xl border border-[#E5E0D8] bg-white px-6 py-12 text-center text-[#A39284]">
+                正在讀取全部雲端百科資料...
+              </div>
+            ) : displayedEntries.length === 0 ? (
               <div className="rounded-2xl border border-[#E5E0D8] bg-white px-6 py-12 text-center text-[#A39284]">
                 目前沒有符合條件的百科資料。
               </div>
