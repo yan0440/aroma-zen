@@ -1104,15 +1104,6 @@ export default function AddEntryPage({
                     />
                   </div>
                 )}
-
-                {formData.category ===
-                  '其他' && (
-                  <>
-                    {renderField('🗂️ 類型','type','例如：中醫名詞、芳療用品')}
-                    {renderField('🏷️ 別名','alias')}
-                    {renderField('🌐 英文名稱','englishName')}
-                  </>
-                )}
               </div>
 
               <div className="mb-6 w-full">
