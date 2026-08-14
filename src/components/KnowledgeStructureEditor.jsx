@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useMemo,
+  useState,
 } from 'react';
 
 const createId = (prefix = 'knowledge') =>
@@ -323,7 +324,7 @@ function TableBlockEditor({
         <table className="w-full min-w-[620px] border-collapse">
           <thead>
             <tr>
-              <th className="w-[35%] border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-3 text-left text-sm font-bold text-[#4E6654]">
+              <th className="w-[30%] border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-3 text-left text-sm font-bold text-[#4E6654]">
                 左欄標題
               </th>
 
@@ -439,7 +440,7 @@ function KnowledgeBlockEditor({
   if (blockType === 'subtitle') {
     return (
       <div className="rounded-2xl border border-[#E5E0D8] bg-[#FBF9F6] p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-1 flex items-center justify-between gap-3">
           <label className={labelClass}>
             副標題
           </label>
@@ -448,7 +449,7 @@ function KnowledgeBlockEditor({
             <button
               type="button"
               onClick={onDeleteBlock}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
+              className="mb-1 rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
             >
               刪除副標題
             </button>
@@ -473,7 +474,7 @@ function KnowledgeBlockEditor({
 
   return (
     <div className="rounded-2xl border border-[#E5E0D8] bg-[#FBF9F6] p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-1 flex items-center justify-between gap-3">
         <label className={labelClass}>
           文字內容
         </label>
@@ -482,7 +483,7 @@ function KnowledgeBlockEditor({
           <button
             type="button"
             onClick={onDeleteBlock}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
+            className="mb-2 rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
           >
             刪除文字
           </button>
@@ -515,10 +516,12 @@ function KnowledgeNodeEditor({
   onUpdate,
   onAddChild,
   onDelete,
+  defaultOpen = false,
 }) {
   const normalizedNode =
     normalizeNode(node);
-
+const [isOpen, setIsOpen] =
+  useState(defaultOpen);
   const blocks = Array.isArray(
     normalizedNode.blocks
   )
@@ -578,34 +581,65 @@ function KnowledgeNodeEditor({
 
   return (
     <div
-      className={`rounded-2xl border border-[#E5E0D8] bg-white p-4 ${
-        level > 0
-          ? 'ml-4 border-l-4 border-l-[#C8A97E] md:ml-8'
-          : ''
-      }`}
+  className={`rounded-2xl border border-[#E5E0D8] bg-white px-3 py-1.5 shadow-sm ${
+    level > 0
+      ? 'ml-4 border-l-4 border-l-[#C8A97E] md:ml-8'
+      : ''
+  }`}
+>
+      <div className="flex min-h-[42px] flex-wrap items-center justify-between gap-1 leading-none">
+  <button
+    type="button"
+    onClick={() =>
+      setIsOpen((previous) => !previous)
+    }
+    className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:opacity-80"
+    aria-expanded={isOpen}
+  >
+    
+
+    <span className="shrink-0 rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-bold text-[#7C8A80]">
+      {level === 0
+        ? '主要章節'
+        : `子章節 ${level}`}
+    </span>
+
+    <span className="min-w-0 truncate text-[20px] font-bold text-[#2F4638] md:text-[14px]">
+  {normalizedNode.title ||
+    '未命名章節'}
+</span>
+
+  </button>
+
+  <div className="flex shrink-0 items-center gap-2">
+    <button
+      type="button"
+      onClick={() =>
+        setIsOpen((previous) => !previous)
+      }
+      className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
     >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-bold text-[#7C8A80]">
-          {level === 0
-            ? '主要章節'
-            : `子章節 ${level}`}
-        </span>
+      {isOpen ? '收合' : '展開'}
+    </button>
 
-        {!disabled && (
-          <button
-            type="button"
-            onClick={() => onDelete(path)}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
-          >
-            刪除此章節
-          </button>
-        )}
-      </div>
+    {!disabled && (
+      <button
+        type="button"
+        onClick={() => onDelete(path)}
+        className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
+      >
+        刪除此章節
+      </button>
+    )}
+  </div>
+</div>
 
-      <div className="mb-5">
-        <label className={labelClass}>
-          章節名稱
-        </label>
+      {isOpen && (
+  <div>
+    <div className="mb-5">
+      <label className={labelClass}>
+        章節名稱
+      </label>
 
         <input
           disabled={disabled}
@@ -695,6 +729,7 @@ function KnowledgeNodeEditor({
               node={child}
               path={[...path, index]}
               level={level + 1}
+              defaultOpen={false}
               disabled={disabled}
               labelClass={labelClass}
               inputClass={inputClass}
@@ -705,9 +740,12 @@ function KnowledgeNodeEditor({
           ))}
         </div>
       )}
+        </div>
+)}
     </div>
   );
 }
+
 
 export default function KnowledgeStructureEditor({
   formData,
@@ -859,6 +897,8 @@ export default function KnowledgeStructureEditor({
               node={node}
               path={[index]}
               level={0}
+              defaultOpen={
+  index === sections.length - 1}
               disabled={isDisabled}
               labelClass={labelClass}
               inputClass={inputClass}

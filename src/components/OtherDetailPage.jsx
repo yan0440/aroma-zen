@@ -287,7 +287,7 @@ const renderTableBlock = (
       }
       className="my-4 overflow-x-auto rounded-xl border border-[#E7DED4] bg-white"
     >
-      <table className="w-full min-w-[560px] border-collapse text-[16px]">
+      <table className="w-full min-w-[480px] border-collapse text-[16px] md:min-w-[620px]">
         <tbody>
           {rows.map((row, rowIndex) => {
             const leftValue =
@@ -317,7 +317,7 @@ const renderTableBlock = (
                 }
                 className="border-b border-[#E7DED4] last:border-b-0"
               >
-                <td className="w-[32%] bg-[#F7F5F0] px-4 py-4 align-top text-[16px] font-bold leading-8 text-[#3A4F3F]">
+                <td className="w-[25%] bg-[#F7F5F0] px-4 py-4 align-middle text-[16px] font-bold leading-8 text-[#3A4F3F]">
                   {leftValue}
                 </td>
 
@@ -594,9 +594,9 @@ export default function OtherDetailPage({
     );
 
   const tags = [
-    item.tag,
-    item.alias,
-  ]
+  item.tag,
+  item.alias,
+]
     .filter(Boolean)
     .flatMap((value) =>
       String(value)

@@ -118,9 +118,9 @@ function EntryCard({
   onClick,
 }) {
   const tags = [
-    item?.tag,
-    item?.alias,
-  ].filter(Boolean);
+  item?.tag || item?.type,
+  item?.alias,
+].filter(Boolean);
 
   return (
     <button
@@ -132,19 +132,19 @@ function EntryCard({
 
       <div className="mb-3 flex flex-wrap gap-2">
         {tags.length > 0 ? (
-          tags.map((tag, index) => (
-            <span
-              key={`${tag}-${index}`}
-              className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-2.5 py-1 text-[13px] text-[#7C8A80]"
-            >
-              {tag}
-            </span>
-          ))
-        ) : (
-          <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[13px] text-[#A39284]">
-            名詞材料
-          </span>
-        )}
+  tags.map((tag, index) => (
+    <span
+      key={`${tag}-${index}`}
+      className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-2.5 py-1 text-[13px] text-[#7C8A80]"
+    >
+      {tag}
+    </span>
+  ))
+) : (
+  <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[13px] text-[#A39284]">
+    名詞材料
+  </span>
+)}
       </div>
 
       <h4 className="text-[24px] font-black leading-tight text-[#2F4638] transition-colors group-hover:text-[#6B9080]">

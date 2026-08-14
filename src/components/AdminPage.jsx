@@ -66,6 +66,18 @@ const getCategoryLabel = (category) =>
     ? '名詞材料'
     : category;
 
+    const getAdminDisplayTag = (item) => {
+  const tag = String(
+    item?.tag || ''
+  ).trim();
+
+  const type = String(
+    item?.type || ''
+  ).trim();
+
+  return tag || type || '名詞材料';
+};
+
 const categories = [
   '全部',
   '書籍',
@@ -229,8 +241,10 @@ const EntryRow = React.memo(function EntryRow({
           </span>
 
           <span className="rounded-full bg-[#F4EFE7] px-2.5 py-1 text-[11px] text-[#7C8A80]">
-            {getCategoryLabel(item.category)}
-          </span>
+  {item.category === '其他'
+    ? getAdminDisplayTag(item)
+    : getCategoryLabel(item.category)}
+</span>
         </div>
       </div>
 

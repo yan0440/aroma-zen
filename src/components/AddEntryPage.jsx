@@ -464,7 +464,7 @@ export default function AddEntryPage({
   }`;
 
   const labelClass =
-    'mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-[#A39284]';
+    'mb-2 block text-[13px] font-bold uppercase tracking-widest text-[#A39284]';
 
   const textareaClass =
     `${inputClass} h-24`;
