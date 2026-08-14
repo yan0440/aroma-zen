@@ -320,8 +320,8 @@ function TableBlockEditor({
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[620px] border-collapse">
+      <div className="my-1 overflow-x-auto">
+        <table className="w-full min-w-[600px] border-collapse">
           <thead>
             <tr>
               <th className="w-[30%] border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-3 text-left text-sm font-bold text-[#4E6654]">

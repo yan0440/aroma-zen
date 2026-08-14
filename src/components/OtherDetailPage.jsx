@@ -285,7 +285,7 @@ const renderTableBlock = (
         block?.id ||
         `table-${blockIndex}`
       }
-      className="my-4 overflow-x-auto rounded-xl border border-[#E7DED4] bg-white"
+      className="my-1 overflow-x-auto rounded-xl border border-[#E7DED4] bg-white"
     >
       <table className="w-full min-w-[480px] border-collapse text-[16px] md:min-w-[620px]">
         <tbody>
@@ -605,35 +605,13 @@ export default function OtherDetailPage({
         .filter(Boolean)
     );
 
-  const knowledgeSections =
-    item?.knowledgeDetails?.sections ||
-    [];
-
-  const knowledgeIntroduction =
-    item?.knowledgeDetails?.introduction ||
-    '';
-
-  const hasKnowledgeSections =
-    normalizeSections(knowledgeSections)
-      .length > 0;
-
-  const hasDescription =
-    item?.description !== undefined &&
-    item?.description !== null &&
-    String(item.description).trim() !== '';
-
-  const hasNote =
-    item?.note !== undefined &&
-    item?.note !== null &&
-    String(item.note).trim() !== '';
-
-  const cautionText =
-    item?.caution ||
-    item?.contraindication ||
-    '';
-
-  const hasCaution =
-    String(cautionText).trim() !== '';
+  const knowledgeSections =item?.knowledgeDetails?.sections ||[];
+  const knowledgeIntroduction =item?.knowledgeDetails?.introduction ||'';
+  const hasKnowledgeSections =normalizeSections(knowledgeSections).length > 0;
+  const hasDescription =item?.description !== undefined &&item?.description !== null &&String(item.description).trim() !== '';
+  const hasNote =item?.note !== undefined &&item?.note !== null &&String(item.note).trim() !== '';
+  const cautionText =item?.caution ||item?.contraindication ||'';
+  const hasCaution =String(cautionText).trim() !== '';
 
   return (
     <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
@@ -702,8 +680,7 @@ export default function OtherDetailPage({
                 </p>
               )}
 
-              {!item.alias &&
-                !item.englishName && (
+              {!item.alias && !item.englishName && (
                   <div className="mb-6 border-b border-[#F0E8DE] pb-4" />
                 )}
 
