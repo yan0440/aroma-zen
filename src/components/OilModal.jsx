@@ -389,7 +389,7 @@ export default function OilModal({
           <section className="space-y-6 lg:col-span-8">
             <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10">
               <div className="space-y-8 text-[#3A4F3F]">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-8">
                   <div>
                     <span className={UI.sectionLabel}>
                       🔍 氣味

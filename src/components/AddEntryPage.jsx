@@ -457,17 +457,17 @@ export default function AddEntryPage({
   setLastNodeId(newNodeId);
 }, []);
 
-  const inputClass = `w-full rounded-xl border border-[#E5E0D8] bg-white px-4 py-3 outline-none transition-all focus:border-[#3A4F3F] focus:ring-2 focus:ring-[#3A4F3F]/10 ${
-    isViewOnly
-      ? 'cursor-not-allowed opacity-70'
-      : ''
-  }`;
+  const inputClass = `w-full rounded-xl border border-[#E5E0D8] bg-white px-4 py-3 outline-none ${
+  isViewOnly
+    ? 'cursor-not-allowed opacity-70'
+    : 'focus:border-[#3A4F3F] focus:ring-2 focus:ring-[#3A4F3F]/10'
+}`;
 
   const labelClass =
     'mb-2 block text-[13px] font-bold uppercase tracking-widest text-[#A39284]';
 
   const textareaClass =
-    `${inputClass} h-24`;
+  `${inputClass} min-h-24 resize-y`;
 
   const getValueByPath = useCallback(
     (obj, path) => {
@@ -516,12 +516,38 @@ export default function AddEntryPage({
   );
 
   const renderField = useCallback(
-    (
-      label,
-      path,
-      placeholder = '',
-      isTextarea = false
-    ) => (
+  (
+    label,
+    path,
+    placeholder = '',
+    isTextarea = false
+  ) => {
+    const value = getValueByPath(
+      formData,
+      path
+    );
+
+    if (isViewOnly) {
+      const text = String(value || '').trim();
+
+      if (!text) {
+        return null;
+      }
+
+      return (
+        <div>
+          <label className={labelClass}>
+            {label}
+          </label>
+
+          <div className="whitespace-pre-wrap break-words rounded-xl border border-[#E5E0D8] bg-[#FBF9F6] px-4 py-3 leading-7 text-[#4B5563]">
+            {text}
+          </div>
+        </div>
+      );
+    }
+
+    return (
       <div>
         <label className={labelClass}>
           {label}
@@ -529,14 +555,9 @@ export default function AddEntryPage({
 
         {isTextarea ? (
           <textarea
-            disabled={
-              isViewOnly || isSaving
-            }
+            disabled={isSaving}
             className={textareaClass}
-            value={getValueByPath(
-              formData,
-              path
-            )}
+            value={value}
             placeholder={placeholder}
             onChange={(event) =>
               updateValueByPath(
@@ -547,14 +568,9 @@ export default function AddEntryPage({
           />
         ) : (
           <input
-            disabled={
-              isViewOnly || isSaving
-            }
+            disabled={isSaving}
             className={inputClass}
-            value={getValueByPath(
-              formData,
-              path
-            )}
+            value={value}
             placeholder={placeholder}
             onChange={(event) =>
               updateValueByPath(
@@ -565,18 +581,19 @@ export default function AddEntryPage({
           />
         )}
       </div>
-    ),
-    [
-      formData,
-      getValueByPath,
-      updateValueByPath,
-      isViewOnly,
-      isSaving,
-      inputClass,
-      labelClass,
-      textareaClass,
-    ]
-  );
+    );
+  },
+  [
+    formData,
+    getValueByPath,
+    updateValueByPath,
+    isViewOnly,
+    isSaving,
+    inputClass,
+    labelClass,
+    textareaClass,
+  ]
+);
 
   const handleSave = useCallback(
     async () => {
@@ -654,22 +671,12 @@ export default function AddEntryPage({
 
        const cleanData = {
   ...formData,
-  knowledgeDetails: {
-    ...formData.knowledgeDetails,
-    sections: Array.isArray(
-      formData.knowledgeDetails?.sections
-    )
-      ? formData.knowledgeDetails.sections
-      : [],
-  },
 
   knowledgeDetails: {
     ...formData.knowledgeDetails,
-
     introduction:
       formData.knowledgeDetails
         ?.introduction || '',
-
     sections: Array.isArray(
       formData.knowledgeDetails?.sections
     )
@@ -689,7 +696,6 @@ export default function AddEntryPage({
     ...formData.oilDetails,
   },
 };
-
         const now = Date.now();
 
         const makeSearchKey = () =>
@@ -1030,7 +1036,7 @@ export default function AddEntryPage({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 font-bold text-[#A39284] transition-colors hover:text-[#3A4F3F]"
+            className="px-6 py-2 font-bold text-[#A39284] hover:text-[#3A4F3F]"
           >
             {resolvedCloseLabel}
           </button>
@@ -1040,7 +1046,7 @@ export default function AddEntryPage({
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="rounded-full bg-[#3A4F3F] px-8 py-2 font-bold text-white shadow-lg transition-all hover:bg-[#2C3C30] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-[#3A4F3F] px-8 py-2 font-bold text-white hover:bg-[#2C3C30] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving
                 ? '儲存中...'
@@ -1050,10 +1056,10 @@ export default function AddEntryPage({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto px-6 py-6 [scrollbar-gutter:stable] md:px-10">
+      <main className="min-h-0 flex-1">
+        <div className="h-full overflow-y-auto overscroll-contain px-6 py-6 [scrollbar-gutter:stable] md:px-10">
           <div className="w-full space-y-6">
-            <div className="rounded-3xl border border-[#E5E0D8]/60 bg-white p-6 shadow-sm md:p-8">
+            <div className="rounded-3xl border border-[#E5E0D8]/60 bg-white p-6 md:p-8">
               <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label className={labelClass}>
@@ -1243,8 +1249,8 @@ export default function AddEntryPage({
 
               {formData.category ===
                 '精油' && (
-                <div className="grid animate-in grid-cols-1 gap-8 fade-in duration-500">
-                  <div className="col-span-1 grid grid-cols-1 gap-4 rounded-2xl border border-[#E5E0D8]/50 bg-white p-5 shadow-sm md:col-span-2 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-8">
+                  <div className="col-span-1 grid grid-cols-1 gap-4 rounded-2xl border border-[#E5E0D8]/50 bg-white p-5 md:col-span-2 md:grid-cols-2">
                     <span className="col-span-1 mb-1 border-b border-[#E5E0D8] pb-1.5 text-sm font-bold text-[#3A4F3F] md:col-span-2">
                       📊 基本屬性資料
                     </span>
@@ -1490,7 +1496,7 @@ export default function AddEntryPage({
                   type="button"
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="rounded-2xl bg-[#3A4F3F] px-10 py-3 text-white shadow-xl shadow-[#3A4F3F]/20 transition-all hover:bg-[#2C3C30] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-2xl bg-[#3A4F3F] px-10 py-3 text-white shadow-[#3A4F3F]/20 hover:bg-[#2C3C30] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSaving
                     ? '儲存中...'

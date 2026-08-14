@@ -1,4 +1,5 @@
 import React, {
+  memo,
   useCallback,
   useMemo,
   useState,
@@ -83,7 +84,7 @@ const normalizeNode = (node) => {
     String(node.text).trim() !== ''
   ) {
     legacyBlocks.push({
-      id: createId('legacy_text'),
+      id: `${node.id || 'section'}_legacy_text`,
       type: 'text',
       text: node.text,
     });
@@ -229,12 +230,44 @@ const removeBlockAtIndex = (
   };
 };
 
+function ReadOnlyTableBlock({
+  block,
+}) {
+  const rows = Array.isArray(block.rows)
+    ? block.rows
+    : [];
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-[#E5E0D8]">
+      <table className="w-full min-w-[520px] border-collapse">
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr
+              key={
+                row.id ||
+                `readonly-row-${rowIndex}`
+              }
+            >
+              <td className="w-[30%] border border-[#E5E0D8] bg-[#F4EFE7] px-3 py-3 align-top font-bold text-[#4E6654]">
+                {row.left || ''}
+              </td>
+
+              <td className="whitespace-pre-wrap border border-[#E5E0D8] px-3 py-3 align-top leading-7 text-[#4B5563]">
+                {row.right || ''}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function TableBlockEditor({
   block,
   blockIndex,
   disabled,
   inputClass,
-  labelClass,
   onUpdateBlock,
   onDeleteBlock,
 }) {
@@ -248,7 +281,13 @@ function TableBlockEditor({
     value
   ) => {
     onUpdateBlock((currentBlock) => {
-      const nextRows = rows.map(
+      const currentRows = Array.isArray(
+        currentBlock.rows
+      )
+        ? currentBlock.rows
+        : [];
+
+      const nextRows = currentRows.map(
         (row, index) => {
           if (index !== rowIndex) {
             return row;
@@ -285,7 +324,9 @@ function TableBlockEditor({
   const deleteRow = (rowIndex) => {
     onUpdateBlock((currentBlock) => {
       const nextRows = (
-        Array.isArray(currentBlock.rows)
+        Array.isArray(
+          currentBlock.rows
+        )
           ? currentBlock.rows
           : []
       ).filter(
@@ -302,6 +343,20 @@ function TableBlockEditor({
     });
   };
 
+  if (disabled) {
+    return (
+      <div className="rounded-2xl border border-[#D8C8B8] bg-[#FFFDF8] p-4">
+        <h4 className="mb-4 text-base font-bold text-[#3A4F3F]">
+          📋 雙欄表格
+        </h4>
+
+        <ReadOnlyTableBlock
+          block={block}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-[#D8C8B8] bg-[#FFFDF8] p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -309,15 +364,13 @@ function TableBlockEditor({
           📋 雙欄表格
         </h4>
 
-        {!disabled && (
-          <button
-            type="button"
-            onClick={onDeleteBlock}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
-          >
-            刪除表格
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onDeleteBlock}
+          className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] hover:bg-red-50"
+        >
+          刪除表格
+        </button>
       </div>
 
       <div className="my-1 overflow-x-auto">
@@ -332,11 +385,9 @@ function TableBlockEditor({
                 右欄內容
               </th>
 
-              {!disabled && (
-                <th className="w-20 border border-[#E5E0D8] bg-[#F4EFE7] px-2 py-3 text-center text-sm font-bold text-[#4E6654]">
-                  操作
-                </th>
-              )}
+              <th className="w-20 border border-[#E5E0D8] bg-[#F4EFE7] px-2 py-3 text-center text-sm font-bold text-[#4E6654]">
+                操作
+              </th>
             </tr>
           </thead>
 
@@ -350,7 +401,6 @@ function TableBlockEditor({
               >
                 <td className="border border-[#E5E0D8] p-2 align-top">
                   <input
-                    disabled={disabled}
                     value={row.left || ''}
                     placeholder="例如：英文名稱、學名、備註"
                     className={inputClass}
@@ -366,7 +416,6 @@ function TableBlockEditor({
 
                 <td className="border border-[#E5E0D8] p-2 align-top">
                   <textarea
-                    disabled={disabled}
                     value={row.right || ''}
                     placeholder="輸入對應內容"
                     className={`${inputClass} min-h-[90px] resize-y`}
@@ -380,34 +429,30 @@ function TableBlockEditor({
                   />
                 </td>
 
-                {!disabled && (
-                  <td className="border border-[#E5E0D8] p-2 text-center align-top">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        deleteRow(rowIndex)
-                      }
-                      className="rounded-lg px-2 py-1 text-sm text-[#D0766E] hover:bg-red-50"
-                    >
-                      刪除
-                    </button>
-                  </td>
-                )}
+                <td className="border border-[#E5E0D8] p-2 text-center align-top">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      deleteRow(rowIndex)
+                    }
+                    className="rounded-lg px-2 py-1 text-sm text-[#D0766E] hover:bg-red-50"
+                  >
+                    刪除
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {!disabled && (
-        <button
-          type="button"
-          onClick={addRow}
-          className="mt-4 rounded-xl border border-[#C8A97E] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
-        >
-          ＋ 新增表格列
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={addRow}
+        className="mt-4 rounded-xl border border-[#C8A97E] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] hover:bg-[#F3E1C5]"
+      >
+        ＋ 新增表格列
+      </button>
     </div>
   );
 }
@@ -423,6 +468,40 @@ function KnowledgeBlockEditor({
 }) {
   const blockType = block.type || 'text';
 
+  if (disabled && blockType === 'table') {
+    return (
+      <div className="rounded-2xl border border-[#D8C8B8] bg-[#FFFDF8] p-4">
+        <h4 className="mb-4 text-base font-bold text-[#3A4F3F]">
+          📋 雙欄表格
+        </h4>
+
+        <ReadOnlyTableBlock
+          block={block}
+        />
+      </div>
+    );
+  }
+
+  if (disabled) {
+    if (!String(block.text || '').trim()) {
+      return null;
+    }
+
+    if (blockType === 'subtitle') {
+      return (
+        <div className="border-l-4 border-[#C8A97E] px-4 py-2 text-lg font-bold leading-8 text-[#3A4F3F]">
+          {block.text}
+        </div>
+      );
+    }
+
+    return (
+      <div className="whitespace-pre-wrap break-words rounded-xl bg-[#FBF9F6] px-4 py-3 leading-8 text-[#4B5563]">
+        {block.text}
+      </div>
+    );
+  }
+
   if (blockType === 'table') {
     return (
       <TableBlockEditor
@@ -430,7 +509,6 @@ function KnowledgeBlockEditor({
         blockIndex={blockIndex}
         disabled={disabled}
         inputClass={inputClass}
-        labelClass={labelClass}
         onUpdateBlock={onUpdateBlock}
         onDeleteBlock={onDeleteBlock}
       />
@@ -445,19 +523,16 @@ function KnowledgeBlockEditor({
             副標題
           </label>
 
-          {!disabled && (
-            <button
-              type="button"
-              onClick={onDeleteBlock}
-              className="mb-1 rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
-            >
-              刪除副標題
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onDeleteBlock}
+            className="mb-1 rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] hover:bg-red-50"
+          >
+            刪除副標題
+          </button>
         </div>
 
         <input
-          disabled={disabled}
           value={block.text || ''}
           placeholder="例如：使用方式、注意事項、基本資料"
           className={inputClass}
@@ -479,19 +554,16 @@ function KnowledgeBlockEditor({
           文字內容
         </label>
 
-        {!disabled && (
-          <button
-            type="button"
-            onClick={onDeleteBlock}
-            className="mb-2 rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
-          >
-            刪除文字
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onDeleteBlock}
+          className="mb-2 rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] hover:bg-red-50"
+        >
+          刪除文字
+        </button>
       </div>
 
       <textarea
-        disabled={disabled}
         value={block.text || ''}
         placeholder="輸入詳細內容，可使用換行、**粗體**、==標記==。"
         className={`${inputClass} min-h-[150px] resize-y`}
@@ -506,6 +578,10 @@ function KnowledgeBlockEditor({
   );
 }
 
+const MemoKnowledgeBlockEditor = memo(
+  KnowledgeBlockEditor
+);
+
 function KnowledgeNodeEditor({
   node,
   path,
@@ -518,234 +594,279 @@ function KnowledgeNodeEditor({
   onDelete,
   defaultOpen = false,
 }) {
-  const normalizedNode =
-    normalizeNode(node);
-const [isOpen, setIsOpen] =
-  useState(defaultOpen);
-  const blocks = Array.isArray(
-    normalizedNode.blocks
-  )
-    ? normalizedNode.blocks
-    : [];
+  const normalizedNode = useMemo(
+    () => normalizeNode(node),
+    [node]
+  );
 
-  const children = normalizeSections(
-    normalizedNode.children
-  ).map(normalizeNode);
+  const [isOpen, setIsOpen] =
+    useState(defaultOpen);
 
-  const updateNode = (key, value) => {
-    onUpdate(path, (currentNode) => ({
-      ...normalizeNode(currentNode),
-      [key]: value,
-    }));
-  };
+  const blocks = useMemo(
+    () =>
+      Array.isArray(
+        normalizedNode.blocks
+      )
+        ? normalizedNode.blocks
+        : [],
+    [normalizedNode.blocks]
+  );
 
-  const addBlock = (type) => {
-    onUpdate(path, (currentNode) => {
-      const current = normalizeNode(
-        currentNode
+  const children = useMemo(
+    () =>
+      normalizeSections(
+        normalizedNode.children
+      ),
+    [normalizedNode.children]
+  );
+
+  const updateNode = useCallback(
+    (key, value) => {
+      onUpdate(path, (currentNode) => ({
+        ...normalizeNode(currentNode),
+        [key]: value,
+      }));
+    },
+    [onUpdate, path]
+  );
+
+  const addBlock = useCallback(
+    (type) => {
+      onUpdate(path, (currentNode) => {
+        const current =
+          normalizeNode(currentNode);
+
+        return {
+          ...current,
+          blocks: [
+            ...(Array.isArray(
+              current.blocks
+            )
+              ? current.blocks
+              : []),
+            createBlock(type),
+          ],
+        };
+      });
+    },
+    [onUpdate, path]
+  );
+
+  const updateBlock = useCallback(
+    (blockIndex, updater) => {
+      onUpdate(path, (currentNode) =>
+        updateBlockAtIndex(
+          normalizeNode(currentNode),
+          blockIndex,
+          updater
+        )
       );
+    },
+    [onUpdate, path]
+  );
 
-      return {
-        ...current,
-        blocks: [
-          ...(Array.isArray(current.blocks)
-            ? current.blocks
-            : []),
-          createBlock(type),
-        ],
-      };
-    });
-  };
+  const deleteBlock = useCallback(
+    (blockIndex) => {
+      onUpdate(path, (currentNode) =>
+        removeBlockAtIndex(
+          normalizeNode(currentNode),
+          blockIndex
+        )
+      );
+    },
+    [onUpdate, path]
+  );
 
-  const updateBlock = (
-    blockIndex,
-    updater
-  ) => {
-    onUpdate(path, (currentNode) =>
-      updateBlockAtIndex(
-        normalizeNode(currentNode),
-        blockIndex,
-        updater
-      )
-    );
-  };
-
-  const deleteBlock = (blockIndex) => {
-    onUpdate(path, (currentNode) =>
-      removeBlockAtIndex(
-        normalizeNode(currentNode),
-        blockIndex
-      )
-    );
-  };
+  const toggleOpen = useCallback(() => {
+    setIsOpen((previous) => !previous);
+  }, []);
 
   return (
     <div
-  className={`rounded-2xl border border-[#E5E0D8] bg-white px-3 py-1.5 shadow-sm ${
-    level > 0
-      ? 'ml-4 border-l-4 border-l-[#C8A97E] md:ml-8'
-      : ''
-  }`}
->
-      <div className="flex min-h-[42px] flex-wrap items-center justify-between gap-1 leading-none">
-  <button
-    type="button"
-    onClick={() =>
-      setIsOpen((previous) => !previous)
-    }
-    className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left transition hover:opacity-80"
-    aria-expanded={isOpen}
-  >
-    
-
-    <span className="shrink-0 rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-bold text-[#7C8A80]">
-      {level === 0
-        ? '主要章節'
-        : `子章節 ${level}`}
-    </span>
-
-    <span className="min-w-0 truncate text-[20px] font-bold text-[#2F4638] md:text-[14px]">
-  {normalizedNode.title ||
-    '未命名章節'}
-</span>
-
-  </button>
-
-  <div className="flex shrink-0 items-center gap-2">
-    <button
-      type="button"
-      onClick={() =>
-        setIsOpen((previous) => !previous)
-      }
-      className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
+  className={`rounded-2xl border border-[#E5E0D8] bg-white px-3 py-1.5 ${
+        level > 0
+          ? 'ml-4 border-l-4 border-l-[#C8A97E] md:ml-8'
+          : ''
+      }`}
     >
-      {isOpen ? '收合' : '展開'}
-    </button>
+      <div className="flex min-h-[42px] flex-wrap items-center justify-between gap-1 leading-none">
+        <button
+          type="button"
+          onClick={toggleOpen}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left hover:opacity-80"
+          aria-expanded={isOpen}
+        >
+          <span className="shrink-0 rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-bold text-[#7C8A80]">
+            {level === 0
+              ? '主要章節'
+              : `子章節 ${level}`}
+          </span>
 
-    {!disabled && (
-      <button
-        type="button"
-        onClick={() => onDelete(path)}
-        className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] transition hover:bg-red-50"
-      >
-        刪除此章節
-      </button>
-    )}
-  </div>
-</div>
+          <span className="min-w-0 truncate text-[20px] font-bold text-[#2F4638] md:text-[14px]">
+            {normalizedNode.title ||
+              '未命名章節'}
+          </span>
+        </button>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleOpen}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#6B9080] hover:bg-[#F3E1C5]"
+          >
+            {isOpen ? '收合' : '展開'}
+          </button>
+
+          {!disabled && (
+            <button
+              type="button"
+              onClick={() => onDelete(path)}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#D0766E] hover:bg-red-50"
+            >
+              刪除此章節
+            </button>
+          )}
+        </div>
+      </div>
 
       {isOpen && (
-  <div>
-    <div className="mb-5">
-      <label className={labelClass}>
-        章節名稱
-      </label>
+        <div className="pt-4">
+          {!disabled && (
+            <div className="mb-5">
+              <label className={labelClass}>
+                章節名稱
+              </label>
 
-        <input
-          disabled={disabled}
-          value={normalizedNode.title || ''}
-          placeholder="例如：荷荷芭油"
-          className={inputClass}
-          onChange={(event) =>
-            updateNode(
-              'title',
-              event.target.value
-            )
-          }
-        />
-      </div>
+              <input
+                value={normalizedNode.title || ''}
+                placeholder="例如：荷荷芭油"
+                className={inputClass}
+                onChange={(event) =>
+                  updateNode(
+                    'title',
+                    event.target.value
+                  )
+                }
+              />
+            </div>
+          )}
 
-      <div className="space-y-4">
-        {blocks.map((block, blockIndex) => (
-          <KnowledgeBlockEditor
-            key={
-              block.id ||
-              `${block.type}-${blockIndex}`
-            }
-            block={block}
-            blockIndex={blockIndex}
-            disabled={disabled}
-            inputClass={inputClass}
-            labelClass={labelClass}
-            onUpdateBlock={(updater) =>
-              updateBlock(
-                blockIndex,
-                updater
+          {disabled &&
+            normalizedNode.title && (
+              <h4 className="mb-5 text-xl font-bold leading-8 text-[#3A4F3F]">
+                {normalizedNode.title}
+              </h4>
+            )}
+
+          <div className="space-y-4">
+            {blocks.map(
+              (block, blockIndex) => (
+                <MemoKnowledgeBlockEditor
+                  key={
+                    block.id ||
+                    `${block.type}-${blockIndex}`
+                  }
+                  block={block}
+                  blockIndex={blockIndex}
+                  disabled={disabled}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
+                  onUpdateBlock={(
+                    updater
+                  ) =>
+                    updateBlock(
+                      blockIndex,
+                      updater
+                    )
+                  }
+                  onDeleteBlock={() =>
+                    deleteBlock(blockIndex)
+                  }
+                />
               )
-            }
-            onDeleteBlock={() =>
-              deleteBlock(blockIndex)
-            }
-          />
-        ))}
-      </div>
+            )}
+          </div>
 
-      {!disabled && (
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-[#E5E0D8] pt-4">
-          <button
-            type="button"
-            onClick={() => addBlock('text')}
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
-          >
-            ＋ 新增文字
-          </button>
+          {!disabled && (
+            <div className="mt-5 flex flex-wrap gap-2 border-t border-[#E5E0D8] pt-4">
+              <button
+                type="button"
+                onClick={() =>
+                  addBlock('text')
+                }
+                className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] hover:bg-[#F3E1C5]"
+              >
+                ＋ 新增文字
+              </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              addBlock('subtitle')
-            }
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
-          >
-            ＋ 新增副標題
-          </button>
+              <button
+                type="button"
+                onClick={() =>
+                  addBlock('subtitle')
+                }
+                className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] hover:bg-[#F3E1C5]"
+              >
+                ＋ 新增副標題
+              </button>
 
-          <button
-            type="button"
-            onClick={() => addBlock('table')}
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
-          >
-            ＋ 新增表格
-          </button>
+              <button
+                type="button"
+                onClick={() =>
+                  addBlock('table')
+                }
+                className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] hover:bg-[#F3E1C5]"
+              >
+                ＋ 新增表格
+              </button>
 
-          <button
-            type="button"
-            onClick={() => onAddChild(path)}
-            className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] transition hover:bg-[#F3E1C5]"
-          >
-            ＋ 新增子章節
-          </button>
+              <button
+                type="button"
+                onClick={() =>
+                  onAddChild(path)
+                }
+                className="rounded-xl border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] font-medium text-[#6B9080] hover:bg-[#F3E1C5]"
+              >
+                ＋ 新增子章節
+              </button>
+            </div>
+          )}
+
+          {children.length > 0 && (
+            <div className="mt-6 space-y-4">
+              {children.map(
+                (child, index) => (
+                  <KnowledgeNodeEditor
+                    key={
+                      child.id ||
+                      `${child.title}-${index}`
+                    }
+                    node={child}
+                    path={[
+                      ...path,
+                      index,
+                    ]}
+                    level={level + 1}
+                    defaultOpen={false}
+                    disabled={disabled}
+                    labelClass={labelClass}
+                    inputClass={inputClass}
+                    onUpdate={onUpdate}
+                    onAddChild={onAddChild}
+                    onDelete={onDelete}
+                  />
+                )
+              )}
+            </div>
+          )}
         </div>
       )}
-
-      {children.length > 0 && (
-        <div className="mt-6 space-y-4">
-          {children.map((child, index) => (
-            <KnowledgeNodeEditor
-              key={
-                child.id ||
-                `${child.title}-${index}`
-              }
-              node={child}
-              path={[...path, index]}
-              level={level + 1}
-              defaultOpen={false}
-              disabled={disabled}
-              labelClass={labelClass}
-              inputClass={inputClass}
-              onUpdate={onUpdate}
-              onAddChild={onAddChild}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
-      )}
-        </div>
-)}
     </div>
   );
 }
 
+const MemoKnowledgeNodeEditor = memo(
+  KnowledgeNodeEditor
+);
 
 export default function KnowledgeStructureEditor({
   formData,
@@ -761,7 +882,10 @@ export default function KnowledgeStructureEditor({
   const sections = useMemo(
     () =>
       getSectionsFromFormData(formData),
-    [formData]
+    [
+      formData?.knowledgeDetails
+        ?.sections,
+    ]
   );
 
   const updateSections = useCallback(
@@ -888,8 +1012,8 @@ export default function KnowledgeStructureEditor({
         </div>
       ) : (
         <div className="space-y-5">
-  {sections.map((node, index) => (
-            <KnowledgeNodeEditor
+          {sections.map((node, index) => (
+            <MemoKnowledgeNodeEditor
               key={
                 node.id ||
                 `${node.title}-${index}`
@@ -898,7 +1022,9 @@ export default function KnowledgeStructureEditor({
               path={[index]}
               level={0}
               defaultOpen={
-  index === sections.length - 1}
+  !isDisabled &&
+  index === sections.length - 1
+}
               disabled={isDisabled}
               labelClass={labelClass}
               inputClass={inputClass}
@@ -911,17 +1037,17 @@ export default function KnowledgeStructureEditor({
       )}
 
       {!isDisabled && (
-  <div className="pointer-events-none sticky bottom-5 z-40 flex justify-end pb-2 md:bottom-6">
-    <button
-      type="button"
-      onClick={handleAddRoot}
-      aria-label="新增主要章節"
-      className="pointer-events-auto rounded-full border border-white/40 bg-[#3A4F3F]/95 px-5 py-3 text-[15px] font-bold text-white shadow-[0_8px_24px_rgba(47,70,56,0.28)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-[#2C3C30] hover:shadow-xl"
-    >
-      ＋ 新增主要章節
-    </button>
-  </div>
-)}
+        <div className="pointer-events-none sticky bottom-5 z-40 flex justify-end pb-2 md:bottom-6">
+          <button
+            type="button"
+            onClick={handleAddRoot}
+            aria-label="新增主要章節"
+            className="pointer-events-auto rounded-full border border-white/40 bg-[#3A4F3F] px-5 py-3 text-[15px] font-bold text-white hover:bg-[#2C3C30]"
+          >
+            ＋ 新增主要章節
+          </button>
+        </div>
+      )}
     </div>
   );
 }
