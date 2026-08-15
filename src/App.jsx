@@ -1,4 +1,6 @@
 import React, {
+  lazy,
+  Suspense,
   useState,
   useEffect,
   useMemo,
@@ -12,33 +14,58 @@ import { herbData } from './data/herbData.js';
 import { formulaData } from './data/formulaData.js';
 import { bookData } from './data/bookData.js';
 
-import OilModal from './components/OilModal';
-import AcuModal from './components/AcuModal';
-import HerbModal from './components/HerbModal';
-import FormulaModal from './components/FormulaModal';
-import BookModal from './components/BookModal';
-import AdminPage from './components/AdminPage';
-import OtherCategoryView from './components/OtherCategoryView';
-import OtherDetailPage from './components/OtherDetailPage';
-
-import { db } from './firebase';
 import {
-  collection,
-  getDocs,
-  query,
-  where,
-} from 'firebase/firestore';
+  loadFirstEntriesPage,
+  loadNextEntriesPage,
+} from './services/entryService';
 
-const CATEGORIES = [
-  '書籍',
-  '精油',
-  '穴道',
-  '中藥',
-  '方劑',
-  '其他',
-];
+import OtherCategoryView from './components/OtherCategoryView';
+
+import {
+  CATEGORIES,
+  MAIN_CATEGORIES,
+  getCategoryLabel,
+} from './config/categories';
+
+import {
+  getDataKey,
+  normalizeText,
+} from './utils/text';
+
+const OilModal = lazy(
+  () => import('./components/OilModal')
+);
+
+const AcuModal = lazy(
+  () => import('./components/AcuModal')
+);
+
+const HerbModal = lazy(
+  () => import('./components/HerbModal')
+);
+
+const FormulaModal = lazy(
+  () => import('./components/FormulaModal')
+);
+
+const BookModal = lazy(
+  () => import('./components/BookModal')
+);
+
+const AdminPage = lazy(
+  () => import('./pages/AdminPage.jsx')
+);
+
+const OtherDetailPage = lazy(
+  () => import('./components/OtherDetailPage')
+);
 
 const PAGE_SIZE = 20;
+
+const OTHER_CATEGORY_VALUES = [
+  '其他',
+  '名詞材料',
+];
 
 const BOLD_KEYWORDS = [
   '肌肉',
@@ -46,22 +73,77 @@ const BOLD_KEYWORDS = [
   '血管',
 ];
 
-const getCategoryLabel = (category) =>
-  category === '其他'
-    ? '名詞材料'
-    : category;
+const MODAL_COMPONENTS = {
+  精油: OilModal,
+  穴道: AcuModal,
+  中藥: HerbModal,
+  方劑: FormulaModal,
+  書籍: BookModal,
+  其他: OtherDetailPage,
+  名詞材料: OtherDetailPage,
+};
 
-const normalizeText = (value = '') =>
-  String(value)
+const normalizeCategory = (
+  category
+) => {
+  const value = String(
+    category || ''
+  )
+    .trim()
+    .normalize('NFKC');
+
+  if (value === '名詞材料') {
+    return '其他';
+  }
+
+  return value;
+};
+
+const normalizeName = (name) => {
+  return String(name || '')
     .trim()
     .normalize('NFKC')
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+    .replace(/\s+/g, ' ');
+};
 
-const getDataKey = (item) =>
-  `${normalizeText(item?.category)}__${normalizeText(
-    item?.name
+const getItemIdentity = (item) => {
+  if (!item) {
+    return '';
+  }
+
+  const entryKey = normalizeText(
+    item.entryKey || ''
+  );
+
+  if (entryKey) {
+    return `entryKey:${entryKey}`;
+  }
+
+  const category =
+    normalizeCategory(
+      item.category
+    );
+
+  const name = normalizeName(
+    item.name
+  );
+
+  if (category && name) {
+    return `category:${category}__name:${normalizeText(
+      name
+    )}`;
+  }
+
+  const documentId =
+    item.documentId ||
+    item.firestoreId ||
+    item.id ||
+    '';
+
+  return `document:${String(
+    documentId
   )}`;
+};
 
 const getCreatedTime = (item) => {
   const value = item?.createdAt;
@@ -77,6 +159,13 @@ const getCreatedTime = (item) => {
     return value.toMillis();
   }
 
+  if (
+    value &&
+    typeof value.toDate === 'function'
+  ) {
+    return value.toDate().getTime();
+  }
+
   if (value instanceof Date) {
     return value.getTime();
   }
@@ -84,9 +173,18 @@ const getCreatedTime = (item) => {
   if (typeof value === 'string') {
     const parsed = Date.parse(value);
 
-    return Number.isNaN(parsed)
-      ? 0
-      : parsed;
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+
+    const numericValue =
+      Number(value);
+
+    if (
+      Number.isFinite(numericValue)
+    ) {
+      return numericValue;
+    }
   }
 
   return 0;
@@ -97,7 +195,7 @@ const mergeNonEmpty = (
   incoming = {}
 ) => {
   const result = {
-    ...base,
+    ...(base || {}),
   };
 
   Object.entries(incoming || {}).forEach(
@@ -117,6 +215,207 @@ const mergeNonEmpty = (
   );
 
   return result;
+};
+
+const mergeArrayValue = (
+  baseValue,
+  incomingValue
+) => {
+  if (Array.isArray(incomingValue)) {
+    return incomingValue;
+  }
+
+  if (
+    incomingValue &&
+    typeof incomingValue === 'object'
+  ) {
+    return Object.keys(incomingValue)
+      .sort(
+        (a, b) =>
+          Number(a) - Number(b)
+      )
+      .map((key) => incomingValue[key]);
+  }
+
+  if (Array.isArray(baseValue)) {
+    return baseValue;
+  }
+
+  if (
+    baseValue &&
+    typeof baseValue === 'object'
+  ) {
+    return Object.keys(baseValue)
+      .sort(
+        (a, b) =>
+          Number(a) - Number(b)
+      )
+      .map((key) => baseValue[key]);
+  }
+
+  return [];
+};
+
+const normalizeItem = (item) => {
+  if (!item) {
+    return null;
+  }
+
+  const category =
+    normalizeCategory(
+      item.category
+    );
+
+  const name = normalizeName(
+    item.name
+  );
+
+  if (!category || !name) {
+    return null;
+  }
+
+  return {
+    ...item,
+    name,
+    category,
+  };
+};
+
+const mergeItems = (
+  base,
+  incoming
+) => {
+  const normalizedBase =
+    normalizeItem(base);
+
+  const normalizedIncoming =
+    normalizeItem(incoming);
+
+  if (!normalizedBase) {
+    return normalizedIncoming;
+  }
+
+  if (!normalizedIncoming) {
+    return normalizedBase;
+  }
+
+  const mergedItem = {
+    ...mergeNonEmpty(
+      normalizedBase,
+      normalizedIncoming
+    ),
+
+    name:
+      normalizedIncoming.name ||
+      normalizedBase.name,
+
+    category:
+      normalizedIncoming.category ||
+      normalizedBase.category,
+
+    id:
+      normalizedIncoming.id ||
+      normalizedBase.id,
+
+    documentId:
+      normalizedIncoming.documentId ||
+      normalizedBase.documentId,
+
+    firestoreId:
+      normalizedIncoming.firestoreId ||
+      normalizedBase.firestoreId,
+
+    entryKey:
+      normalizedIncoming.entryKey ||
+      normalizedBase.entryKey,
+
+    oilDetails: mergeNonEmpty(
+      normalizedBase.oilDetails,
+      normalizedIncoming.oilDetails
+    ),
+
+    acuTable: mergeNonEmpty(
+      normalizedBase.acuTable,
+      normalizedIncoming.acuTable
+    ),
+
+    acuDetails: mergeNonEmpty(
+      normalizedBase.acuDetails,
+      normalizedIncoming.acuDetails
+    ),
+
+    bookDetails: {
+      ...(normalizedBase.bookDetails ||
+        {}),
+      ...(normalizedIncoming.bookDetails ||
+        {}),
+
+      chapters:
+        mergeArrayValue(
+          normalizedBase.bookDetails
+            ?.chapters,
+          normalizedIncoming.bookDetails
+            ?.chapters
+        ),
+    },
+
+    knowledgeDetails: {
+      ...(normalizedBase.knowledgeDetails ||
+        {}),
+      ...(normalizedIncoming.knowledgeDetails ||
+        {}),
+
+      sections:
+        mergeArrayValue(
+          normalizedBase.knowledgeDetails
+            ?.sections,
+          normalizedIncoming.knowledgeDetails
+            ?.sections
+        ),
+    },
+  };
+
+  return mergedItem;
+};
+
+const addItemToMap = (
+  itemMap,
+  item,
+  source
+) => {
+  const normalizedItem =
+    normalizeItem(item);
+
+  if (!normalizedItem) {
+    return;
+  }
+
+  const key =
+    getItemIdentity(
+      normalizedItem
+    );
+
+  if (!key) {
+    return;
+  }
+
+  const existingItem =
+    itemMap.get(key);
+
+  const nextItem = existingItem
+    ? mergeItems(
+        existingItem,
+        {
+          ...normalizedItem,
+          _source: source,
+        }
+      )
+    : {
+        ...normalizedItem,
+        _source: source,
+      };
+
+  itemMap.set(key, nextItem);
 };
 
 const collectSearchText = (value) => {
@@ -155,18 +454,18 @@ const collectSearchText = (value) => {
   return '';
 };
 
-const parseBoldSyntax = (str) => {
-  if (typeof str !== 'string') {
-    return str;
+const parseBoldSyntax = (value) => {
+  if (typeof value !== 'string') {
+    return value;
   }
 
   const regex =
     /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
 
-  return str.split('\n').map(
+  return value.split('\n').map(
     (line, lineIndex) => (
       <span
-        key={lineIndex}
+        key={`line-${lineIndex}`}
         className="mb-1 block"
       >
         {line.split(regex).map(
@@ -181,7 +480,7 @@ const parseBoldSyntax = (str) => {
             ) {
               return (
                 <mark
-                  key={index}
+                  key={`part-${index}`}
                   className="rounded bg-[#F3E1C5] px-1 font-bold text-[#2C3C30]"
                 >
                   {part.slice(2, -2)}
@@ -195,7 +494,7 @@ const parseBoldSyntax = (str) => {
             ) {
               return (
                 <strong
-                  key={index}
+                  key={`part-${index}`}
                   className="font-bold text-[#2F4638]"
                 >
                   {part.slice(2, -2)}
@@ -208,7 +507,7 @@ const parseBoldSyntax = (str) => {
             ) {
               return (
                 <strong
-                  key={index}
+                  key={`part-${index}`}
                   className="font-bold text-[#2F4638]"
                 >
                   {part}
@@ -217,11 +516,13 @@ const parseBoldSyntax = (str) => {
             }
 
             if (
-              /^[【《\(].*[】》\)]$/.test(part)
+              /^[【《\(].*[】》\)]$/.test(
+                part
+              )
             ) {
               return (
                 <span
-                  key={index}
+                  key={`part-${index}`}
                   className="font-medium text-[#6B9080]"
                 >
                   {part}
@@ -239,41 +540,61 @@ const parseBoldSyntax = (str) => {
 
 const DataCard = memo(function DataCard({
   item,
-  onClick,
+  onSelectItem,
 }) {
-  const tags = [
-    item.tag,
-    item.constitutionTag,
-    item.chemicalTag,
-    item.acuTable?.meridian,
-  ].filter(Boolean);
+  const tags = useMemo(
+    () =>
+      [
+        item?.tag,
+        item?.constitutionTag,
+        item?.chemicalTag,
+        item?.acuTable?.meridian,
+      ].filter(Boolean),
+    [
+      item?.tag,
+      item?.constitutionTag,
+      item?.chemicalTag,
+      item?.acuTable?.meridian,
+    ]
+  );
+
+  const handleClick = useCallback(() => {
+    onSelectItem(item);
+  }, [item, onSelectItem]);
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (
+        event.key === 'Enter' ||
+        event.key === ' '
+      ) {
+        event.preventDefault();
+        onSelectItem(item);
+      }
+    },
+    [item, onSelectItem]
+  );
 
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(event) => {
-        if (
-          event.key === 'Enter' ||
-          event.key === ' '
-        ) {
-          event.preventDefault();
-          onClick();
-        }
-      }}
+      onKeyDown={handleKeyDown}
       className="group relative cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md md:p-7"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#6B9080] via-[#C8A97E] to-[#D9C6B0] opacity-70" />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-semibold tracking-wider text-[#3A4F3F]">
-          {getCategoryLabel(item.category)}
+          {getCategoryLabel(
+            item.category
+          )}
         </span>
 
         {tags.map((tag, index) => (
           <span
-            key={`tag-${index}`}
+            key={`tag-${index}-${tag}`}
             className="rounded-full border border-[#E7DED4] bg-white px-3 py-1 text-[13px] font-medium text-[#7C8A80]"
           >
             {tag}
@@ -320,32 +641,33 @@ const DataCard = memo(function DataCard({
 });
 
 const getBookSearchText = (item) => {
-  const walkChapters = (chapters) => {
+  const walkChapters = (
+    chapters
+  ) => {
     if (!chapters) {
       return '';
     }
 
-    const chapterArray = Array.isArray(
-      chapters
-    )
-      ? chapters
-      : Object.values(chapters);
+    const chapterArray =
+      Array.isArray(chapters)
+        ? chapters
+        : Object.values(chapters);
 
     return chapterArray
       .map((chapter) => {
         const current = [
-          chapter.title,
-          chapter.alias,
-          chapter.name,
-          chapter.text,
-          chapter.content,
-          chapter.description,
+          chapter?.title,
+          chapter?.alias,
+          chapter?.name,
+          chapter?.text,
+          chapter?.content,
+          chapter?.description,
         ]
           .filter(Boolean)
           .join(' ');
 
         return `${current} ${walkChapters(
-          chapter.children
+          chapter?.children
         )}`;
       })
       .join(' ');
@@ -353,11 +675,11 @@ const getBookSearchText = (item) => {
 
   return normalizeText(
     [
-      item.name,
-      item.alias,
-      item.bookDetails?.author,
+      item?.name,
+      item?.alias,
+      item?.bookDetails?.author,
       walkChapters(
-        item.bookDetails?.chapters
+        item?.bookDetails?.chapters
       ),
     ]
       .filter(Boolean)
@@ -367,73 +689,76 @@ const getBookSearchText = (item) => {
 
 const getSearchText = (item) => {
   const fields = [
-    item.name,
-    item.alias,
-    item.englishName,
-    item.type,
-    item.latin,
-    item.tag,
-    item.source,
-    item.typePart,
-    item.method,
-    item.property,
-    item.noteAnalogy,
-    item.planet,
-    item.origin,
-    item.constitutionTag,
-    item.chemicalTag,
-    item.description,
-    item.effect,
-    item.indications,
-    item.literature,
-    item.contraindication,
-    item.nature,
-    item.family,
-    item.meridian,
-    item.traits,
-    item.dosage,
-    item.pharmacology,
-    item.contemporary,
-    item.medicine,
-    item.preparation,
-    item.directions,
-    item.analysis,
-    item.discussion,
-    item.syndrome,
-    item.modifications,
-    item.modernApp,
-    item.modernPharmacology,
-    item.prescription,
-    item.note,
-    item.usage,
-    item.caution,
-    item.acuTable?.code,
-    item.acuTable?.meridian,
-    item.acuTable?.alias,
-    item.acuDetails?.location,
-    item.acuDetails?.operation,
-    item.acuDetails?.indications,
-    item.acuDetails?.type,
-    item.acuDetails?.nameExpl,
-    item.acuDetails?.anatomy,
-    item.acuDetails?.effectAncient,
-    item.acuDetails?.effectModern,
-    item.acuDetails?.matchingPoints,
-    item.oilDetails?.scent,
-    item.oilDetails?.appearance,
-    item.oilDetails?.historyMyth,
-    item.oilDetails?.chemistry,
-    item.oilDetails?.attribute,
-    item.oilDetails?.caution,
-    item.oilDetails?.mindEffect,
-    item.oilDetails?.bodyEffect,
-    item.oilDetails?.skinEffect,
-    item.oilDetails?.constitution,
-    item.oilDetails?.blendingOils,
-    item.oilDetails?.formulas,
-    item.oilDetails?.carrierOils,
-    item.oilDetails?.usage,
-    item.knowledgeDetails,
+    item?.name,
+    item?.alias,
+    item?.englishName,
+    item?.type,
+    item?.latin,
+    item?.tag,
+    item?.source,
+    item?.typePart,
+    item?.method,
+    item?.property,
+    item?.noteAnalogy,
+    item?.planet,
+    item?.origin,
+    item?.constitutionTag,
+    item?.chemicalTag,
+    item?.description,
+    item?.effect,
+    item?.indications,
+    item?.literature,
+    item?.contraindication,
+    item?.nature,
+    item?.family,
+    item?.meridian,
+    item?.traits,
+    item?.dosage,
+    item?.pharmacology,
+    item?.contemporary,
+    item?.medicine,
+    item?.preparation,
+    item?.directions,
+    item?.analysis,
+    item?.discussion,
+    item?.syndrome,
+    item?.modifications,
+    item?.modernApp,
+    item?.modernPharmacology,
+    item?.prescription,
+    item?.note,
+    item?.usage,
+    item?.caution,
+    item?.acuTable?.code,
+    item?.acuTable?.meridian,
+    item?.acuTable?.alias,
+    item?.acuDetails?.location,
+    item?.acuDetails?.operation,
+    item?.acuDetails?.indications,
+    item?.acuDetails?.type,
+    item?.acuDetails?.nameExpl,
+    item?.acuDetails?.anatomy,
+    item?.acuDetails?.effectAncient,
+    item?.acuDetails?.effectModern,
+    item?.acuDetails?.matchingPoints,
+    item?.oilDetails?.scent,
+    item?.oilDetails?.appearance,
+    item?.oilDetails?.historyMyth,
+    item?.oilDetails?.chemistry,
+    item?.oilDetails?.attribute,
+    item?.oilDetails?.caution,
+    item?.oilDetails?.mindEffect,
+    item?.oilDetails?.bodyEffect,
+    item?.oilDetails?.skinEffect,
+    item?.oilDetails?.constitution,
+    item?.oilDetails?.blendingOils,
+    item?.oilDetails?.formulas,
+    item?.oilDetails?.carrierOils,
+    item?.oilDetails?.usage,
+    item?.knowledgeDetails?.introduction,
+    item?.knowledgeDetails?.sections,
+    item?.bookDetails?.author,
+    item?.bookDetails?.chapters,
   ];
 
   return normalizeText(
@@ -445,6 +770,14 @@ const getSearchText = (item) => {
       .join(' ')
   );
 };
+
+function PageLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#fdfbf7] text-[#A39284]">
+      正在載入頁面...
+    </div>
+  );
+}
 
 function StatusMessage({
   isOnline,
@@ -479,54 +812,234 @@ function StatusMessage({
 }
 
 export default function App() {
-  const [dbData, setDbData] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery,] = useState('');
-  const [selectedCategory,setSelectedCategory,] = useState('書籍');
-  const [activeItem, setActiveItem] =useState(null);
-  const [isAdminMode, setIsAdminMode] =useState(false);
-  const [visibleCount, setVisibleCount] =useState(PAGE_SIZE);
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined'? navigator.onLine: true);
-  const [isUsingCache, setIsUsingCache] =useState(false);
-  const [dataError, setDataError] =useState('');
-  const [isLoading, setIsLoading] =useState(true);
+  const [dbData, setDbData] =
+    useState([]);
+
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
+  const [
+    debouncedSearchQuery,
+    setDebouncedSearchQuery,
+  ] = useState('');
+
+  const [
+    selectedCategory,
+    setSelectedCategory,
+  ] = useState('書籍');
+
+  const [activeItem, setActiveItem] =
+    useState(null);
+
+  const [isAdminMode, setIsAdminMode] =
+    useState(false);
+
+  const [visibleCount, setVisibleCount] =
+    useState(PAGE_SIZE);
+
+  const [isOnline, setIsOnline] =
+    useState(
+      typeof navigator !== 'undefined'
+        ? navigator.onLine
+        : true
+    );
+
+  const [
+    isUsingCache,
+    setIsUsingCache,
+  ] = useState(false);
+
+  const [dataError, setDataError] =
+    useState('');
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [
+    isLoadingMore,
+    setIsLoadingMore,
+  ] = useState(false);
+
+  const [hasMore, setHasMore] =
+    useState(false);
+
+  const [lastDocument, setLastDocument] =
+    useState(null);
+
   const staticData = useMemo(
-    () => [...(oilData || []),...(acuData || []),...(herbData || []),...(formulaData || []),...(bookData || []),],[]);
-  const loadFirstPage = useCallback(async () => {setIsLoading(true);setDataError('');setDbData([]);setVisibleCount(PAGE_SIZE);
-    try {
-  const entriesQuery = query(collection(db, 'entries'),where('category','==',selectedCategory)
-      );
-      const snapshot = await getDocs(
-        entriesQuery
-      );
+    () => [
+      ...(oilData || []),
+      ...(acuData || []),
+      ...(herbData || []),
+      ...(formulaData || []),
+      ...(bookData || []),
+    ],
+    []
+  );
 
-      const entries = snapshot.docs.map(
-        (entryDoc) => ({
-          id: entryDoc.id,
-          ...entryDoc.data(),
-        })
-      );
+  const loadFirstPage =
+    useCallback(
+      async (signal) => {
+        setIsLoading(true);
+        setDataError('');
+        setDbData([]);
+        setLastDocument(null);
+        setHasMore(false);
+        setVisibleCount(PAGE_SIZE);
 
-      setDbData(entries);
-      setIsUsingCache(false);
-    } catch (error) {
-      console.error(
-        'Firestore 讀取錯誤：',
-        error
-      );
+        try {
+          const result =
+            await loadFirstEntriesPage({
+              category: selectedCategory,
+              pageSize: 200,
+            });
 
-      setDataError(
-        `百科資料讀取失敗：${
-          error.code || error.message
-        }`
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedCategory]);
+          if (signal?.cancelled) {
+            return;
+          }
+
+          setDbData(
+            Array.isArray(
+              result?.entries
+            )
+              ? result.entries
+              : []
+          );
+
+          setLastDocument(
+            result?.lastDocument || null
+          );
+
+          setHasMore(
+            Boolean(result?.hasMore)
+          );
+
+          setIsUsingCache(false);
+        } catch (error) {
+          if (signal?.cancelled) {
+            return;
+          }
+
+          console.error(
+            'Firestore 第一頁讀取錯誤：',
+            error
+          );
+
+          setDataError(
+            `百科資料讀取失敗：${
+              error?.code ||
+              error?.message ||
+              '未知錯誤'
+            }`
+          );
+
+          setDbData([]);
+          setLastDocument(null);
+          setHasMore(false);
+        } finally {
+          if (!signal?.cancelled) {
+            setIsLoading(false);
+          }
+        }
+      },
+      [selectedCategory]
+    );
+
+  const loadMoreEntries =
+    useCallback(async () => {
+      if (
+        isLoading ||
+        isLoadingMore ||
+        !hasMore ||
+        !lastDocument
+      ) {
+        return;
+      }
+
+      setIsLoadingMore(true);
+      setDataError('');
+
+      try {
+        const result =
+          await loadNextEntriesPage({
+            category: selectedCategory,
+            pageSize: 200,
+            lastDocument,
+          });
+
+        const nextEntries =
+          Array.isArray(
+            result?.entries
+          )
+            ? result.entries
+            : [];
+
+        setDbData((previous) => {
+          const itemMap = new Map();
+
+          [
+            ...previous,
+            ...nextEntries,
+          ].forEach((item) => {
+            addItemToMap(
+              itemMap,
+              item,
+              'firestore'
+            );
+          });
+
+          return Array.from(
+            itemMap.values()
+          );
+        });
+
+        setLastDocument(
+          result?.lastDocument ||
+            lastDocument
+        );
+
+        setHasMore(
+          Boolean(result?.hasMore)
+        );
+
+        setVisibleCount(
+          (previous) =>
+            previous + PAGE_SIZE
+        );
+      } catch (error) {
+        console.error(
+          'Firestore 載入更多資料錯誤：',
+          error
+        );
+
+        setDataError(
+          `更多百科資料載入失敗：${
+            error?.code ||
+            error?.message ||
+            '未知錯誤'
+          }`
+        );
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }, [
+      hasMore,
+      isLoading,
+      isLoadingMore,
+      lastDocument,
+      selectedCategory,
+    ]);
 
   useEffect(() => {
-    loadFirstPage();
+    const signal = {
+      cancelled: false,
+    };
+
+    loadFirstPage(signal);
+
+    return () => {
+      signal.cancelled = true;
+    };
   }, [loadFirstPage]);
 
   useEffect(() => {
@@ -565,7 +1078,9 @@ export default function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
+      setDebouncedSearchQuery(
+        searchQuery
+      );
     }, 250);
 
     return () => {
@@ -581,90 +1096,27 @@ export default function App() {
   ]);
 
   const allData = useMemo(() => {
-    const dataMap = new Map();
+    const itemMap = new Map();
 
     staticData.forEach((item) => {
-      if (
-        !item ||
-        !item.name ||
-        !item.category
-      ) {
-        return;
-      }
-
-      const key = getDataKey(item);
-
-      dataMap.set(key, {
-        ...item,
-        _source: 'static',
-      });
+      addItemToMap(
+        itemMap,
+        item,
+        'static'
+      );
     });
 
-    dbData.forEach((dbItem) => {
-      if (
-        !dbItem ||
-        !dbItem.name ||
-        !dbItem.category
-      ) {
-        return;
-      }
-
-      const key = getDataKey(dbItem);
-      const staticItem = dataMap.get(key);
-
-      if (!staticItem) {
-        dataMap.set(key, {
-          ...dbItem,
-          _source: 'firestore',
-        });
-
-        return;
-      }
-
-      const mergedItem = {
-        ...mergeNonEmpty(
-          staticItem,
-          dbItem
-        ),
-
-        oilDetails: mergeNonEmpty(
-          staticItem.oilDetails,
-          dbItem.oilDetails
-        ),
-
-        acuTable: mergeNonEmpty(
-          staticItem.acuTable,
-          dbItem.acuTable
-        ),
-
-        acuDetails: mergeNonEmpty(
-          staticItem.acuDetails,
-          dbItem.acuDetails
-        ),
-
-        bookDetails: {
-          ...staticItem.bookDetails,
-          ...dbItem.bookDetails,
-        },
-
-        knowledgeDetails: {
-          ...staticItem.knowledgeDetails,
-          ...dbItem.knowledgeDetails,
-          sections:
-            dbItem.knowledgeDetails
-              ?.sections ||
-            staticItem.knowledgeDetails
-              ?.sections ||
-            [],
-        },
-
-        _source: 'firestore',
-      };
-
-      dataMap.set(key, mergedItem);
+    dbData.forEach((item) => {
+      addItemToMap(
+        itemMap,
+        item,
+        'firestore'
+      );
     });
 
-    return Array.from(dataMap.values())
+    return Array.from(
+      itemMap.values()
+    )
       .filter(
         (item) =>
           item &&
@@ -672,14 +1124,19 @@ export default function App() {
           item.category
       )
       .sort((a, b) => {
-        const timeA = getCreatedTime(a);
-        const timeB = getCreatedTime(b);
+        const timeA =
+          getCreatedTime(a);
+
+        const timeB =
+          getCreatedTime(b);
 
         if (timeA !== timeB) {
           return timeB - timeA;
         }
 
-        return String(a.name).localeCompare(
+        return String(
+          a.name
+        ).localeCompare(
           String(b.name),
           'zh-Hant'
         );
@@ -690,11 +1147,15 @@ export default function App() {
           ...cleanItem
         } = item;
 
-        if (cleanItem.category === '書籍') {
+        if (
+          cleanItem.category === '書籍'
+        ) {
           return {
             ...cleanItem,
             _searchText:
-              getBookSearchText(cleanItem),
+              getBookSearchText(
+                cleanItem
+              ),
           };
         }
 
@@ -707,33 +1168,35 @@ export default function App() {
   }, [staticData, dbData]);
 
   const filteredData = useMemo(() => {
-    const normalizedQuery = normalizeText(
-      debouncedSearchQuery
-    );
+    const normalizedQuery =
+      normalizeText(
+        debouncedSearchQuery
+      );
 
     return allData.filter((item) => {
       if (!item || !item.name) {
         return false;
       }
 
-      if (selectedCategory === '其他') {
-        const mainCategories = [
-          '書籍',
-          '精油',
-          '穴道',
-          '中藥',
-          '方劑',
-        ];
+      const itemCategory =
+        normalizeCategory(
+          item.category
+        );
 
+      if (
+        selectedCategory === '其他'
+      ) {
         if (
-          mainCategories.includes(
+          !OTHER_CATEGORY_VALUES.includes(
             item.category
-          )
+          ) &&
+          itemCategory !== '其他'
         ) {
           return false;
         }
       } else if (
-        item.category !== selectedCategory
+        itemCategory !==
+        selectedCategory
       ) {
         return false;
       }
@@ -761,13 +1224,92 @@ export default function App() {
     [filteredData, visibleCount]
   );
 
-  const handleCloseDetail = useCallback(() => {
-    setActiveItem(null);
-  }, []);
+  const canLoadMore =
+    visibleCount <
+      filteredData.length ||
+    hasMore;
+
+  const handleSelectItem =
+    useCallback((item) => {
+      setActiveItem(item);
+    }, []);
+
+  const handleCloseDetail =
+    useCallback(() => {
+      setActiveItem(null);
+    }, []);
+
+  const handleEnterAdmin =
+    useCallback(() => {
+      setIsAdminMode(true);
+    }, []);
+
+  const handleLeaveAdmin =
+    useCallback(() => {
+      setIsAdminMode(false);
+    }, []);
+
+  const handleCategoryChange =
+    useCallback((category) => {
+      setSelectedCategory(category);
+      setSearchQuery('');
+      setDebouncedSearchQuery('');
+      setActiveItem(null);
+      setVisibleCount(PAGE_SIZE);
+    }, []);
+
+  const handleLoadMore =
+    useCallback(async () => {
+      if (
+        visibleCount <
+        filteredData.length
+      ) {
+        setVisibleCount(
+          (previous) =>
+            previous + PAGE_SIZE
+        );
+
+        return;
+      }
+
+      if (hasMore && lastDocument) {
+        await loadMoreEntries();
+      }
+    }, [
+      filteredData.length,
+      hasMore,
+      lastDocument,
+      loadMoreEntries,
+      visibleCount,
+    ]);
+
+  const renderLoadMoreButton =
+    () => {
+      if (!canLoadMore) {
+        return null;
+      }
+
+      return (
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className="rounded-full bg-[#2F4638] px-5 py-2.5 text-[15px] font-medium text-white shadow-md transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoadingMore
+              ? '載入中...'
+              : '載入更多'}
+          </button>
+        </div>
+      );
+    };
 
   if (isAdminMode) {
     return (
-      <>
+      <Suspense
+        fallback={<PageLoading />}
+      >
         <StatusMessage
           isOnline={isOnline}
           isUsingCache={isUsingCache}
@@ -776,33 +1318,39 @@ export default function App() {
 
         <AdminPage
           allData={allData}
-          onBack={() =>
-            setIsAdminMode(false)
-          }
+          onBack={handleLeaveAdmin}
         />
-      </>
+      </Suspense>
     );
   }
 
   if (activeItem) {
-    const modalMap = {
-      精油: OilModal,
-      穴道: AcuModal,
-      中藥: HerbModal,
-      方劑: FormulaModal,
-      書籍: BookModal,
-      其他: OtherDetailPage,
-    };
+    const activeCategory =
+      normalizeCategory(
+        activeItem.category
+      );
 
     const ModalComponent =
-      modalMap[activeItem.category];
+      MODAL_COMPONENTS[
+        activeCategory
+      ];
 
     if (ModalComponent) {
       return (
-        <ModalComponent
-          item={activeItem}
-          onClose={handleCloseDetail}
-        />
+        <Suspense
+          fallback={<PageLoading />}
+        >
+          <ModalComponent
+            item={{
+              ...activeItem,
+              category:
+                activeCategory,
+            }}
+            onClose={
+              handleCloseDetail
+            }
+          />
+        </Suspense>
       );
     }
 
@@ -817,7 +1365,9 @@ export default function App() {
         <div className="mx-auto max-w-6xl px-4 pt-8">
           <button
             type="button"
-            onClick={handleCloseDetail}
+            onClick={
+              handleCloseDetail
+            }
             className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-4 py-2 text-[15px] text-[#7F6D5F] shadow-sm transition-all hover:text-[#3A4F3F] hover:shadow-md"
           >
             ← 返回列表
@@ -843,7 +1393,7 @@ export default function App() {
 
       <button
         type="button"
-        onClick={() => setIsAdminMode(true)}
+        onClick={handleEnterAdmin}
         className="fixed left-3 top-3 z-50 rounded-full border border-white bg-white px-3 py-1 text-[12px] font-medium text-[#A39284] shadow-sm transition-all hover:text-[#3A4F3F]"
       >
         開發者專區
@@ -885,74 +1435,76 @@ export default function App() {
             </div>
 
             <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 md:justify-end md:pb-0">
-              {CATEGORIES.map((category) => (
-                <button
-                  type="button"
-                  key={category}
-                  onClick={() => {
-                    setSelectedCategory(
+              {CATEGORIES.map(
+                (category) => (
+                  <button
+                    type="button"
+                    key={category}
+                    onClick={() =>
+                      handleCategoryChange(
+                        category
+                      )
+                    }
+                    className={`shrink-0 rounded-full px-4 py-2 text-[15px] font-medium transition-all ${
+                      selectedCategory ===
                       category
-                    );
-                    setSearchQuery('');
-                    setActiveItem(null);
-                  }}
-                  className={`shrink-0 rounded-full px-4 py-2 text-[15px] font-medium transition-all ${
-                    selectedCategory === category
-                      ? 'bg-[#2F4638] text-white shadow-md'
-                      : 'border border-[#E6DDD3] bg-white text-[#5F6F65] hover:text-[#2F4638]'
-                  }`}
-                >
-                  {getCategoryLabel(category)}
-                </button>
-              ))}
+                        ? 'bg-[#2F4638] text-white shadow-md'
+                        : 'border border-[#E6DDD3] bg-white text-[#5F6F65] hover:text-[#2F4638]'
+                    }`}
+                  >
+                    {getCategoryLabel(
+                      category
+                    )}
+                  </button>
+                )
+              )}
             </div>
           </div>
         </section>
 
         <main>
-          {selectedCategory === '其他' ? (
-  <OtherCategoryView
-    allData={filteredData}
-    onSelectItem={setActiveItem}
-  />
-) : filteredData.length > 0 ? (
+          {selectedCategory ===
+          '其他' ? (
+            filteredData.length > 0 ? (
+              <>
+                <OtherCategoryView
+                  allData={visibleData}
+                  onSelectItem={
+                    handleSelectItem
+                  }
+                />
+
+                {renderLoadMoreButton()}
+              </>
+            ) : (
+              <div className="rounded-3xl border border-[#E5E0D8] bg-white px-6 py-16 text-center text-[16px] text-[#A39284] shadow-sm">
+                {isLoading
+                  ? '正在讀取資料...'
+                  : '目前沒有符合條件的資料。'}
+              </div>
+            )
+          ) : filteredData.length > 0 ? (
             <>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
-                {visibleData.map(
-                  (item, index) => (
+                {visibleData.map((item) => {
+                  const itemKey =
+                    getItemIdentity(
+                      item
+                    );
+
+                  return (
                     <DataCard
-                      key={
-                        item.id ||
-                        `${getCategoryLabel(
-                          item.category
-                        )}-${item.name}-${index}`
-                      }
+                      key={itemKey}
                       item={item}
-                      onClick={() =>
-                        setActiveItem(item)
+                      onSelectItem={
+                        handleSelectItem
                       }
                     />
-                  )
-                )}
+                  );
+                })}
               </div>
 
-              {visibleCount <
-                filteredData.length && (
-                <div className="mt-8 text-center">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setVisibleCount(
-                        (previous) =>
-                          previous + PAGE_SIZE
-                      )
-                    }
-                    className="rounded-full bg-[#2F4638] px-5 py-2.5 text-[15px] font-medium text-white shadow-md transition-all hover:opacity-90"
-                  >
-                    載入更多
-                  </button>
-                </div>
-              )}
+              {renderLoadMoreButton()}
             </>
           ) : (
             <div className="rounded-3xl border border-[#E5E0D8] bg-white px-6 py-16 text-center text-[16px] text-[#A39284] shadow-sm">
