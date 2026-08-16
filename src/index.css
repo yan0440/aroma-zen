@@ -1,15 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200;300;400;500;600;700;800;900&display=swap');
+
 @import "tailwindcss";
-@font-face {
-  font-family: 'fttf'; /* 這個名字是 CSS 內部用的 */
-  src: url('/fonts/fttf.ttf');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-  
+
+@theme {
+  --font-sans:
+    "Chiron GoRound TC",
+    "Microsoft JhengHei",
+    sans-serif;
 }
 
-/* 設定全域預設字體 */
-/* index.css */
-body {
-  font-family: 'fttf', sans-serif !important;
+:root {
+  font-family:
+    "Chiron GoRound TC",
+    "Microsoft JhengHei",
+    sans-serif;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  font-family:
+    "Chiron GoRound TC",
+    "Microsoft JhengHei",
+    sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
