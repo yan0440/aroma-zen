@@ -3,7 +3,9 @@ import {
   runTransaction,
 } from 'firebase/firestore';
 
-import { db } from '../../../firebase';
+import {
+  db,
+} from '../../../firebase';
 
 import {
   buildSearchKey,
@@ -13,48 +15,87 @@ import {
   normalizeText,
 } from '../utils/addEntryUtils';
 
+function removeUndefinedValues(value) {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (
+    value === null ||
+    typeof value !== 'object'
+  ) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map(removeUndefinedValues)
+      .filter(
+        (item) =>
+          item !== null &&
+          item !== undefined
+      );
+  }
+
+  return Object.entries(value).reduce(
+    (result, [key, item]) => {
+      const cleanedValue =
+        removeUndefinedValues(item);
+
+      if (
+        cleanedValue !== null &&
+        cleanedValue !== undefined
+      ) {
+        result[key] = cleanedValue;
+      }
+
+      return result;
+    },
+    {}
+  );
+}
+
 function buildCleanData(formData) {
   const cleanChapters =
     normalizeChapters(
-      formData.bookDetails?.chapters
+      formData?.bookDetails?.chapters
     );
 
   const cleanSections =
     normalizeArray(
-      formData.knowledgeDetails?.sections
+      formData?.knowledgeDetails?.sections
     );
 
-  return {
+  return removeUndefinedValues({
     ...formData,
 
     bookDetails: {
-      ...(formData.bookDetails || {}),
+      ...(formData?.bookDetails || {}),
       author:
-        formData.bookDetails?.author ||
-        '',
+        formData?.bookDetails?.author || '',
       chapters: cleanChapters,
     },
 
     knowledgeDetails: {
-      ...(formData.knowledgeDetails || {}),
+      ...(formData?.knowledgeDetails || {}),
       introduction:
-        formData.knowledgeDetails
+        formData?.knowledgeDetails
           ?.introduction || '',
       sections: cleanSections,
     },
 
     acuTable: {
-      ...(formData.acuTable || {}),
+      ...(formData?.acuTable || {}),
     },
 
     acuDetails: {
-      ...(formData.acuDetails || {}),
+      ...(formData?.acuDetails || {}),
     },
 
     oilDetails: {
-      ...(formData.oilDetails || {}),
+      ...(formData?.oilDetails || {}),
     },
-  };
+  });
 }
 
 function buildEntryData({
@@ -66,14 +107,13 @@ function buildEntryData({
   createdAt,
   updatedAt,
 }) {
-  const searchKey =
-    buildSearchKey({
-      ...cleanData,
-      category,
-      name,
-    });
+  const searchKey = buildSearchKey({
+    ...cleanData,
+    category,
+    name,
+  });
 
-  return {
+  return removeUndefinedValues({
     ...cleanData,
 
     id: documentId,
@@ -89,7 +129,7 @@ function buildEntryData({
 
     createdAt,
     updatedAt,
-  };
+  });
 }
 
 function buildEntryKeyData({
@@ -101,14 +141,13 @@ function buildEntryKeyData({
   createdAt,
   updatedAt,
 }) {
-  const searchKey =
-    buildSearchKey({
-      ...cleanData,
-      category,
-      name,
-    });
+  const searchKey = buildSearchKey({
+    ...cleanData,
+    category,
+    name,
+  });
 
-  return {
+  return removeUndefinedValues({
     entryKey,
     entryId: documentId,
     documentId,
@@ -119,56 +158,41 @@ function buildEntryKeyData({
     sortName: normalizeText(name),
     searchKey,
 
-    type: cleanData.type || '',
-    alias: cleanData.alias || '',
+    type: cleanData?.type || '',
+    alias: cleanData?.alias || '',
     englishName:
-      cleanData.englishName || '',
+      cleanData?.englishName || '',
     description:
-      cleanData.description || '',
-    effect: cleanData.effect || '',
+      cleanData?.description || '',
+    effect:
+      cleanData?.effect || '',
     indications:
-      cleanData.indications || '',
-    usage: cleanData.usage || '',
+      cleanData?.indications || '',
+    usage:
+      cleanData?.usage || '',
     directions:
-      cleanData.directions || '',
-    caution: cleanData.caution || '',
-    tag: cleanData.tag || '',
+      cleanData?.directions || '',
+    caution:
+      cleanData?.caution || '',
+    tag:
+      cleanData?.tag || '',
     constitutionTag:
-      cleanData.constitutionTag || '',
+      cleanData?.constitutionTag || '',
     chemicalTag:
-      cleanData.chemicalTag || '',
-
-    bookDetails: {
-      author:
-        cleanData.bookDetails?.author ||
-        '',
-      chapters:
-        cleanData.bookDetails?.chapters ||
-        [],
-    },
-
-    knowledgeDetails: {
-      introduction:
-        cleanData.knowledgeDetails
-          ?.introduction || '',
-      sections:
-        cleanData.knowledgeDetails
-          ?.sections || [],
-    },
+      cleanData?.chemicalTag || '',
 
     acuTable: {
       code:
-        cleanData.acuTable?.code || '',
+        cleanData?.acuTable?.code || '',
       meridian:
-        cleanData.acuTable?.meridian ||
-        '',
+        cleanData?.acuTable?.meridian || '',
       alias:
-        cleanData.acuTable?.alias || '',
+        cleanData?.acuTable?.alias || '',
     },
 
     createdAt,
     updatedAt,
-  };
+  });
 }
 
 export async function saveEntry({
@@ -178,11 +202,11 @@ export async function saveEntry({
   originalEntryKey,
 }) {
   const category = String(
-    formData.category || ''
+    formData?.category || ''
   ).trim();
 
   const name = String(
-    formData.name || ''
+    formData?.name || ''
   ).trim();
 
   if (!category) {
@@ -202,6 +226,9 @@ export async function saveEntry({
     name
   );
 
+  const isEditing =
+    Boolean(editingItem);
+
   const oldEntryKey =
     originalEntryKey ||
     editingItem?.entryKey ||
@@ -210,18 +237,21 @@ export async function saveEntry({
       editingItem?.name || ''
     );
 
-  const isEditing =
-    Boolean(editingItem);
+  const oldDocumentId =
+    originalDocumentId ||
+    editingItem?.documentId ||
+    editingItem?.firestoreId ||
+    editingItem?.id ||
+    oldEntryKey;
+
+  const documentId =
+    isEditing
+      ? oldDocumentId
+      : entryKey;
 
   const isKeyChanged =
     isEditing &&
     entryKey !== oldEntryKey;
-
-  const documentId =
-    isEditing &&
-    originalDocumentId
-      ? originalDocumentId
-      : entryKey;
 
   const newEntryRef = doc(
     db,
@@ -238,8 +268,7 @@ export async function saveEntry({
   const oldEntryRef = doc(
     db,
     'entries',
-    originalDocumentId ||
-      oldEntryKey
+    oldDocumentId
   );
 
   const oldKeyRef = doc(
@@ -248,32 +277,32 @@ export async function saveEntry({
     oldEntryKey
   );
 
-  const cleanData =
-    buildCleanData({
-      ...formData,
-      category,
-      name,
-    });
+  const cleanData = buildCleanData({
+    ...formData,
+    category,
+    name,
+  });
 
   const now = Date.now();
 
   await runTransaction(
     db,
     async (transaction) => {
-      const newKeySnap =
+      const newKeySnapshot =
         await transaction.get(
           newKeyRef
         );
 
       if (!isEditing) {
-        if (newKeySnap.exists()) {
+        if (
+          newKeySnapshot.exists()
+        ) {
           throw new Error(
             '已有相同分類與名稱的百科資料'
           );
         }
 
-        transaction.set(
-          newEntryRef,
+        const entryData =
           buildEntryData({
             cleanData,
             category,
@@ -282,11 +311,9 @@ export async function saveEntry({
             documentId,
             createdAt: now,
             updatedAt: now,
-          })
-        );
+          });
 
-        transaction.set(
-          newKeyRef,
+        const entryKeyData =
           buildEntryKeyData({
             cleanData,
             category,
@@ -295,43 +322,48 @@ export async function saveEntry({
             documentId,
             createdAt: now,
             updatedAt: now,
-          })
+          });
+
+        transaction.set(
+          newEntryRef,
+          entryData
+        );
+
+        transaction.set(
+          newKeyRef,
+          entryKeyData
         );
 
         return;
       }
 
-      const oldEntrySnap =
+      const oldEntrySnapshot =
         await transaction.get(
           oldEntryRef
         );
 
-      const sameKey =
-        oldKeyRef.path ===
-        newKeyRef.path;
+      const oldEntryData =
+        oldEntrySnapshot.exists()
+          ? oldEntrySnapshot.data() || {}
+          : {};
 
       if (
         isKeyChanged &&
-        newKeySnap.exists() &&
-        !sameKey
+        newKeySnapshot.exists() &&
+        newKeyRef.path !==
+          oldKeyRef.path
       ) {
         throw new Error(
           '已有相同分類與名稱的百科資料'
         );
       }
 
-      const oldEntryData =
-        oldEntrySnap.exists()
-          ? oldEntrySnap.data() || {}
-          : {};
-
       const createdAt =
         oldEntryData.createdAt ||
         editingItem?.createdAt ||
         now;
 
-      transaction.set(
-        newEntryRef,
+      const entryData =
         buildEntryData({
           cleanData,
           category,
@@ -340,11 +372,9 @@ export async function saveEntry({
           documentId,
           createdAt,
           updatedAt: now,
-        })
-      );
+        });
 
-      transaction.set(
-        newKeyRef,
+      const entryKeyData =
         buildEntryKeyData({
           cleanData,
           category,
@@ -353,7 +383,16 @@ export async function saveEntry({
           documentId,
           createdAt,
           updatedAt: now,
-        })
+        });
+
+      transaction.set(
+        newEntryRef,
+        entryData
+      );
+
+      transaction.set(
+        newKeyRef,
+        entryKeyData
       );
 
       if (
@@ -367,9 +406,8 @@ export async function saveEntry({
       }
 
       if (
-        isKeyChanged &&
-        originalDocumentId &&
-        documentId !== originalDocumentId
+        oldEntryRef.path !==
+        newEntryRef.path
       ) {
         transaction.delete(
           oldEntryRef
@@ -377,4 +415,25 @@ export async function saveEntry({
       }
     }
   );
+
+  return {
+    ...cleanData,
+
+    id: documentId,
+    documentId,
+    firestoreId: documentId,
+
+    entryKey,
+    category,
+    name,
+
+    sortName: normalizeText(name),
+    searchKey: buildSearchKey({
+      ...cleanData,
+      category,
+      name,
+    }),
+
+    updatedAt: now,
+  };
 }
