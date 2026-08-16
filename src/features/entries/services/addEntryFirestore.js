@@ -417,23 +417,28 @@ export async function saveEntry({
   );
 
   return {
+  ...cleanData,
+
+  id: documentId,
+  documentId,
+  firestoreId: documentId,
+
+  entryKey,
+  category,
+  name,
+
+  sortName: normalizeText(name),
+
+  searchKey: buildSearchKey({
     ...cleanData,
-
-    id: documentId,
-    documentId,
-    firestoreId: documentId,
-
-    entryKey,
     category,
     name,
+  }),
 
-    sortName: normalizeText(name),
-    searchKey: buildSearchKey({
-      ...cleanData,
-      category,
-      name,
-    }),
+  createdAt:
+    editingItem?.createdAt ||
+    now,
 
-    updatedAt: now,
-  };
+  updatedAt: now,
+};
 }

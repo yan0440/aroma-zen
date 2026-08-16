@@ -77,6 +77,7 @@ const getFriendlyTransactionError = (error) => {
 
 export default function AddEntryPage({
   onClose,
+  onSaved,
   editingItem,
   isViewOnly = false,
   closeLabel = '',
@@ -545,30 +546,37 @@ firestoreId:
     setIsSaving(true);
 
     try {
-      await saveEntry({
-        formData: {
-          ...formData,
-          category,
-          name,
-        },
+  const savedEntry =
+    await saveEntry({
+      formData: {
+        ...formData,
+        category,
+        name,
+      },
 
-        editingItem,
+      editingItem,
 
-        originalDocumentId:
-          originalDocumentIdRef.current,
+      originalDocumentId:
+        originalDocumentIdRef.current,
 
-        originalEntryKey:
-          originalEntryKeyRef.current,
-      });
+      originalEntryKey:
+        originalEntryKeyRef.current,
+    });
 
-      window.alert(
-        editingItem
-          ? '✅ 資料已成功更新！'
-          : '✅ 資料已成功儲存！'
-      );
+  if (
+    typeof onSaved === 'function'
+  ) {
+    onSaved(savedEntry);
+  } else {
+    onClose();
+  }
 
-      onClose();
-    } catch (error) {
+  window.alert(
+    editingItem
+      ? '✅ 資料已成功更新！'
+      : '✅ 資料已成功儲存！'
+  );
+}catch (error) {
       console.error(
         '寫入資料失敗：',
         error
@@ -604,12 +612,13 @@ firestoreId:
     }
   },
   [
-    editingItem,
-    formData,
-    isSaving,
-    isViewOnly,
-    onClose,
-  ]
+  editingItem,
+  formData,
+  isSaving,
+  isViewOnly,
+  onClose,
+  onSaved,
+]
 );
 
   return (
@@ -1077,6 +1086,7 @@ firestoreId:
                 '穴道' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
+                    {renderField('🌐 英文名稱', 'englishName')}
                     {renderField('🆔 國際代碼','acuTable.code')}
                     {renderField('🎯 經絡','acuTable.meridian')}
                   </div>
@@ -1098,6 +1108,7 @@ firestoreId:
                 <div className="mb-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     {renderField('🗂️ 別名','alias')}
+                    {renderField('🌐 英文名稱', 'englishName')}
                     {renderField('🌿 科屬','family')}
                     {renderField('👅 性味','nature')}
                     {renderField('🎯 歸經','meridian')}

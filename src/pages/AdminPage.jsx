@@ -142,6 +142,127 @@ const getFirestoreDocumentId = (
   );
 };
 
+const mergeSavedEntry = (
+  previousEntries,
+  savedEntry
+) => {
+  if (!savedEntry) {
+    return previousEntries;
+  }
+
+  const savedDocumentId =
+    savedEntry.documentId ||
+    savedEntry.firestoreId ||
+    savedEntry.id ||
+    '';
+
+  const savedEntryKey =
+    savedEntry.entryKey ||
+    getEntryKey(
+      normalizeCategory(
+        savedEntry.category || ''
+      ),
+      savedEntry.name || ''
+    );
+
+  const exists = previousEntries.some(
+    (entry) => {
+      const currentDocumentId =
+        entry.documentId ||
+        entry.firestoreId ||
+        entry.id ||
+        '';
+
+      const currentEntryKey =
+        entry.entryKey ||
+        getEntryKey(
+          normalizeCategory(
+            entry.category || ''
+          ),
+          entry.name || ''
+        );
+
+      return (
+        (
+          savedDocumentId &&
+          currentDocumentId ===
+            savedDocumentId
+        ) ||
+        (
+          savedEntryKey &&
+          currentEntryKey ===
+            savedEntryKey
+        )
+      );
+    }
+  );
+
+  if (exists) {
+    return previousEntries.map(
+      (entry) => {
+        const currentDocumentId =
+          entry.documentId ||
+          entry.firestoreId ||
+          entry.id ||
+          '';
+
+        const currentEntryKey =
+          entry.entryKey ||
+          getEntryKey(
+            normalizeCategory(
+              entry.category || ''
+            ),
+            entry.name || ''
+          );
+
+        const isSame =
+          (
+            savedDocumentId &&
+            currentDocumentId ===
+              savedDocumentId
+          ) ||
+          (
+            savedEntryKey &&
+            currentEntryKey ===
+              savedEntryKey
+          );
+
+        return isSame
+          ? {
+              ...entry,
+              ...savedEntry,
+              id:
+                savedDocumentId ||
+                savedEntry.id,
+              documentId:
+                savedDocumentId ||
+                savedEntry.documentId,
+              firestoreId:
+                savedDocumentId ||
+                savedEntry.firestoreId,
+            }
+          : entry;
+      }
+    );
+  }
+
+  return [
+    ...previousEntries,
+    {
+      ...savedEntry,
+      id:
+        savedDocumentId ||
+        savedEntry.id,
+      documentId:
+        savedDocumentId ||
+        savedEntry.documentId,
+      firestoreId:
+        savedDocumentId ||
+        savedEntry.firestoreId,
+    },
+  ];
+};
+
 const getCategoryLabel = (category) =>
   category === '其他'
     ? '名詞材料'
@@ -218,59 +339,7 @@ const buildSearchText = (item) => {
   return normalizeText(
     [
       item.name,
-      item.alias,
-      item.englishName,
-      item.tag,
-      item.source,
-      item.effect,
-      item.indications,
-      item.description,
-      item.syndrome,
-      item.modifications,
-      item.modernApp,
-      item.modernPharmacology,
-      item.pharmacology,
-      item.contemporary,
-      item.directions,
-      item.note,
-      item.literature,
-      item.contraindication,
-      item.traits,
-      item.nature,
-      item.family,
-      item.meridian,
-      item.property,
-      item.typePart,
-      item.method,
-
-      item.oilDetails?.scent,
-      item.oilDetails?.appearance,
-      item.oilDetails?.historyMyth,
-      item.oilDetails?.chemistry,
-      item.oilDetails?.attribute,
-      item.oilDetails?.caution,
-      item.oilDetails?.mindEffect,
-      item.oilDetails?.bodyEffect,
-      item.oilDetails?.skinEffect,
-      item.oilDetails?.constitution,
-      item.oilDetails?.blendingOils,
-      item.oilDetails?.formulas,
-      item.oilDetails?.carrierOils,
-      item.oilDetails?.usage,
-
-      item.acuTable?.code,
-      item.acuTable?.meridian,
-      item.acuTable?.alias,
-
-      item.acuDetails?.location,
-      item.acuDetails?.operation,
-      item.acuDetails?.indications,
-      item.acuDetails?.type,
-      item.acuDetails?.nameExpl,
-      item.acuDetails?.anatomy,
-      item.acuDetails?.effectAncient,
-      item.acuDetails?.effectModern,
-      item.acuDetails?.matchingPoints,
+      
     ]
       .filter(Boolean)
       .join(' ')
@@ -940,6 +1009,22 @@ export default function AdminPage({
     []
   );
 
+  const handleEntrySaved =
+  useCallback((savedEntry) => {
+    setFirestoreEntries(
+      (previousEntries) =>
+        mergeSavedEntry(
+          previousEntries,
+          savedEntry
+        )
+    );
+
+    setViewState('list');
+    setEditingItem(null);
+    setViewingItem(null);
+    setViewingCard(null);
+  }, []);
+
   if (authLoading) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F7F5F0]">
@@ -1023,16 +1108,17 @@ export default function AdminPage({
   }
 
   if (viewState === 'add') {
-    return (
-      <AddEntryPage
-        onClose={() => {
-          setViewState('list');
-          setEditingItem(null);
-        }}
-        editingItem={editingItem}
-      />
-    );
-  }
+  return (
+    <AddEntryPage
+      onClose={() => {
+        setViewState('list');
+        setEditingItem(null);
+      }}
+      onSaved={handleEntrySaved}
+      editingItem={editingItem}
+    />
+  );
+}
 
 if (viewingItem) {
   const DetailComponent =

@@ -307,7 +307,7 @@ export default function AcuModal({
               </h2>
 
               <p className="mb-6 mt-1 border-b border-[#F0E8DE] pb-4 font-serif text-base italic text-[#A39284]">
-                {acuTable.code || 'N/A'}
+                {item.englishName || '百科資料'}
               </p>
 
               <div className="overflow-hidden rounded-xl border border-[#EAE4DB] shadow-[0_4px_14px_rgba(63,81,68,0.04)]">
