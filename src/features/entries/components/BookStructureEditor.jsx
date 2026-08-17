@@ -419,7 +419,7 @@ export default function BookStructureEditor({
           ) {
             scrollContainerRef.current.scrollTo(
               {
-                top: 0,
+                top: 500,
                 behavior: 'smooth',
               }
             );
@@ -681,87 +681,118 @@ export default function BookStructureEditor({
     ]);
 
   const addChild = useCallback(
-    (parentPath, type = 'content') => {
-      const newChild =
-        type === 'folder'
-          ? createFolderNode()
-          : createContentNode();
+  (parentPath, type = 'content') => {
+    if (
+      disabled ||
+      isViewOnly ||
+      !Array.isArray(parentPath) ||
+      parentPath.length === 0
+    ) {
+      return;
+    }
 
-      const nextChapters =
-        updateNestedState(
-          chapters,
-          parentPath,
-          (parentNode) => ({
-            ...parentNode,
+    const newChild =
+      type === 'folder'
+        ? createFolderNode()
+        : createContentNode();
 
-            children: [
-              ...(Array.isArray(
-                parentNode.children
-              )
-                ? parentNode.children
-                : []),
+    const parentPathWithoutLastNode =
+      parentPath.length >= 3
+        ? parentPath.slice(0, -2)
+        : [];
 
-              newChild,
-            ],
-          })
-        );
+    const selectedNodeIndex =
+      parentPath[parentPath.length - 1];
 
-      updateChapters(
-        nextChapters
+    const parentChildren =
+      parentPathWithoutLastNode.length === 0
+        ? chapters
+        : getNodeByPath(
+            chapters,
+            parentPathWithoutLastNode
+          )?.children || [];
+
+    if (
+      !Array.isArray(parentChildren) ||
+      typeof selectedNodeIndex !==
+        'number'
+    ) {
+      return;
+    }
+
+    const nextChapters =
+      cloneDeep(chapters);
+
+    const siblingList =
+      parentPathWithoutLastNode.length === 0
+        ? nextChapters
+        : getNodeByPath(
+            nextChapters,
+            parentPathWithoutLastNode
+          )?.children;
+
+    if (!Array.isArray(siblingList)) {
+      return;
+    }
+
+    const insertIndex =
+      selectedNodeIndex + 1;
+
+    siblingList.splice(
+      insertIndex,
+      0,
+      newChild
+    );
+
+    updateChapters(
+      nextChapters
+    );
+
+    const newChildPath =
+      parentPathWithoutLastNode.length === 0
+        ? [insertIndex]
+        : [
+            ...parentPathWithoutLastNode,
+            'children',
+            insertIndex,
+          ];
+
+    setSelectedPath(
+      newChildPath
+    );
+
+    if (
+      type === 'folder'
+    ) {
+      setExpandedNodes(
+        (previous) => ({
+          ...previous,
+          [newChild.id]: true,
+        })
       );
+    }
 
-      const updatedParentNode =
-        getNodeByPath(
-          nextChapters,
-          parentPath
-        );
-
-      const children =
-        Array.isArray(
-          updatedParentNode?.children
-        )
-          ? updatedParentNode.children
-          : [];
-
-      const newChildIndex =
-        children.length - 1;
-
-      if (
-        updatedParentNode?.id
-      ) {
-        setExpandedNodes(
-          (previous) => ({
-            ...previous,
-
-            [updatedParentNode.id]:
-              true,
-          })
-        );
+    window.requestAnimationFrame(
+      () => {
+        if (
+          scrollContainerRef?.current
+        ) {
+          scrollContainerRef.current.scrollTo({
+            top: 500,
+            behavior: 'smooth',
+          });
+        }
       }
-
-      setSelectedPath([
-        ...parentPath,
-        'children',
-        newChildIndex,
-      ]);
-
-      if (type === 'folder') {
-        setExpandedNodes(
-          (previous) => ({
-            ...previous,
-            [newChild.id]: true,
-          })
-        );
-      }
-
-      scrollToTop();
-    },
-    [
-      chapters,
-      updateChapters,
-      scrollToTop,
-    ]
-  );
+    );
+  },
+  [
+    chapters,
+    updateChapters,
+    disabled,
+    isViewOnly,
+    scrollContainerRef,
+  ]
+);
 
   const renderNode = useCallback(
     (
@@ -778,8 +809,8 @@ export default function BookStructureEditor({
         node.type === 'folder';
 
       const isExpanded =
-        expandedNodes[node.id] !==
-        false;
+  expandedNodes[node.id] ===
+  true;
 
       const isSelected =
         Array.isArray(
@@ -1205,39 +1236,85 @@ export default function BookStructureEditor({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      appendText(
-                        '【概念】\n\n\n【辨證分析】\n\n\n【文獻別錄】\n\n'
-                      )
-                    }
-                    disabled={
-                      disabled ||
-                      isViewOnly
-                    }
-                    className="rounded-lg bg-[#E5E0D8]/60 px-3 py-2 text-[11px] text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:opacity-50"
-                  >
-                    📌 插入模板
-                  </button>
+                <div className="flex flex-wrap items-center gap-2">
+  <button
+    type="button"
+    onClick={() =>
+      appendText(
+        '【概念】\n\n\n【辨證分析】\n\n\n【文獻別錄】\n'
+      )
+    }
+    disabled={
+      disabled ||
+      isViewOnly
+    }
+    className="rounded-lg bg-[#E5E0D8]/60 px-3 py-2 text-[11px] text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:opacity-50"
+  >
+    📌 插入模板
+  </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      appendText(
-                        '| 項目 | 內容 | 備註 |\n| :--- | :--- | :--- |\n| 欄位1 | 欄位2 | 欄位3 |'
-                      )
-                    }
-                    disabled={
-                      disabled ||
-                      isViewOnly
-                    }
-                    className="rounded-lg bg-[#E5E0D8]/60 px-3 py-2 text-[11px] text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:opacity-50"
-                  >
-                    📊 插入表格
-                  </button>
-                </div>
+  <button
+    type="button"
+    onClick={() =>
+      appendText(
+        '| 項目 | 內容 | 備註 |\n| :--- | :--- | :--- |\n| 欄位1 | 欄位2 | 欄位3 |'
+      )
+    }
+    disabled={
+      disabled ||
+      isViewOnly
+    }
+    className="rounded-lg bg-[#E5E0D8]/60 px-3 py-2 text-[11px] text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:opacity-50"
+  >
+    📊 插入表格
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      addChild(
+        selectedPath,
+        'content'
+      )
+    }
+    disabled={
+      disabled ||
+      isViewOnly ||
+      !selectedNode ||
+      !Array.isArray(
+        selectedPath
+      ) ||
+      selectedPath.length === 0
+    }
+    title="在目前選取資料夾內新增內文"
+    className="rounded-xl border border-[#D9D1C7] bg-white px-4 py-2 text-sm font-bold text-[#3A4F3F] transition hover:border-[#3A4F3F] hover:bg-[#F7F4EF] disabled:cursor-not-allowed disabled:opacity-40"
+  >
+    ＋ 新增該資料夾內文
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      addChild(
+        selectedPath,
+        'folder'
+      )
+    }
+    disabled={
+      disabled ||
+      isViewOnly ||
+      !selectedNode ||
+      !Array.isArray(
+        selectedPath
+      ) ||
+      selectedPath.length === 0
+    }
+    title="在目前選取資料夾內新增子目錄"
+    className="rounded-xl border border-[#D9D1C7] bg-white px-4 py-2 text-sm font-bold text-[#3A4F3F] transition hover:border-[#3A4F3F] hover:bg-[#F7F4EF] disabled:cursor-not-allowed disabled:opacity-40"
+  >
+    ＋ 新增該資料子目錄
+  </button>
+</div>
               </div>
 
               <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 shadow-sm">

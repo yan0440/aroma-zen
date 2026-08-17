@@ -8,6 +8,7 @@
  * - 依分類顯示不同欄位
  * - 呼叫 AI 圖片匯入功能
  */
+
 import React, {
   useState,
   useEffect,
@@ -36,8 +37,9 @@ import {
   saveEntry,
 } from '../services/addEntryFirestore';
 
-
-const getFriendlyTransactionError = (error) => {
+const getFriendlyTransactionError = (
+  error
+) => {
   const code = String(
     error?.code || ''
   ).toLowerCase();
@@ -46,11 +48,16 @@ const getFriendlyTransactionError = (error) => {
     error?.message || ''
   ).toLowerCase();
 
-  if (code.includes('aborted') || message.includes('too much contention')
+  if (
+    code.includes('aborted') ||
+    message.includes('too much contention')
   ) {
     return '目前資料正在被其他人更新，請稍後再試。';
   }
-  if (code.includes('permission-denied') || code.includes('permissiondenied')
+
+  if (
+    code.includes('permission-denied') ||
+    code.includes('permissiondenied')
   ) {
     return '你沒有儲存這筆資料的權限。';
   }
@@ -62,18 +69,21 @@ const getFriendlyTransactionError = (error) => {
     return '資料狀態不符合儲存條件，請重新整理後再試。';
   }
 
-  if (code.includes('resource-exhausted') ||code.includes('resourceexhausted')
+  if (
+    code.includes('resource-exhausted') ||
+    code.includes('resourceexhausted')
   ) {
     return '目前系統資源不足，請稍後再試。';
   }
 
-  if (code.includes('unauthenticated')) {
+  if (
+    code.includes('unauthenticated')
+  ) {
     return '請先登入後再儲存。';
   }
 
   return '儲存失敗，請稍後再試一次。';
 };
-
 
 export default function AddEntryPage({
   onClose,
@@ -82,555 +92,676 @@ export default function AddEntryPage({
   isViewOnly = false,
   closeLabel = '',
 }) {
-  const contentRef = useRef(null);
-const originalDocumentIdRef = useRef('');
-const originalEntryKeyRef = useRef('');
+  const contentRef =
+    useRef(null);
 
-  const [lastNodeId, setLastNodeId] = useState(null);
-  const [saveError, setSaveError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState(getDefaultFormData());
-  const resolvedCloseLabel = closeLabel ||
-    (isViewOnly ? '關閉' : '取消');
+  const originalDocumentIdRef =
+    useRef('');
 
-  useEffect(() => {
-  if (!editingItem) {
-  originalDocumentIdRef.current = '';
-  originalEntryKeyRef.current = '';
+  const originalEntryKeyRef =
+    useRef('');
 
-  setFormData(
+  const [
+    lastNodeId,
+    setLastNodeId,
+  ] = useState(null);
+
+  const [
+    saveError,
+    setSaveError,
+  ] = useState('');
+
+  const [
+    isSaving,
+    setIsSaving,
+  ] = useState(false);
+
+  const [
+    formData,
+    setFormData,
+  ] = useState(
     getDefaultFormData()
   );
-  setLastNodeId(null);
-  setSaveError('');
-  return;
-}
 
-  const originalDocumentId = editingItem?.documentId || editingItem?.firestoreId || editingItem?.id || '';
-  const originalEntryKey = editingItem?.entryKey || getEntryKey(editingItem?.category || '', editingItem?.name || '');
+  const resolvedCloseLabel =
+    closeLabel ||
+    (isViewOnly
+      ? '關閉'
+      : '取消');
 
-originalDocumentIdRef.current =
-  originalDocumentId;
+  useEffect(() => {
+    if (!editingItem) {
+      originalDocumentIdRef.current =
+        '';
 
-originalEntryKeyRef.current =
-  originalEntryKey;
+      originalEntryKeyRef.current =
+        '';
 
-const editingData =
-  removeFirestoreFields(
-    editingItem
-  );
+      setFormData(
+        getDefaultFormData()
+      );
 
-const normalized =
-  convertObjectsToArrays(
-    editingData
-  ) || {};
+      setLastNodeId(null);
+      setSaveError('');
 
-  const defaultData =
-    getDefaultFormData();
+      return;
+    }
 
-  const normalizedBookDetails =
-    normalized.bookDetails &&
-    typeof normalized.bookDetails ===
-      'object'
-      ? normalized.bookDetails
-      : {};
+    const originalDocumentId =
+      editingItem?.documentId ||
+      editingItem?.firestoreId ||
+      editingItem?.id ||
+      '';
 
-  const normalizedKnowledgeDetails =
-    normalized.knowledgeDetails &&
-    typeof normalized.knowledgeDetails ===
-      'object'
-      ? normalized.knowledgeDetails
-      : {};
+    const originalEntryKey =
+      editingItem?.entryKey ||
+      getEntryKey(
+        editingItem?.category ||
+          '',
+        editingItem?.name ||
+          ''
+      );
 
-  const normalizedChapters =
-    normalizeChapters(
-      normalizedBookDetails.chapters
-    );
+    originalDocumentIdRef.current =
+      originalDocumentId;
 
-  const normalizedSections =
-    normalizeArray(
-      normalizedKnowledgeDetails.sections
-    );
+    originalEntryKeyRef.current =
+      originalEntryKey;
 
-  const nextFormData = {
-    ...defaultData,
-    ...normalized,
+    const editingData =
+      removeFirestoreFields(
+        editingItem
+      );
 
-    category:
-      normalized.category ||
-      '精油',
+    const normalized =
+      convertObjectsToArrays(
+        editingData
+      ) || {};
 
-    name:
-      normalized.name ||
-      '',
+    const defaultData =
+      getDefaultFormData();
 
-    bookDetails: {
-      ...defaultData.bookDetails,
-      ...normalizedBookDetails,
+    const normalizedBookDetails =
+      normalized.bookDetails &&
+      typeof normalized.bookDetails ===
+        'object'
+        ? normalized.bookDetails
+        : {};
 
-      author:
-        normalizedBookDetails.author ||
+    const normalizedKnowledgeDetails =
+      normalized.knowledgeDetails &&
+      typeof normalized.knowledgeDetails ===
+        'object'
+        ? normalized.knowledgeDetails
+        : {};
+
+    const normalizedChapters =
+      normalizeChapters(
+        normalizedBookDetails.chapters
+      );
+
+    const normalizedSections =
+      normalizeArray(
+        normalizedKnowledgeDetails.sections
+      );
+
+    const nextFormData = {
+      ...defaultData,
+      ...normalized,
+
+      category:
+        normalized.category ||
+        '精油',
+
+      name:
+        normalized.name ||
         '',
 
-      chapters:
-        normalizedChapters,
-    },
+      bookDetails: {
+        ...defaultData.bookDetails,
+        ...normalizedBookDetails,
 
-    knowledgeDetails: {
-      ...defaultData.knowledgeDetails,
-      ...normalizedKnowledgeDetails,
+        author:
+          normalizedBookDetails.author ||
+          '',
 
-      introduction:
-        normalizedKnowledgeDetails
-          .introduction || '',
+        chapters:
+          normalizedChapters,
+      },
 
-      sections:
-        normalizedSections,
-    },
+      knowledgeDetails: {
+        ...defaultData.knowledgeDetails,
+        ...normalizedKnowledgeDetails,
 
-    acuTable: {
-      ...defaultData.acuTable,
-      ...(normalized.acuTable || {}),
-    },
+        introduction:
+          normalizedKnowledgeDetails
+            .introduction ||
+          '',
 
-    acuDetails: {
-      ...defaultData.acuDetails,
-      ...(normalized.acuDetails || {}),
-    },
+        sections:
+          normalizedSections,
+      },
 
-    oilDetails: {
-      ...defaultData.oilDetails,
-      ...(normalized.oilDetails || {}),
-    },
+      acuTable: {
+        ...defaultData.acuTable,
+        ...(normalized.acuTable || {}),
+      },
 
-    entryKey:
-  originalEntryKey ||
-  normalized.entryKey ||
-  getEntryKey(
-    normalized.category || '',
-    normalized.name || ''
-  ),
+      acuDetails: {
+        ...defaultData.acuDetails,
+        ...(normalized.acuDetails || {}),
+      },
 
-documentId:
-  originalDocumentId,
+      oilDetails: {
+        ...defaultData.oilDetails,
+        ...(normalized.oilDetails || {}),
+      },
 
-firestoreId:
-  originalDocumentId,
+      entryKey:
+        originalEntryKey ||
+        normalized.entryKey ||
+        getEntryKey(
+          normalized.category ||
+            '',
+          normalized.name ||
+            ''
+        ),
 
-    sortName:
-      normalized.sortName ||
-      normalizeText(
-        normalized.name || ''
-      ),
+      documentId:
+        originalDocumentId,
 
-    searchKey:
-      normalized.searchKey || '',
+      firestoreId:
+        originalDocumentId,
 
-    sourceText:
-      normalized.sourceText || '',
+      sortName:
+        normalized.sortName ||
+        normalizeText(
+          normalized.name ||
+            ''
+        ),
 
-    createdAt:
-      normalized.createdAt || '',
+      searchKey:
+        normalized.searchKey ||
+        '',
 
-    updatedAt:
-      normalized.updatedAt || '',
-  };
+      sourceText:
+        normalized.sourceText ||
+        '',
 
-  console.log(
-    'AddEntryPage 載入資料：',
-    nextFormData
-  );
+      createdAt:
+        normalized.createdAt ||
+        '',
 
-  console.log(
-    'AddEntryPage 載入 chapters：',
-    nextFormData.bookDetails.chapters
-  );
-
-  setFormData(nextFormData);
-  setSaveError('');
-}, [editingItem]);
-
- const addNode = useCallback(
-  (path = []) => {
-    const newNodeId =
-      `sub_${Date.now()}_${Math.floor(
-        Math.random() * 100000
-      )}`;
-
-    const newNode = {
-      id: newNodeId,
-      title: '',
-      type: 'content',
-      text: '',
-      children: [],
+      updatedAt:
+        normalized.updatedAt ||
+        '',
     };
 
-    setFormData((currentData) => {
-      const chapters =
-        normalizeChapters(
-          currentData.bookDetails?.chapters
-        );
+    setFormData(
+      nextFormData
+    );
 
-      const newChapters =
-        JSON.parse(
-          JSON.stringify(chapters)
-        );
+    setSaveError('');
+  }, [editingItem]);
 
-      if (
-        !Array.isArray(path) ||
-        path.length === 0
-      ) {
-        newChapters.push(newNode);
+  const addNode = useCallback(
+    (path = []) => {
+      const newNodeId =
+        `sub_${Date.now()}_${Math.floor(
+          Math.random() * 100000
+        )}`;
 
-        return {
-          ...currentData,
+      const newNode = {
+        id: newNodeId,
+        title: '',
+        type: 'content',
+        text: '',
+        children: [],
+      };
 
-          bookDetails: {
-            ...(currentData.bookDetails || {}),
-            chapters: newChapters,
-          },
-        };
-      }
-
-      let targetList = newChapters;
-      let targetNode = null;
-
-      for (
-        let index = 0;
-        index < path.length;
-        index += 1
-      ) {
-        const pathIndex = path[index];
-
-        if (
-          !Array.isArray(targetList) ||
-          !targetList[pathIndex]
-        ) {
-          targetNode = null;
-          break;
-        }
-
-        targetNode =
-          targetList[pathIndex];
-
-        if (
-          index < path.length - 1
-        ) {
-          targetNode.children =
-            normalizeArray(
-              targetNode.children
+      setFormData(
+        (currentData) => {
+          const chapters =
+            normalizeChapters(
+              currentData
+                ?.bookDetails
+                ?.chapters
             );
 
-          targetList =
-            targetNode.children;
+          const newChapters =
+            JSON.parse(
+              JSON.stringify(
+                chapters
+              )
+            );
+
+          if (
+            !Array.isArray(path) ||
+            path.length === 0
+          ) {
+            newChapters.push(
+              newNode
+            );
+
+            return {
+              ...currentData,
+
+              bookDetails: {
+                ...(currentData.bookDetails ||
+                  {}),
+                chapters:
+                  newChapters,
+              },
+            };
+          }
+
+          let targetList =
+            newChapters;
+
+          let targetNode =
+            null;
+
+          for (
+            let index = 0;
+            index < path.length;
+            index += 1
+          ) {
+            const pathIndex =
+              path[index];
+
+            if (
+              !Array.isArray(
+                targetList
+              ) ||
+              !targetList[pathIndex]
+            ) {
+              targetNode = null;
+              break;
+            }
+
+            targetNode =
+              targetList[pathIndex];
+
+            if (
+              index <
+              path.length - 1
+            ) {
+              targetNode.children =
+                normalizeArray(
+                  targetNode.children
+                );
+
+              targetList =
+                targetNode.children;
+            }
+          }
+
+          if (!targetNode) {
+            newChapters.push(
+              newNode
+            );
+
+            return {
+              ...currentData,
+
+              bookDetails: {
+                ...(currentData.bookDetails ||
+                  {}),
+                chapters:
+                  newChapters,
+              },
+            };
+          }
+
+          if (
+            targetNode.type ===
+            'folder'
+          ) {
+            targetNode.children =
+              normalizeArray(
+                targetNode.children
+              );
+
+            targetNode.children.push(
+              newNode
+            );
+          } else {
+            targetNode.type =
+              'folder';
+
+            targetNode.children = [
+              newNode,
+            ];
+          }
+
+          return {
+            ...currentData,
+
+            bookDetails: {
+              ...(currentData.bookDetails ||
+                {}),
+              chapters:
+                newChapters,
+            },
+          };
         }
-      }
+      );
 
-      if (!targetNode) {
-        newChapters.push(newNode);
+      setLastNodeId(
+        newNodeId
+      );
 
-        return {
-          ...currentData,
-
-          bookDetails: {
-            ...(currentData.bookDetails || {}),
-            chapters: newChapters,
-          },
-        };
-      }
-
-      if (
-        targetNode.type === 'folder'
-      ) {
-        targetNode.children =
-          normalizeArray(
-            targetNode.children
-          );
-
-        targetNode.children.push(
-          newNode
-        );
-      } else {
-        targetNode.type = 'folder';
-        targetNode.children = [
-          newNode,
-        ];
-      }
-
-      return {
-        ...currentData,
-
-        bookDetails: {
-          ...(currentData.bookDetails || {}),
-          chapters: newChapters,
-        },
-      };
-    });
-
-    setLastNodeId(newNodeId);
-  },
-  []
-);
+      window.requestAnimationFrame(
+        () => {
+          if (
+            contentRef.current
+          ) {
+            contentRef.current.scrollTo({
+              top: 0,
+              behavior: 'smooth',
+            });
+          }
+        }
+      );
+    },
+    []
+  );
 
   const inputClass = `w-full rounded-xl border border-[#E5E0D8] bg-white px-4 py-3 outline-none ${
-  isViewOnly
-    ? 'cursor-not-allowed opacity-70'
-    : 'focus:border-[#3A4F3F] focus:ring-2 focus:ring-[#3A4F3F]/10'
-}`;
+    isViewOnly
+      ? 'cursor-not-allowed opacity-70'
+      : 'focus:border-[#3A4F3F] focus:ring-2 focus:ring-[#3A4F3F]/10'
+  }`;
 
   const labelClass =
     'mb-2 block text-[13px] font-bold uppercase tracking-widest text-[#A39284]';
 
   const textareaClass =
-  `${inputClass} min-h-24 resize-y`;
+    `${inputClass} min-h-24 resize-y`;
 
-  const getValueByPath = useCallback(
-    (obj, path) => {
-      const value = path
-        .split('.')
-        .reduce(
-          (acc, key) => acc?.[key],
-          obj
-        );
+  const getValueByPath =
+    useCallback(
+      (object, path) => {
+        const value =
+          path
+            .split('.')
+            .reduce(
+              (current, key) =>
+                current?.[key],
+              object
+            );
 
-      return value ?? '';
-    },
-    []
-  );
+        return value ?? '';
+      },
+      []
+    );
 
-  const updateValueByPath = useCallback(
-    (path, value) => {
-      const keys = path.split('.');
+  const updateValueByPath =
+    useCallback(
+      (path, value) => {
+        const keys =
+          path.split('.');
 
-      setFormData((prev) => {
-        const next = {
-          ...prev,
-        };
-
-        let current = next;
-
-        for (
-          let i = 0;
-          i < keys.length - 1;
-          i++
-        ) {
-          current[keys[i]] = {
-            ...(current[keys[i]] || {}),
+        setFormData((previous) => {
+          const next = {
+            ...previous,
           };
 
-          current = current[keys[i]];
+          let current = next;
+
+          for (
+            let index = 0;
+            index <
+            keys.length - 1;
+            index += 1
+          ) {
+            current[keys[index]] = {
+              ...(current[keys[index]] ||
+                {}),
+            };
+
+            current =
+              current[keys[index]];
+          }
+
+          current[
+            keys[keys.length - 1]
+          ] = value;
+
+          return next;
+        });
+      },
+      []
+    );
+
+  const renderField =
+    useCallback(
+      (
+        label,
+        path,
+        placeholder = '',
+        isTextarea = false
+      ) => {
+        const value =
+          getValueByPath(
+            formData,
+            path
+          );
+
+        if (isViewOnly) {
+          const text =
+            String(
+              value || ''
+            ).trim();
+
+          if (!text) {
+            return null;
+          }
+
+          return (
+            <div>
+              <label
+                className={
+                  labelClass
+                }
+              >
+                {label}
+              </label>
+
+              <div className="whitespace-pre-wrap break-words rounded-xl border border-[#E5E0D8] bg-[#FBF9F6] px-4 py-3 leading-7 text-[#4B5563]">
+                {text}
+              </div>
+            </div>
+          );
         }
 
-        current[keys[keys.length - 1]] =
-          value;
+        return (
+          <div>
+            <label
+              className={
+                labelClass
+              }
+            >
+              {label}
+            </label>
 
-        return next;
-      });
-    },
-    []
-  );
-
-  const renderField = useCallback(
-  (
-    label,
-    path,
-    placeholder = '',
-    isTextarea = false
-  ) => {
-    const value = getValueByPath(
-      formData,
-      path
-    );
-
-    if (isViewOnly) {
-      const text = String(value || '').trim();
-
-      if (!text) {
-        return null;
-      }
-
-      return (
-        <div>
-          <label className={labelClass}>
-            {label}
-          </label>
-
-          <div className="whitespace-pre-wrap break-words rounded-xl border border-[#E5E0D8] bg-[#FBF9F6] px-4 py-3 leading-7 text-[#4B5563]">
-            {text}
+            {isTextarea ? (
+              <textarea
+                disabled={isSaving}
+                className={
+                  textareaClass
+                }
+                value={value}
+                placeholder={
+                  placeholder
+                }
+                onChange={(event) =>
+                  updateValueByPath(
+                    path,
+                    event.target
+                      .value
+                  )
+                }
+              />
+            ) : (
+              <input
+                disabled={isSaving}
+                className={
+                  inputClass
+                }
+                value={value}
+                placeholder={
+                  placeholder
+                }
+                onChange={(event) =>
+                  updateValueByPath(
+                    path,
+                    event.target
+                      .value
+                  )
+                }
+              />
+            )}
           </div>
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        <label className={labelClass}>
-          {label}
-        </label>
-
-        {isTextarea ? (
-          <textarea
-            disabled={isSaving}
-            className={textareaClass}
-            value={value}
-            placeholder={placeholder}
-            onChange={(event) =>
-              updateValueByPath(
-                path,
-                event.target.value
-              )
-            }
-          />
-        ) : (
-          <input
-            disabled={isSaving}
-            className={inputClass}
-            value={value}
-            placeholder={placeholder}
-            onChange={(event) =>
-              updateValueByPath(
-                path,
-                event.target.value
-              )
-            }
-          />
-        )}
-      </div>
-    );
-  },
-  [
-    formData,
-    getValueByPath,
-    updateValueByPath,
-    isViewOnly,
-    isSaving,
-    inputClass,
-    labelClass,
-    textareaClass,
-  ]
-);
-
-  const handleSave = useCallback(
-  async () => {
-    if (
-      isSaving ||
-      isViewOnly
-    ) {
-      return;
-    }
-
-    setSaveError('');
-
-    const category = String(
-      formData.category || ''
-    ).trim();
-
-    const name = String(
-      formData.name || ''
-    ).trim();
-
-    if (!name) {
-      setSaveError(
-        '請至少填寫名稱！'
-      );
-      return;
-    }
-
-    if (!category) {
-      setSaveError(
-        '請至少填寫分類與名稱！'
-      );
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-  const savedEntry =
-    await saveEntry({
-      formData: {
-        ...formData,
-        category,
-        name,
+        );
       },
+      [
+        formData,
+        getValueByPath,
+        updateValueByPath,
+        isViewOnly,
+        isSaving,
+        inputClass,
+        labelClass,
+        textareaClass,
+      ]
+    );
 
-      editingItem,
+  const handleSave =
+    useCallback(
+      async () => {
+        if (
+          isSaving ||
+          isViewOnly
+        ) {
+          return;
+        }
 
-      originalDocumentId:
-        originalDocumentIdRef.current,
+        setSaveError('');
 
-      originalEntryKey:
-        originalEntryKeyRef.current,
-    });
+        const category =
+          String(
+            formData.category ||
+              ''
+          ).trim();
 
-  if (
-    typeof onSaved === 'function'
-  ) {
-    onSaved(savedEntry);
-  } else {
-    onClose();
-  }
+        const name =
+          String(
+            formData.name ||
+              ''
+          ).trim();
 
-  window.alert(
-    editingItem
-      ? '✅ 資料已成功更新！'
-      : '✅ 資料已成功儲存！'
-  );
-}catch (error) {
-      console.error(
-        '寫入資料失敗：',
-        error
-      );
+        if (!name) {
+          setSaveError(
+            '請至少填寫名稱！'
+          );
+          return;
+        }
 
-      if (
-        error?.message ===
-          '已有相同分類與名稱的百科資料' ||
-        error?.message ===
-          '已存在相同分類與名稱的百科資料'
-      ) {
-        setSaveError(
-          error.message
-        );
-      } else if (
-        error?.message ===
-          '請至少填寫名稱！' ||
-        error?.message ===
-          '請至少填寫分類與名稱！'
-      ) {
-        setSaveError(
-          error.message
-        );
-      } else {
-        setSaveError(
-          getFriendlyTransactionError(
+        if (!category) {
+          setSaveError(
+            '請至少填寫分類與名稱！'
+          );
+          return;
+        }
+
+        setIsSaving(true);
+
+        try {
+          const savedEntry =
+            await saveEntry({
+              formData: {
+                ...formData,
+                category,
+                name,
+              },
+
+              editingItem,
+
+              originalDocumentId:
+                originalDocumentIdRef.current,
+
+              originalEntryKey:
+                originalEntryKeyRef.current,
+            });
+
+          if (
+            typeof onSaved ===
+            'function'
+          ) {
+            onSaved(savedEntry);
+          } else {
+            onClose();
+          }
+
+          window.alert(
+            editingItem
+              ? '✅ 資料已成功更新！'
+              : '✅ 資料已成功儲存！'
+          );
+        } catch (error) {
+          console.error(
+            '寫入資料失敗：',
             error
-          )
-        );
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  },
-  [
-  editingItem,
-  formData,
-  isSaving,
-  isViewOnly,
-  onClose,
-  onSaved,
-]
-);
+          );
+
+          if (
+            error?.message ===
+              '已有相同分類與名稱的百科資料' ||
+            error?.message ===
+              '已存在相同分類與名稱的百科資料'
+          ) {
+            setSaveError(
+              error.message
+            );
+          } else if (
+            error?.message ===
+              '請至少填寫名稱！' ||
+            error?.message ===
+              '請至少填寫分類與名稱！'
+          ) {
+            setSaveError(
+              error.message
+            );
+          } else {
+            setSaveError(
+              getFriendlyTransactionError(
+                error
+              )
+            );
+          }
+        } finally {
+          setIsSaving(false);
+        }
+      },
+      [
+        editingItem,
+        formData,
+        isSaving,
+        isViewOnly,
+        onClose,
+        onSaved,
+      ]
+    );
 
   return (
-    <div
-  ref={contentRef}
-  className="scrollbar-hidden h-full overflow-y-auto overscroll-contain px-6 py-6 md:px-10"
->
+    <div className="flex h-dvh w-screen min-h-0 flex-col overflow-hidden bg-[#FBF9F6]">
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#E5E0D8] bg-[#FBF9F6] px-6 py-5 md:px-10">
         <h2 className="text-xl font-black text-[#3A4F3F] md:text-3xl">
           {isViewOnly
             ? `檢視：${
-                formData.name || '百科資料'
+                formData.name ||
+                '百科資料'
               }`
             : editingItem
               ? '編輯百科資料'
@@ -640,137 +771,157 @@ firestoreId:
         <div className="flex shrink-0 gap-4">
           {!isViewOnly && (
             <AiImageImporter
-  category={formData.category}
-  disabled={isSaving}
-  isSaving={isSaving}
-  onData={(aiData) => {
-    if (!aiData) {
-      return;
-    }
+              category={
+                formData.category
+              }
+              disabled={isSaving}
+              isSaving={isSaving}
+              onData={(aiData) => {
+                if (!aiData) {
+                  return;
+                }
 
-    setFormData((currentData) => {
-      const mergeNonEmptyFields = (
-        oldData,
-        newData
-      ) => {
-        const result = {
-          ...(oldData || {}),
-        };
+                setFormData(
+                  (currentData) => {
+                    const mergeNonEmptyFields =
+                      (
+                        oldData,
+                        newData
+                      ) => {
+                        const result = {
+                          ...(oldData || {}),
+                        };
 
-        Object.entries(
-          newData || {}
-        ).forEach(([key, value]) => {
-          if (
-            value === undefined ||
-            value === null
-          ) {
-            return;
-          }
+                        Object.entries(
+                          newData || {}
+                        ).forEach(
+                          ([key, value]) => {
+                            if (
+                              value ===
+                                undefined ||
+                              value === null
+                            ) {
+                              return;
+                            }
 
-          if (
-            typeof value === 'string' &&
-            value.trim() === ''
-          ) {
-            return;
-          }
+                            if (
+                              typeof value ===
+                                'string' &&
+                              value.trim() ===
+                                ''
+                            ) {
+                              return;
+                            }
 
-          result[key] = value;
-        });
+                            result[key] =
+                              value;
+                          }
+                        );
 
-        return result;
-      };
+                        return result;
+                      };
 
-      const aiBookDetails = {
-        ...(aiData.bookDetails || {}),
-      };
+                    const aiBookDetails = {
+                      ...(aiData.bookDetails ||
+                        {}),
+                    };
 
-      const aiKnowledgeDetails = {
-        ...(aiData.knowledgeDetails || {}),
-      };
+                    const aiKnowledgeDetails = {
+                      ...(aiData.knowledgeDetails ||
+                        {}),
+                    };
 
-      const currentBookDetails = {
-        ...(currentData.bookDetails || {}),
-      };
+                    const currentBookDetails = {
+                      ...(currentData.bookDetails ||
+                        {}),
+                    };
 
-      const currentKnowledgeDetails = {
-        ...(currentData.knowledgeDetails || {}),
-      };
+                    const currentKnowledgeDetails = {
+                      ...(currentData.knowledgeDetails ||
+                        {}),
+                    };
 
-      const aiChapters =
-        Array.isArray(
-          aiBookDetails.chapters
-        )
-          ? normalizeChapters(
-              aiBookDetails.chapters
-            )
-          : normalizeChapters(
-              currentBookDetails.chapters
-            );
+                    const aiChapters =
+                      Array.isArray(
+                        aiBookDetails.chapters
+                      )
+                        ? normalizeChapters(
+                            aiBookDetails.chapters
+                          )
+                        : normalizeChapters(
+                            currentBookDetails.chapters
+                          );
 
-      const aiSections =
-        Array.isArray(
-          aiKnowledgeDetails.sections
-        )
-          ? normalizeArray(
-              aiKnowledgeDetails.sections
-            )
-          : normalizeArray(
-              currentKnowledgeDetails.sections
-            );
+                    const aiSections =
+                      Array.isArray(
+                        aiKnowledgeDetails.sections
+                      )
+                        ? normalizeArray(
+                            aiKnowledgeDetails.sections
+                          )
+                        : normalizeArray(
+                            currentKnowledgeDetails.sections
+                          );
 
-      return {
-        ...currentData,
+                    return {
+                      ...currentData,
 
-        ...mergeNonEmptyFields(
-          currentData,
-          aiData
-        ),
+                      ...mergeNonEmptyFields(
+                        currentData,
+                        aiData
+                      ),
 
-        category:
-          currentData.category,
+                      category:
+                        currentData.category,
 
-        oilDetails: mergeNonEmptyFields(
-          currentData.oilDetails,
-          aiData.oilDetails
-        ),
+                      oilDetails:
+                        mergeNonEmptyFields(
+                          currentData.oilDetails,
+                          aiData.oilDetails
+                        ),
 
-        acuTable: mergeNonEmptyFields(
-          currentData.acuTable,
-          aiData.acuTable
-        ),
+                      acuTable:
+                        mergeNonEmptyFields(
+                          currentData.acuTable,
+                          aiData.acuTable
+                        ),
 
-        acuDetails: mergeNonEmptyFields(
-          currentData.acuDetails,
-          aiData.acuDetails
-        ),
+                      acuDetails:
+                        mergeNonEmptyFields(
+                          currentData.acuDetails,
+                          aiData.acuDetails
+                        ),
 
-        bookDetails: {
-          ...currentBookDetails,
-          ...aiBookDetails,
+                      bookDetails: {
+                        ...currentBookDetails,
+                        ...aiBookDetails,
 
-          author:
-            aiBookDetails.author ||
-            currentBookDetails.author ||
-            '',
+                        author:
+                          aiBookDetails.author ||
+                          currentBookDetails.author ||
+                          '',
 
-          chapters: aiChapters,
-        },
+                        chapters:
+                          aiChapters,
+                      },
 
-        knowledgeDetails: {
-          ...currentKnowledgeDetails,
-          ...aiKnowledgeDetails,
+                      knowledgeDetails: {
+                        ...currentKnowledgeDetails,
+                        ...aiKnowledgeDetails,
 
-          introduction:
-            aiKnowledgeDetails.introduction ||
-            currentKnowledgeDetails.introduction ||
-            '',
+                        introduction:
+                          aiKnowledgeDetails.introduction ||
+                          currentKnowledgeDetails.introduction ||
+                          '',
 
-          sections: aiSections,
-        },
-      };
-    });
-  }}
-/>
+                        sections:
+                          aiSections,
+                      },
+                    };
+                  }
+                );
+              }}
+            />
           )}
 
           <button
@@ -796,36 +947,65 @@ firestoreId:
         </div>
       </header>
 
-      <main className="min-h-0 flex-1">
-        <div className="h-full overflow-y-auto overscroll-contain px-6 py-6 [scrollbar-gutter:stable] md:px-10">
+      <main className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div
+          ref={contentRef}
+          className="scrollbar-hidden min-h-0 h-full w-full overflow-y-auto overscroll-contain px-6 py-6 md:px-10"
+        >
           <div className="w-full space-y-6">
-            <div className="rounded-3xl border border-[#E5E0D8]/60 bg-white p-6 md:p-8">
+            <div className="w-full bg-transparent p-0">
               <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label className={labelClass}>
+                  <label
+                    className={
+                      labelClass
+                    }
+                  >
                     分類
                   </label>
 
                   <select
                     disabled={
-                      isViewOnly || isSaving
+                      isViewOnly ||
+                      isSaving
                     }
-                    className={inputClass}
-                    value={formData.category}
+                    className={
+                      inputClass
+                    }
+                    value={
+                      formData.category
+                    }
                     onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        category:
-                          event.target.value,
-                      }))
+                      setFormData(
+                        (previous) => ({
+                          ...previous,
+                          category:
+                            event.target
+                              .value,
+                        })
+                      )
                     }
                   >
-                    <option value="書籍">書籍</option>
-                    <option value="精油">精油</option>
-                    <option value="穴道">穴道</option>
-                    <option value="中藥">中藥</option>
-                    <option value="方劑">方劑
+                    <option value="書籍">
+                      書籍
                     </option>
+
+                    <option value="精油">
+                      精油
+                    </option>
+
+                    <option value="穴道">
+                      穴道
+                    </option>
+
+                    <option value="中藥">
+                      中藥
+                    </option>
+
+                    <option value="方劑">
+                      方劑
+                    </option>
+
                     <option value="其他">
                       名詞材料
                     </option>
@@ -833,22 +1013,34 @@ firestoreId:
                 </div>
 
                 <div>
-                  <label className={labelClass}>
+                  <label
+                    className={
+                      labelClass
+                    }
+                  >
                     名稱
                   </label>
 
                   <input
                     disabled={
-                      isViewOnly || isSaving
+                      isViewOnly ||
+                      isSaving
                     }
                     placeholder="輸入名稱"
-                    value={formData.name}
-                    className={inputClass}
+                    value={
+                      formData.name
+                    }
+                    className={
+                      inputClass
+                    }
                     onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
+                      setFormData(
+                        (previous) => ({
+                          ...previous,
+                          name: event.target
+                            .value,
+                        })
+                      )
                     }
                   />
                 </div>
@@ -856,30 +1048,42 @@ firestoreId:
                 {formData.category ===
                   '書籍' && (
                   <div className="md:col-span-2">
-                    <label className={labelClass}>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
                       作者 / 編著
                     </label>
 
                     <input
                       disabled={
-                        isViewOnly || isSaving
+                        isViewOnly ||
+                        isSaving
                       }
                       placeholder="輸入作者 / 編著"
                       value={
-                        formData.bookDetails
+                        formData
+                          .bookDetails
                           .author
                       }
-                      className={inputClass}
+                      className={
+                        inputClass
+                      }
                       onChange={(event) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          bookDetails: {
-                            ...prev.bookDetails,
-                            author:
-                              event.target
-                                .value,
-                          },
-                        }))
+                        setFormData(
+                          (previous) => ({
+                            ...previous,
+
+                            bookDetails: {
+                              ...previous.bookDetails,
+
+                              author:
+                                event.target
+                                  .value,
+                            },
+                          })
+                        )
                       }
                     />
                   </div>
@@ -887,23 +1091,37 @@ firestoreId:
               </div>
 
               <div className="mb-6 w-full">
-                <label className={labelClass}>
+                <label
+                  className={
+                    labelClass
+                  }
+                >
                   簡介描述
                 </label>
 
                 <textarea
                   disabled={
-                    isViewOnly || isSaving
+                    isViewOnly ||
+                    isSaving
                   }
                   placeholder="簡介描述"
-                  value={formData.description || ''}
-                  className={textareaClass}
+                  value={
+                    formData.description ||
+                    ''
+                  }
+                  className={
+                    textareaClass
+                  }
                   onChange={(event) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      description:
-                        event.target.value,
-                    }))
+                    setFormData(
+                      (previous) => ({
+                        ...previous,
+
+                        description:
+                          event.target
+                            .value,
+                      })
+                    )
                   }
                 />
               </div>
@@ -911,25 +1129,39 @@ firestoreId:
               {![
                 '穴道',
                 '精油',
-              ].includes(formData.category) && (
+              ].includes(
+                formData.category
+              ) && (
                 <div className="mb-6">
-                  <label className={labelClass}>
+                  <label
+                    className={
+                      labelClass
+                    }
+                  >
                     核心標籤
                   </label>
 
                   <input
                     disabled={
-                      isViewOnly || isSaving
+                      isViewOnly ||
+                      isSaving
                     }
                     placeholder="例如：解表、清熱"
-                    value={formData.tag}
-                    className={inputClass}
+                    value={
+                      formData.tag
+                    }
+                    className={
+                      inputClass
+                    }
                     onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        tag: event.target
-                          .value,
-                      }))
+                      setFormData(
+                        (previous) => ({
+                          ...previous,
+
+                          tag: event.target
+                            .value,
+                        })
+                      )
                     }
                   />
                 </div>
@@ -937,7 +1169,7 @@ firestoreId:
 
               {formData.category ===
                 '書籍' && (
-                <div className="max-h-[60vh] overflow-y-auto border-r border-[#E5E0D8]/30 pl-1 pr-6 [scrollbar-gutter:stable]">
+                <div className="min-h-0 w-full overflow-hidden pl-1 pr-1">
                   <BookStructureEditor
                     formData={formData}
                     setFormData={setFormData}
@@ -945,48 +1177,76 @@ firestoreId:
                     inputClass={inputClass}
                     addNode={addNode}
                     lastNodeId={lastNodeId}
-                    scrollContainerRef={contentRef}
+                    scrollContainerRef={
+                      contentRef
+                    }
                     disabled={
-                      isViewOnly || isSaving
+                      isViewOnly ||
+                      isSaving
                     }
                     isViewOnly={
-                      isViewOnly || isSaving
+                      isViewOnly ||
+                      isSaving
                     }
                   />
                 </div>
               )}
 
-              {formData.category === '其他' && (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {renderField('🗂️ 類型', 'type')}
-      {renderField('🏷️ 別名', 'alias')}
-      {renderField('🌐 英文名稱', 'englishName')}
-    </div>
+              {formData.category ===
+                '其他' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {renderField(
+                      '🗂️ 類型',
+                      'type'
+                    )}
 
-    {renderField(
-      '📖 詳細介紹',
-      'knowledgeDetails.introduction',
-      '輸入這個名詞或材料的完整介紹',
-      true
-    )}
+                    {renderField(
+                      '🏷️ 別名',
+                      'alias'
+                    )}
 
-    <div className="rounded-2xl border border-[#E5E0D8]/60 bg-[#FBF9F6] p-5">
-      <h3 className="mb-4 text-base font-bold text-[#3A4F3F]">
-        📚 內容
-      </h3>
+                    {renderField(
+                      '🌐 英文名稱',
+                      'englishName'
+                    )}
+                  </div>
 
-      <KnowledgeStructureEditor
-        formData={formData}
-        setFormData={setFormData}
-        labelClass={labelClass}
-        inputClass={inputClass}
-        disabled={isViewOnly || isSaving}
-        isViewOnly={isViewOnly || isSaving}
-      />
-    </div>
-  </div>
-)}
+                  {renderField(
+                    '📖 詳細介紹',
+                    'knowledgeDetails.introduction',
+                    '輸入這個名詞或材料的完整介紹',
+                    true
+                  )}
+
+                  <div className="rounded-2xl border border-[#E5E0D8]/60 bg-[#FBF9F6] p-5">
+                    <h3 className="mb-4 text-base font-bold text-[#3A4F3F]">
+                      📚 內容
+                    </h3>
+
+                    <KnowledgeStructureEditor
+                      formData={formData}
+                      setFormData={
+                        setFormData
+                      }
+                      labelClass={
+                        labelClass
+                      }
+                      inputClass={
+                        inputClass
+                      }
+                      disabled={
+                        isViewOnly ||
+                        isSaving
+                      }
+                      isViewOnly={
+                        isViewOnly ||
+                        isSaving
+                      }
+                    />
+                  </div>
+                </div>
+              )}
 
               {formData.category ===
                 '精油' && (
@@ -997,25 +1257,22 @@ firestoreId:
                     </span>
 
                     <div className="col-span-1 md:col-span-2">
-                      <label className={labelClass}>
+                      <label
+                        className={labelClass}
+                      >
                         適用體質與化學屬性標籤
                       </label>
 
                       <div className="flex gap-2">
-                        <input
-                          disabled={
-                            isViewOnly ||
-                            isSaving
-                          }
+                        <input disabled={isViewOnly ||isSaving}
                           placeholder="體質標籤"
-                          value={
-                            formData.constitutionTag
-                          }
+                          value={formData.constitutionTag}
                           className={inputClass}
                           onChange={(event) =>
                             setFormData(
-                              (prev) => ({
-                                ...prev,
+                              (previous) => ({
+                                ...previous,
+
                                 constitutionTag:
                                   event.target
                                     .value,
@@ -1031,13 +1288,17 @@ firestoreId:
                           }
                           placeholder="化學屬性標籤"
                           value={
-                            formData.chemicalTag
+                            formData
+                              .chemicalTag
                           }
-                          className={inputClass}
+                          className={
+                            inputClass
+                          }
                           onChange={(event) =>
                             setFormData(
-                              (prev) => ({
-                                ...prev,
+                              (previous) => ({
+                                ...previous,
+
                                 chemicalTag:
                                   event.target
                                     .value,
@@ -1087,8 +1348,8 @@ firestoreId:
               {formData.category ===
                 '穴道' && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {renderField('🌐 英文名稱', 'englishName')}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {renderField('🌐 英文名稱','englishName')}
                     {renderField('🆔 國際代碼','acuTable.code')}
                     {renderField('🎯 經絡','acuTable.meridian')}
                   </div>
@@ -1108,9 +1369,9 @@ firestoreId:
               {formData.category ===
                 '中藥' && (
                 <div className="mb-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {renderField('🗂️ 別名','alias')}
-                    {renderField('🌐 英文名稱', 'englishName')}
+                    {renderField('🌐 英文名稱','englishName')}
                     {renderField('🌿 科屬','family')}
                     {renderField('👅 性味','nature')}
                     {renderField('🎯 歸經','meridian')}
@@ -1134,7 +1395,7 @@ firestoreId:
               {formData.category ===
                 '方劑' && (
                 <div className="mb-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     {renderField('🗂️ 別名','alias')}
                     {renderField('🌱 來源','source')}
                     {renderField('✨ 功效','effect')}
