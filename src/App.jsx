@@ -8,6 +8,15 @@ import React, {
   memo,
 } from 'react';
 
+import {
+  collection,
+  onSnapshot,
+} from 'firebase/firestore';
+
+import {
+  db,
+} from './firebase';
+
 import { oilData } from './data/oilData.js';
 import { acuData } from './data/acuData.js';
 import { herbData } from './data/herbData.js';
@@ -777,73 +786,63 @@ export default function App() {
   );
 
   const loadFirstPage =
-    useCallback(
-      async (signal) => {
-        setIsLoading(true);
-        setDataError('');
-        setDbData([]);
+  useCallback(
+    async (signal) => {
+      setIsLoading(true);
+      setDataError('');
+      setLastDocument(null);
+      setHasMore(false);
+      setVisibleCount(PAGE_SIZE);
+
+      try {
+        const result =
+          await loadFirstEntriesPage({
+            category: selectedCategory,
+            pageSize: 200,
+          });
+
+        if (signal?.cancelled) {
+          return;
+        }
+
+        setLastDocument(
+          result?.lastDocument || null
+        );
+
+        setHasMore(
+          Boolean(result?.hasMore)
+        );
+
+        setIsUsingCache(false);
+      } catch (error) {
+        if (signal?.cancelled) {
+          return;
+        }
+
+        console.error(
+          'Firestore 第一頁讀取錯誤：',
+          error
+        );
+
+        setDataError(
+          `百科資料讀取失敗：${
+            error?.code ||
+            error?.message ||
+            '未知錯誤'
+          }`
+        );
+
         setLastDocument(null);
         setHasMore(false);
-        setVisibleCount(PAGE_SIZE);
-
-        try {
-          const result =
-            await loadFirstEntriesPage({
-              category: selectedCategory,
-              pageSize: 200,
-            });
-
-          if (signal?.cancelled) {
-            return;
-          }
-
-          setDbData(
-            Array.isArray(
-              result?.entries
-            )
-              ? result.entries
-              : []
-          );
-
-          setLastDocument(
-            result?.lastDocument || null
-          );
-
-          setHasMore(
-            Boolean(result?.hasMore)
-          );
-
-          setIsUsingCache(false);
-        } catch (error) {
-          if (signal?.cancelled) {
-            return;
-          }
-
-          console.error(
-            'Firestore 第一頁讀取錯誤：',
-            error
-          );
-
-          setDataError(
-            `百科資料讀取失敗：${
-              error?.code ||
-              error?.message ||
-              '未知錯誤'
-            }`
-          );
-
-          setDbData([]);
-          setLastDocument(null);
-          setHasMore(false);
-        } finally {
-          if (!signal?.cancelled) {
-            setIsLoading(false);
-          }
+      } finally {
+        if (!signal?.cancelled) {
+          setIsLoading(false);
         }
-      },
-      [selectedCategory]
-    );
-
+      }
+    },
+    [selectedCategory]
+  );
+  
   const loadMoreEntries =
     useCallback(async () => {
       if (
@@ -867,11 +866,6 @@ export default function App() {
           });
 
         const nextEntries =
-          Array.isArray(
-            result?.entries
-          )
-            ? result.entries
-            : [];
 
         setDbData((previous) => {
           const itemMap = new Map();
@@ -940,6 +934,55 @@ export default function App() {
       signal.cancelled = true;
     };
   }, [loadFirstPage]);
+
+  useEffect(() => {
+  const entriesRef = collection(
+    db,
+    'entries'
+  );
+
+  const unsubscribe = onSnapshot(
+    entriesRef,
+    (snapshot) => {
+      const nextEntries =
+        snapshot.docs.map(
+          (entryDoc) => ({
+            ...entryDoc.data(),
+            id: entryDoc.id,
+            documentId: entryDoc.id,
+            firestoreId: entryDoc.id,
+          })
+        );
+
+      setDbData(nextEntries);
+
+      setIsUsingCache(
+        snapshot.metadata.fromCache
+      );
+
+      setDataError('');
+      setIsLoading(false);
+    },
+    (error) => {
+      console.error(
+        '展示區即時同步失敗：',
+        error
+      );
+
+      setDataError(
+        `展示區資料同步失敗：${
+          error?.code ||
+          error?.message ||
+          '未知錯誤'
+        }`
+      );
+
+      setIsLoading(false);
+    }
+  );
+
+  return unsubscribe;
+}, []);
 
   useEffect(() => {
     const handleOnline = () => {

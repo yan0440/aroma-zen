@@ -72,7 +72,7 @@ const getLocationLabel = (
       ],
     },
     {
-      label: '上肢',
+      label: '上肢部',
       keywords: [
         '臂內',
         '上臂',
@@ -86,7 +86,7 @@ const getLocationLabel = (
       ],
     },
     {
-      label: '下肢',
+      label: '下肢部',
       keywords: [
         '髖',
         '臀',

@@ -649,7 +649,7 @@ export default function BookModal({
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="hidden h-12 w-1 shrink-0 rounded-full bg-[#6B9080] sm:block" />
+                    <div className="hidden h-10 w-1 shrink-0 rounded-full bg-[#6B9080] sm:block" />
 
                     <div className="min-w-0 flex-1">
                       {renderTitleWithAlias(
