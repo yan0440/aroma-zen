@@ -63,6 +63,7 @@ function parseAiJson(text) {
 export default function AiImageImporter({
   category,
   disabled = false,
+  isSaving = false,
   onData,
 }) {
   const fileRef = useRef(null);
@@ -466,13 +467,15 @@ ${category}
       />
 
       <button
-        type="button"
-        disabled={disabled || isReading}
-        onClick={() => fileRef.current?.click()}
-        className="px-6 py-2 bg-[#D7A85D] text-white rounded-full font-bold shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {isReading ? 'AI 讀取中...' : '📄 AI 讀取'}
-      </button>
+  type="button"
+  disabled={disabled || isSaving || isReading}
+  onClick={() => fileRef.current?.click()}
+  className="px-6 py-2 bg-[#D7A85D] text-white rounded-full font-bold shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+>
+  {isReading
+    ? 'AI 讀取中...'
+    : '📄 AI 讀取'}
+</button>
 
       {message && (
         <div

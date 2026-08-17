@@ -623,9 +623,9 @@ firestoreId:
 
   return (
     <div
-      ref={contentRef}
-      className="flex h-dvh w-screen flex-col overflow-hidden bg-[#FBF9F6]"
-    >
+  ref={contentRef}
+  className="scrollbar-hidden h-full overflow-y-auto overscroll-contain px-6 py-6 md:px-10"
+>
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#E5E0D8] bg-[#FBF9F6] px-6 py-5 md:px-10">
         <h2 className="text-xl font-black text-[#3A4F3F] md:text-3xl">
           {isViewOnly
@@ -642,6 +642,7 @@ firestoreId:
             <AiImageImporter
   category={formData.category}
   disabled={isSaving}
+  isSaving={isSaving}
   onData={(aiData) => {
     if (!aiData) {
       return;
@@ -944,6 +945,7 @@ firestoreId:
                     inputClass={inputClass}
                     addNode={addNode}
                     lastNodeId={lastNodeId}
+                    scrollContainerRef={contentRef}
                     disabled={
                       isViewOnly || isSaving
                     }

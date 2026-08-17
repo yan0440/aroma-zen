@@ -1,4 +1,3 @@
-
 /**
  * 書籍結構編輯器
  *
@@ -25,15 +24,20 @@ function AutoResizeTextarea({
   className = '',
   disabled = false,
 }) {
-  const textareaRef = useRef(null);
+  const textareaRef =
+    useRef(null);
 
   useEffect(() => {
-    const textarea = textareaRef.current;
+    const textarea =
+      textareaRef.current;
 
-    if (!textarea) return;
+    if (!textarea) {
+      return;
+    }
 
     textarea.style.height = '0px';
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    textarea.style.height =
+      `${textarea.scrollHeight}px`;
   }, [value]);
 
   return (
@@ -44,22 +48,31 @@ function AutoResizeTextarea({
       placeholder={placeholder}
       rows={1}
       disabled={disabled}
-      className={`${className} w-full overflow-hidden resize-none`}
+      className={`${className} w-full resize-none overflow-hidden`}
     />
   );
 }
 
 function restoreArray(value) {
-  if (!value) return [];
+  if (!value) {
+    return [];
+  }
 
   if (Array.isArray(value)) {
     return value;
   }
 
-  if (typeof value === 'object') {
+  if (
+    typeof value === 'object'
+  ) {
     return Object.keys(value)
-      .filter((key) => /^\d+$/.test(key))
-      .sort((a, b) => Number(a) - Number(b))
+      .filter((key) =>
+        /^\d+$/.test(key)
+      )
+      .sort(
+        (a, b) =>
+          Number(a) - Number(b)
+      )
       .map((key) => value[key]);
   }
 
@@ -67,21 +80,42 @@ function restoreArray(value) {
 }
 
 function normalizeNode(node) {
-  if (!node || typeof node !== 'object') {
+  if (
+    !node ||
+    typeof node !== 'object'
+  ) {
     return null;
   }
 
-  const normalizedType = node.type === 'folder' ? 'folder' : 'content';
+  const normalizedType =
+    node.type === 'folder'
+      ? 'folder'
+      : 'content';
 
   return {
     ...node,
+
     id:
       node.id ||
-      `${normalizedType}_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-    title: typeof node.title === 'string' ? node.title : '',
+      `${normalizedType}_${Date.now()}_${Math.floor(
+        Math.random() * 100000
+      )}`,
+
+    title:
+      typeof node.title === 'string'
+        ? node.title
+        : '',
+
     type: normalizedType,
-    text: typeof node.text === 'string' ? node.text : '',
-    children: restoreArray(node.children)
+
+    text:
+      typeof node.text === 'string'
+        ? node.text
+        : '',
+
+    children: restoreArray(
+      node.children
+    )
       .map(normalizeNode)
       .filter(Boolean),
   };
@@ -94,16 +128,29 @@ function normalizeChapters(value) {
 }
 
 function parseTitle(title = '') {
-  const match = title.match(/(.*?)[（(]別名[:：](.*?)[)）]/);
+  const match = title.match(
+    /(.*?)[（(]別名[:：](.*?)[)）]/
+  );
 
   return {
-    pureTitle: match ? match[1].trim() : title,
-    aliasText: match ? match[2].trim() : '',
+    pureTitle: match
+      ? match[1].trim()
+      : title,
+
+    aliasText: match
+      ? match[2].trim()
+      : '',
   };
 }
 
-function buildTitle(pureTitle, aliasText) {
-  if (!pureTitle && !aliasText) {
+function buildTitle(
+  pureTitle,
+  aliasText
+) {
+  if (
+    !pureTitle &&
+    !aliasText
+  ) {
     return '';
   }
 
@@ -120,29 +167,44 @@ function cloneDeep(value) {
   }
 
   try {
-    return JSON.parse(JSON.stringify(value));
+    return JSON.parse(
+      JSON.stringify(value)
+    );
   } catch {
     return value;
   }
 }
 
-function updateNestedState(currentData, path, updater) {
+function updateNestedState(
+  currentData,
+  path,
+  updater
+) {
   if (path.length === 0) {
     return typeof updater === 'function'
       ? updater(currentData)
       : updater;
   }
 
-  const [key, ...restPath] = path;
+  const [
+    key,
+    ...restPath
+  ] = path;
 
   if (Array.isArray(currentData)) {
-    return currentData.map((item, index) => {
-      if (index !== key) {
-        return item;
-      }
+    return currentData.map(
+      (item, index) => {
+        if (index !== key) {
+          return item;
+        }
 
-      return updateNestedState(item, restPath, updater);
-    });
+        return updateNestedState(
+          item,
+          restPath,
+          updater
+        );
+      }
+    );
   }
 
   if (
@@ -151,6 +213,7 @@ function updateNestedState(currentData, path, updater) {
   ) {
     return {
       ...currentData,
+
       [key]: updateNestedState(
         currentData[key],
         restPath,
@@ -162,7 +225,10 @@ function updateNestedState(currentData, path, updater) {
   return currentData;
 }
 
-function getNodeByPath(chapters, path) {
+function getNodeByPath(
+  chapters,
+  path
+) {
   let current = chapters;
 
   for (const key of path || []) {
@@ -176,11 +242,18 @@ function getNodeByPath(chapters, path) {
   return current;
 }
 
-function getPathNodes(chapters, path) {
+function getPathNodes(
+  chapters,
+  path
+) {
   const nodes = [];
   let current = chapters;
 
-  for (let i = 0; i < path.length; i += 2) {
+  for (
+    let i = 0;
+    i < path.length;
+    i += 2
+  ) {
     const index = path[i];
     const node = current?.[index];
 
@@ -189,7 +262,10 @@ function getPathNodes(chapters, path) {
     }
 
     nodes.push(node);
-    current = Array.isArray(node.children)
+
+    current = Array.isArray(
+      node.children
+    )
       ? node.children
       : [];
   }
@@ -197,37 +273,50 @@ function getPathNodes(chapters, path) {
   return nodes;
 }
 
-function findFirstEditableNode(chapters) {
-  const queue = chapters.map((node, index) => ({
-    node,
-    path: [index],
-  }));
+function findFirstEditableNode(
+  chapters
+) {
+  const queue = chapters.map(
+    (node, index) => ({
+      node,
+      path: [index],
+    })
+  );
 
   while (queue.length > 0) {
-    const current = queue.shift();
+    const current =
+      queue.shift();
 
     if (!current?.node) {
       continue;
     }
 
-    if (current.node.type === 'content') {
+    if (
+      current.node.type ===
+      'content'
+    ) {
       return current;
     }
 
-    const children = Array.isArray(current.node.children)
-      ? current.node.children
-      : [];
+    const children =
+      Array.isArray(
+        current.node.children
+      )
+        ? current.node.children
+        : [];
 
-    children.forEach((child, index) => {
-      queue.push({
-        node: child,
-        path: [
-          ...current.path,
-          'children',
-          index,
-        ],
-      });
-    });
+    children.forEach(
+      (child, index) => {
+        queue.push({
+          node: child,
+          path: [
+            ...current.path,
+            'children',
+            index,
+          ],
+        });
+      }
+    );
   }
 
   if (chapters.length > 0) {
@@ -242,7 +331,10 @@ function findFirstEditableNode(chapters) {
 
 function createFolderNode() {
   return {
-    id: `folder_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+    id: `folder_${Date.now()}_${Math.floor(
+      Math.random() * 100000
+    )}`,
+
     title: '',
     type: 'folder',
     children: [],
@@ -252,7 +344,10 @@ function createFolderNode() {
 
 function createContentNode() {
   return {
-    id: `content_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+    id: `content_${Date.now()}_${Math.floor(
+      Math.random() * 100000
+    )}`,
+
     title: '',
     type: 'content',
     children: [],
@@ -270,25 +365,75 @@ function getLevelLabel(level) {
     '項',
   ];
 
-  return labels[Math.min(level, labels.length - 1)];
+  return labels[
+    Math.min(
+      level,
+      labels.length - 1
+    )
+  ];
 }
 
 export default function BookStructureEditor({
   formData,
   setFormData,
+  scrollContainerRef,
   disabled = false,
   isViewOnly = false,
 }) {
-  const [selectedPath, setSelectedPath] = useState(null);
-  const [expandedNodes, setExpandedNodes] = useState({});
+  const [
+    selectedPath,
+    setSelectedPath,
+  ] = useState(null);
 
-  const rawChapters = useMemo(() => {
-    return formData?.bookDetails?.chapters ?? [];
-  }, [formData?.bookDetails?.chapters]);
+  const [
+    expandedNodes,
+    setExpandedNodes,
+  ] = useState({});
 
-  const chapters = useMemo(() => {
-    return normalizeChapters(rawChapters);
-  }, [rawChapters]);
+  const rawChapters = useMemo(
+    () =>
+      formData
+        ?.bookDetails
+        ?.chapters ?? [],
+    [
+      formData
+        ?.bookDetails
+        ?.chapters,
+    ]
+  );
+
+  const chapters = useMemo(
+    () =>
+      normalizeChapters(
+        rawChapters
+      ),
+    [rawChapters]
+  );
+
+  const scrollToTop =
+    useCallback(() => {
+      window.requestAnimationFrame(
+        () => {
+          if (
+            scrollContainerRef?.current
+          ) {
+            scrollContainerRef.current.scrollTo(
+              {
+                top: 0,
+                behavior: 'smooth',
+              }
+            );
+
+            return;
+          }
+
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+          });
+        }
+      );
+    }, [scrollContainerRef]);
 
   useEffect(() => {
     if (!chapters.length) {
@@ -296,135 +441,244 @@ export default function BookStructureEditor({
       return;
     }
 
-    const currentSelectedNode = selectedPath
-      ? getNodeByPath(chapters, selectedPath)
-      : null;
+    const currentSelectedNode =
+      selectedPath
+        ? getNodeByPath(
+            chapters,
+            selectedPath
+          )
+        : null;
 
     if (!currentSelectedNode) {
-      const firstNode = findFirstEditableNode(chapters);
+      const firstNode =
+        findFirstEditableNode(
+          chapters
+        );
 
-      setSelectedPath(firstNode?.path || [0]);
+      setSelectedPath(
+        firstNode?.path || [0]
+      );
     }
-  }, [chapters, selectedPath]);
+  }, [
+    chapters,
+    selectedPath,
+  ]);
 
   const selectedNode = useMemo(() => {
     if (!selectedPath) {
       return null;
     }
 
-    return getNodeByPath(chapters, selectedPath);
-  }, [chapters, selectedPath]);
+    return getNodeByPath(
+      chapters,
+      selectedPath
+    );
+  }, [
+    chapters,
+    selectedPath,
+  ]);
 
-  const breadcrumbNodes = useMemo(() => {
-    if (!selectedPath) {
-      return [];
-    }
+  const breadcrumbNodes =
+    useMemo(() => {
+      if (!selectedPath) {
+        return [];
+      }
 
-    return getPathNodes(chapters, selectedPath);
-  }, [chapters, selectedPath]);
+      return getPathNodes(
+        chapters,
+        selectedPath
+      );
+    }, [
+      chapters,
+      selectedPath,
+    ]);
 
-  const updateChapters = useCallback(
-    (nextChapters) => {
-      const normalizedChapters = normalizeChapters(nextChapters);
+  const updateChapters =
+    useCallback(
+      (nextChapters) => {
+        const normalizedChapters =
+          normalizeChapters(
+            nextChapters
+          );
 
-      setFormData((previousFormData) => {
-        const previousBookDetails =
-          previousFormData?.bookDetails || {};
+        setFormData(
+          (previousFormData) => {
+            const previousBookDetails =
+              previousFormData
+                ?.bookDetails || {};
 
-        return {
-          ...previousFormData,
-          bookDetails: {
-            ...previousBookDetails,
-            chapters: normalizedChapters,
-          },
-        };
-      });
+            return {
+              ...previousFormData,
+
+              bookDetails: {
+                ...previousBookDetails,
+                chapters:
+                  normalizedChapters,
+              },
+            };
+          }
+        );
+      },
+      [setFormData]
+    );
+
+  const toggleNode = useCallback(
+    (id) => {
+      setExpandedNodes(
+        (previous) => ({
+          ...previous,
+
+          [id]:
+            previous[id] === false,
+        })
+      );
     },
-    [setFormData]
+    []
   );
-
-  const toggleNode = useCallback((id) => {
-    setExpandedNodes((previous) => ({
-      ...previous,
-      [id]: previous[id] === false,
-    }));
-  }, []);
 
   const updateNode = useCallback(
     (path, updates) => {
-      if (!path || path.length === 0) {
+      if (
+        !path ||
+        path.length === 0
+      ) {
         return;
       }
 
-      const nextChapters = updateNestedState(
-        chapters,
-        path,
-        (node) => ({
-          ...node,
-          ...updates,
-        })
-      );
+      const nextChapters =
+        updateNestedState(
+          chapters,
+          path,
+          (node) => ({
+            ...node,
+            ...updates,
+          })
+        );
 
-      updateChapters(nextChapters);
+      updateChapters(
+        nextChapters
+      );
     },
-    [chapters, updateChapters]
+    [
+      chapters,
+      updateChapters,
+    ]
   );
 
   const deleteNode = useCallback(
     (path) => {
-      if (!path || path.length === 0) {
+      if (
+        !path ||
+        path.length === 0
+      ) {
         return;
       }
 
-      const nextChapters = cloneDeep(chapters);
+      const nextChapters =
+        cloneDeep(chapters);
 
       if (path.length === 1) {
-        const rootIndex = path[0];
+        const rootIndex =
+          path[0];
 
-        nextChapters.splice(rootIndex, 1);
-      } else {
-        const parentPath = path.slice(0, -2);
-        const childIndex = path[path.length - 1];
-        const parentNode = getNodeByPath(
-          nextChapters,
-          parentPath
+        nextChapters.splice(
+          rootIndex,
+          1
         );
+      } else {
+        const parentPath =
+          path.slice(0, -2);
+
+        const childIndex =
+          path[path.length - 1];
+
+        const parentNode =
+          getNodeByPath(
+            nextChapters,
+            parentPath
+          );
 
         if (
           parentNode &&
-          Array.isArray(parentNode.children)
+          Array.isArray(
+            parentNode.children
+          )
         ) {
-          parentNode.children.splice(childIndex, 1);
+          parentNode.children.splice(
+            childIndex,
+            1
+          );
         }
       }
 
-      updateChapters(nextChapters);
+      updateChapters(
+        nextChapters
+      );
+
       setSelectedPath(null);
     },
-    [chapters, updateChapters]
+    [
+      chapters,
+      updateChapters,
+    ]
   );
 
-  const addRootContent = useCallback(() => {
-    const newNode = createContentNode();
-    const nextChapters = [...chapters, newNode];
+  const addRootContent =
+    useCallback(() => {
+      const newNode =
+        createContentNode();
 
-    updateChapters(nextChapters);
-    setSelectedPath([nextChapters.length - 1]);
-  }, [chapters, updateChapters]);
+      const nextChapters = [
+        ...chapters,
+        newNode,
+      ];
 
-  const addRootFolder = useCallback(() => {
-    const newNode = createFolderNode();
-    const nextChapters = [...chapters, newNode];
+      updateChapters(
+        nextChapters
+      );
 
-    updateChapters(nextChapters);
+      setSelectedPath([
+        nextChapters.length - 1,
+      ]);
 
-    setSelectedPath([nextChapters.length - 1]);
+      scrollToTop();
+    }, [
+      chapters,
+      updateChapters,
+      scrollToTop,
+    ]);
 
-    setExpandedNodes((previous) => ({
-      ...previous,
-      [newNode.id]: true,
-    }));
-  }, [chapters, updateChapters]);
+  const addRootFolder =
+    useCallback(() => {
+      const newNode =
+        createFolderNode();
+
+      const nextChapters = [
+        ...chapters,
+        newNode,
+      ];
+
+      updateChapters(
+        nextChapters
+      );
+
+      setSelectedPath([
+        nextChapters.length - 1,
+      ]);
+
+      setExpandedNodes(
+        (previous) => ({
+          ...previous,
+          [newNode.id]: true,
+        })
+      );
+
+      scrollToTop();
+    }, [
+      chapters,
+      updateChapters,
+      scrollToTop,
+    ]);
 
   const addChild = useCallback(
     (parentPath, type = 'content') => {
@@ -433,40 +687,56 @@ export default function BookStructureEditor({
           ? createFolderNode()
           : createContentNode();
 
-      const nextChapters = updateNestedState(
-        chapters,
-        parentPath,
-        (parentNode) => ({
-          ...parentNode,
-          children: [
-            ...(Array.isArray(parentNode.children)
-              ? parentNode.children
-              : []),
-            newChild,
-          ],
-        })
+      const nextChapters =
+        updateNestedState(
+          chapters,
+          parentPath,
+          (parentNode) => ({
+            ...parentNode,
+
+            children: [
+              ...(Array.isArray(
+                parentNode.children
+              )
+                ? parentNode.children
+                : []),
+
+              newChild,
+            ],
+          })
+        );
+
+      updateChapters(
+        nextChapters
       );
 
-      updateChapters(nextChapters);
+      const updatedParentNode =
+        getNodeByPath(
+          nextChapters,
+          parentPath
+        );
 
-      const updatedParentNode = getNodeByPath(
-        nextChapters,
-        parentPath
-      );
+      const children =
+        Array.isArray(
+          updatedParentNode?.children
+        )
+          ? updatedParentNode.children
+          : [];
 
-      const children = Array.isArray(
-        updatedParentNode?.children
-      )
-        ? updatedParentNode.children
-        : [];
+      const newChildIndex =
+        children.length - 1;
 
-      const newChildIndex = children.length - 1;
+      if (
+        updatedParentNode?.id
+      ) {
+        setExpandedNodes(
+          (previous) => ({
+            ...previous,
 
-      if (updatedParentNode?.id) {
-        setExpandedNodes((previous) => ({
-          ...previous,
-          [updatedParentNode.id]: true,
-        }));
+            [updatedParentNode.id]:
+              true,
+          })
+        );
       }
 
       setSelectedPath([
@@ -476,32 +746,60 @@ export default function BookStructureEditor({
       ]);
 
       if (type === 'folder') {
-        setExpandedNodes((previous) => ({
-          ...previous,
-          [newChild.id]: true,
-        }));
+        setExpandedNodes(
+          (previous) => ({
+            ...previous,
+            [newChild.id]: true,
+          })
+        );
       }
+
+      scrollToTop();
     },
-    [chapters, updateChapters]
+    [
+      chapters,
+      updateChapters,
+      scrollToTop,
+    ]
   );
 
   const renderNode = useCallback(
-    (node, index, path, level = 0) => {
+    (
+      node,
+      index,
+      path,
+      level = 0
+    ) => {
       if (!node) {
         return null;
       }
 
-      const isFolder = node.type === 'folder';
-      const isExpanded = expandedNodes[node.id] !== false;
+      const isFolder =
+        node.type === 'folder';
+
+      const isExpanded =
+        expandedNodes[node.id] !==
+        false;
 
       const isSelected =
-        Array.isArray(selectedPath) &&
-        selectedPath.length === path.length &&
+        Array.isArray(
+          selectedPath
+        ) &&
+        selectedPath.length ===
+          path.length &&
         selectedPath.every(
-          (value, pathIndex) => value === path[pathIndex]
+          (
+            value,
+            pathIndex
+          ) =>
+            value ===
+            path[pathIndex]
         );
 
-      const { pureTitle, aliasText } = parseTitle(
+      const {
+        pureTitle,
+        aliasText,
+      } = parseTitle(
         node.title || ''
       );
 
@@ -516,91 +814,133 @@ export default function BookStructureEditor({
         >
           <button
             type="button"
-            onClick={() => setSelectedPath(path)}
-            className={`w-full text-left rounded-lg border px-3 py-2 transition ${
+            onClick={() =>
+              setSelectedPath(path)
+            }
+            className={`w-full rounded-lg border px-3 py-2 text-left transition ${
               isSelected
-                ? 'bg-[#6B9080] text-white border-[#6B9080]'
-                : 'bg-white text-[#3A4F3F] border-[#E5E0D8] hover:bg-[#F7F5F0]'
+                ? 'border-[#6B9080] bg-[#6B9080] text-white'
+                : 'border-[#E5E0D8] bg-white text-[#3A4F3F] hover:bg-[#F7F5F0]'
             }`}
           >
             <div className="flex items-center gap-2">
               {isFolder ? (
                 <span
                   role="button"
+                  tabIndex={0}
                   onClick={(event) => {
                     event.stopPropagation();
-                    toggleNode(node.id);
+
+                    toggleNode(
+                      node.id
+                    );
                   }}
-                  className="w-4 text-center text-xs"
+                  onKeyDown={(event) => {
+                    if (
+                      event.key ===
+                        'Enter' ||
+                      event.key ===
+                        ' '
+                    ) {
+                      event.preventDefault();
+
+                      toggleNode(
+                        node.id
+                      );
+                    }
+                  }}
+                  className="w-4 cursor-pointer text-center text-xs"
                 >
-                  {isExpanded ? '▼' : '▶'}
+                  {isExpanded
+                    ? '▼'
+                    : '▶'}
                 </span>
               ) : (
                 <span className="w-4" />
               )}
 
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/20 shrink-0">
+              <span className="shrink-0 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">
                 {label}
               </span>
 
-              <span className="truncate flex-1">
-                {pureTitle || '未命名'}
+              <span className="min-w-0 flex-1 truncate">
+                {pureTitle ||
+                  '未命名'}
+
                 {aliasText
                   ? `（別名：${aliasText}）`
                   : ''}
               </span>
 
-              {isFolder && node.text && (
-                <span className="text-[10px] opacity-80">
-                  有內文
-                </span>
-              )}
+              {isFolder &&
+                node.text && (
+                  <span className="text-[10px] opacity-80">
+                    有內文
+                  </span>
+                )}
             </div>
           </button>
 
-          {isFolder && isExpanded && (
-            <div className="pl-4 border-l border-[#E5E0D8] space-y-2">
-              {Array.isArray(node.children) &&
-                node.children.map((child, childIndex) =>
-                  renderNode(
-                    child,
-                    childIndex,
-                    [
-                      ...path,
-                      'children',
-                      childIndex,
-                    ],
-                    level + 1
-                  )
+          {isFolder &&
+            isExpanded && (
+              <div className="space-y-2 border-l border-[#E5E0D8] pl-4">
+                {Array.isArray(
+                  node.children
+                ) &&
+                  node.children.map(
+                    (
+                      child,
+                      childIndex
+                    ) =>
+                      renderNode(
+                        child,
+                        childIndex,
+                        [
+                          ...path,
+                          'children',
+                          childIndex,
+                        ],
+                        level + 1
+                      )
+                  )}
+
+                {!isViewOnly && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addChild(
+                          path,
+                          'content'
+                        )
+                      }
+                      disabled={
+                        disabled
+                      }
+                      className="rounded px-2 py-1 text-xs font-bold text-[#6B9080] hover:bg-[#6B9080]/10 hover:text-[#5A7B6D] disabled:opacity-50"
+                    >
+                      ＋ 新增內文
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addChild(
+                          path,
+                          'folder'
+                        )
+                      }
+                      disabled={
+                        disabled
+                      }
+                      className="rounded px-2 py-1 text-xs font-bold text-[#6B9080] hover:bg-[#6B9080]/10 hover:text-[#5A7B6D] disabled:opacity-50"
+                    >
+                      ＋ 新增子目錄
+                    </button>
+                  </div>
                 )}
-
-              {!isViewOnly && (
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addChild(path, 'content')
-                    }
-                    disabled={disabled}
-                    className="text-xs font-bold text-[#6B9080] hover:text-[#5A7B6D] px-2 py-1 rounded hover:bg-[#6B9080]/10 disabled:opacity-50"
-                  >
-                    ＋ 新增內文
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addChild(path, 'folder')
-                    }
-                    disabled={disabled}
-                    className="text-xs font-bold text-[#6B9080] hover:text-[#5A7B6D] px-2 py-1 rounded hover:bg-[#6B9080]/10 disabled:opacity-50"
-                  >
-                    ＋ 新增子目錄
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
         </div>
       );
     },
@@ -614,23 +954,36 @@ export default function BookStructureEditor({
     ]
   );
 
-  const selectedTitleParts = useMemo(() => {
-    return parseTitle(selectedNode?.title || '');
-  }, [selectedNode]);
+  const selectedTitleParts =
+    useMemo(
+      () =>
+        parseTitle(
+          selectedNode?.title ||
+            ''
+        ),
+      [selectedNode]
+    );
 
   const appendText = useCallback(
     (text) => {
-      if (!selectedNode || !selectedPath) {
+      if (
+        !selectedNode ||
+        !selectedPath
+      ) {
         return;
       }
 
-      const currentText = selectedNode.text || '';
+      const currentText =
+        selectedNode.text || '';
 
-      updateNode(selectedPath, {
-        text: currentText
-          ? `${currentText}\n${text}`
-          : text,
-      });
+      updateNode(
+        selectedPath,
+        {
+          text: currentText
+            ? `${currentText}\n${text}`
+            : text,
+        }
+      );
     },
     [
       selectedNode,
@@ -640,77 +993,101 @@ export default function BookStructureEditor({
   );
 
   return (
-    <div className="w-full bg-[#FCFBFA] flex flex-col overflow-hidden">
-      <main className="flex-1 min-h-0 flex overflow-hidden">
-        <aside className="w-[320px] shrink-0 border-r border-[#E5E0D8] bg-[#F7F5F0] flex flex-col min-h-0">
-          <div className="shrink-0 p-4 border-b border-[#E5E0D8]">
+    <div className="flex w-full flex-col overflow-hidden bg-[#FCFBFA]">
+      <main className="flex min-h-0 flex-1 overflow-hidden">
+        <aside className="flex min-h-0 w-[320px] shrink-0 flex-col border-r border-[#E5E0D8] bg-[#F7F5F0]">
+          <div className="shrink-0 border-b border-[#E5E0D8] p-4">
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={addRootContent}
-                disabled={disabled || isViewOnly}
-                className="w-full py-3 bg-[#6B9080] text-white rounded-xl font-bold hover:bg-[#5A7B6D] disabled:opacity-50"
+                onClick={
+                  addRootContent
+                }
+                disabled={
+                  disabled ||
+                  isViewOnly
+                }
+                className="w-full rounded-xl bg-[#6B9080] py-3 font-bold text-white hover:bg-[#5A7B6D] disabled:opacity-50"
               >
                 ＋ 新增內文
               </button>
 
               <button
                 type="button"
-                onClick={addRootFolder}
-                disabled={disabled || isViewOnly}
-                className="w-full py-3 bg-white border border-[#E5E0D8] text-[#3A4F3F] rounded-xl font-bold hover:bg-[#F7F5F0] disabled:opacity-50"
+                onClick={
+                  addRootFolder
+                }
+                disabled={
+                  disabled ||
+                  isViewOnly
+                }
+                className="w-full rounded-xl border border-[#E5E0D8] bg-white py-3 font-bold text-[#3A4F3F] hover:bg-[#F7F5F0] disabled:opacity-50"
               >
                 ＋ 新增篇章
               </button>
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 [scrollbar-gutter:stable]">
+          <div className="scrollbar-hidden min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
             {chapters.length > 0 ? (
-              chapters.map((chapter, index) =>
-                renderNode(
-                  chapter,
-                  index,
-                  [index],
-                  0
-                )
+              chapters.map(
+                (chapter, index) =>
+                  renderNode(
+                    chapter,
+                    index,
+                    [index],
+                    0
+                  )
               )
             ) : (
-              <div className="text-center text-sm text-gray-400 py-8">
+              <div className="py-8 text-center text-sm text-gray-400">
                 目前沒有內容，請先新增一筆。
               </div>
             )}
           </div>
         </aside>
 
-        <section className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-[#FCFBFA] p-6 [scrollbar-gutter:stable]">
+        <section className="scrollbar-hidden min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#FCFBFA] p-6">
           {selectedNode ? (
             <div className="w-full space-y-6">
-              <div className="text-sm text-[#6B9080] flex items-center gap-1 flex-wrap">
-                {breadcrumbNodes.map((node, index) => (
-                  <React.Fragment
-                    key={node.id || index}
-                  >
-                    <span>
-                      {node.type === 'folder'
-                        ? getLevelLabel(index)
-                        : '內文'}{' '}
-                      {node.title?.trim() || '未命名'}
-                    </span>
+              <div className="flex flex-wrap items-center gap-1 text-sm text-[#6B9080]">
+                {breadcrumbNodes.map(
+                  (node, index) => (
+                    <React.Fragment
+                      key={
+                        node.id ||
+                        index
+                      }
+                    >
+                      <span>
+                        {node.type ===
+                        'folder'
+                          ? getLevelLabel(
+                              index
+                            )
+                          : '內文'}{' '}
+                        {node.title?.trim() ||
+                          '未命名'}
+                      </span>
 
-                    {index < breadcrumbNodes.length - 1 && (
-                      <span>›</span>
-                    )}
-                  </React.Fragment>
-                ))}
+                      {index <
+                        breadcrumbNodes.length -
+                          1 && (
+                        <span>›</span>
+                      )}
+                    </React.Fragment>
+                  )
+                )}
               </div>
 
-              <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="space-y-4 rounded-2xl border border-[#E5E0D8] bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold px-2 py-1 rounded bg-[#E5E0D8] text-[#3A4F3F]">
-                    {selectedNode.type === 'folder'
+                  <span className="rounded bg-[#E5E0D8] px-2 py-1 text-xs font-bold text-[#3A4F3F]">
+                    {selectedNode.type ===
+                    'folder'
                       ? getLevelLabel(
-                          breadcrumbNodes.length - 1
+                          breadcrumbNodes.length -
+                            1
                         )
                       : '內文'}
                   </span>
@@ -718,72 +1095,104 @@ export default function BookStructureEditor({
                   <button
                     type="button"
                     onClick={() =>
-                      deleteNode(selectedPath)
+                      deleteNode(
+                        selectedPath
+                      )
                     }
-                    disabled={disabled || isViewOnly}
+                    disabled={
+                      disabled ||
+                      isViewOnly
+                    }
                     className="ml-auto text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
                   >
                     刪除
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="mb-2 block text-sm font-medium">
                       名稱
                     </label>
 
                     <input
-                      value={selectedTitleParts.pureTitle}
-                      onChange={(event) =>
-                        updateNode(selectedPath, {
-                          title: buildTitle(
-                            event.target.value,
-                            selectedTitleParts.aliasText
-                          ),
-                        })
+                      value={
+                        selectedTitleParts.pureTitle
                       }
-                      disabled={disabled || isViewOnly}
-                      className="w-full border border-[#E5E0D8] rounded-xl px-3 py-2 outline-none"
+                      onChange={(event) =>
+                        updateNode(
+                          selectedPath,
+                          {
+                            title: buildTitle(
+                              event.target.value,
+                              selectedTitleParts.aliasText
+                            ),
+                          }
+                        )
+                      }
+                      disabled={
+                        disabled ||
+                        isViewOnly
+                      }
+                      className="w-full rounded-xl border border-[#E5E0D8] px-3 py-2 outline-none"
                       placeholder="輸入名稱"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="mb-2 block text-sm font-medium">
                       別名
                     </label>
 
                     <input
-                      value={selectedTitleParts.aliasText}
-                      onChange={(event) =>
-                        updateNode(selectedPath, {
-                          title: buildTitle(
-                            selectedTitleParts.pureTitle,
-                            event.target.value
-                          ),
-                        })
+                      value={
+                        selectedTitleParts.aliasText
                       }
-                      disabled={disabled || isViewOnly}
-                      className="w-full border border-[#E5E0D8] rounded-xl px-3 py-2 outline-none text-[#6B9080] disabled:bg-[#F7F5F0]"
+                      onChange={(event) =>
+                        updateNode(
+                          selectedPath,
+                          {
+                            title: buildTitle(
+                              selectedTitleParts.pureTitle,
+                              event.target.value
+                            ),
+                          }
+                        )
+                      }
+                      disabled={
+                        disabled ||
+                        isViewOnly
+                      }
+                      className="w-full rounded-xl border border-[#E5E0D8] px-3 py-2 text-[#6B9080] outline-none disabled:bg-[#F7F5F0]"
                       placeholder="輸入別名"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="mb-2 block text-sm font-medium">
                       類型
                     </label>
 
                     <select
-                      value={selectedNode.type || 'content'}
-                      onChange={(event) =>
-                        updateNode(selectedPath, {
-                          type: event.target.value,
-                        })
+                      value={
+                        selectedNode.type ||
+                        'content'
                       }
-                      disabled={disabled || isViewOnly}
-                      className="w-full md:w-48 border border-[#E5E0D8] rounded-xl px-3 py-2 outline-none bg-white disabled:bg-[#F7F5F0]"
+                      onChange={(event) =>
+                        updateNode(
+                          selectedPath,
+                          {
+                            type:
+                              event.target
+                                .value,
+                          }
+                        )
+                      }
+                      disabled={
+                        disabled ||
+                        isViewOnly
+                      }
+                      className="w-full rounded-xl border border-[#E5E0D8] bg-white px-3 py-2 outline-none disabled:bg-[#F7F5F0] md:w-48"
                     >
                       <option value="content">
                         內文
@@ -796,7 +1205,7 @@ export default function BookStructureEditor({
                   </div>
                 </div>
 
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() =>
@@ -804,8 +1213,11 @@ export default function BookStructureEditor({
                         '【概念】\n\n\n【辨證分析】\n\n\n【文獻別錄】\n\n'
                       )
                     }
-                    disabled={disabled || isViewOnly}
-                    className="text-[11px] bg-[#E5E0D8]/60 hover:bg-[#E5E0D8] text-[#3A4F3F] px-3 py-2 rounded-lg disabled:opacity-50"
+                    disabled={
+                      disabled ||
+                      isViewOnly
+                    }
+                    className="rounded-lg bg-[#E5E0D8]/60 px-3 py-2 text-[11px] text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:opacity-50"
                   >
                     📌 插入模板
                   </button>
@@ -817,53 +1229,69 @@ export default function BookStructureEditor({
                         '| 項目 | 內容 | 備註 |\n| :--- | :--- | :--- |\n| 欄位1 | 欄位2 | 欄位3 |'
                       )
                     }
-                    disabled={disabled || isViewOnly}
-                    className="text-[11px] bg-[#E5E0D8]/60 hover:bg-[#E5E0D8] text-[#3A4F3F] px-3 py-2 rounded-lg disabled:opacity-50"
+                    disabled={
+                      disabled ||
+                      isViewOnly
+                    }
+                    className="rounded-lg bg-[#E5E0D8]/60 px-3 py-2 text-[11px] text-[#3A4F3F] hover:bg-[#E5E0D8] disabled:opacity-50"
                   >
                     📊 插入表格
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-sm">
-                <label className="block text-sm font-medium mb-3">
+              <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 shadow-sm">
+                <label className="mb-3 block text-sm font-medium">
                   內文
                 </label>
 
                 <AutoResizeTextarea
-                  value={selectedNode.text || ''}
-                  onChange={(event) =>
-                    updateNode(selectedPath, {
-                      text: event.target.value,
-                    })
+                  value={
+                    selectedNode.text ||
+                    ''
                   }
-                  disabled={disabled || isViewOnly}
+                  onChange={(event) =>
+                    updateNode(
+                      selectedPath,
+                      {
+                        text: event.target.value,
+                      }
+                    )
+                  }
+                  disabled={
+                    disabled ||
+                    isViewOnly
+                  }
                   placeholder="在此輸入詳細內容..."
-                  className="w-full min-h-[520px] p-4 bg-[#FCFBFA] text-sm border border-[#E5E0D8] rounded-xl outline-none leading-relaxed"
+                  className="min-h-[520px] rounded-xl border border-[#E5E0D8] bg-[#FCFBFA] p-4 text-sm leading-relaxed outline-none"
                 />
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-400">
-              <div className="text-center space-y-3">
+            <div className="flex h-full items-center justify-center text-gray-400">
+              <div className="space-y-3 text-center">
                 <p>目前尚未選擇內容。</p>
 
                 {!isViewOnly && (
-                  <div className="flex gap-2 justify-center">
+                  <div className="flex justify-center gap-2">
                     <button
                       type="button"
-                      onClick={addRootContent}
+                      onClick={
+                        addRootContent
+                      }
                       disabled={disabled}
-                      className="px-4 py-2 rounded-lg bg-[#6B9080] text-white disabled:opacity-50"
+                      className="rounded-lg bg-[#6B9080] px-4 py-2 text-white disabled:opacity-50"
                     >
                       新增內文
                     </button>
 
                     <button
                       type="button"
-                      onClick={addRootFolder}
+                      onClick={
+                        addRootFolder
+                      }
                       disabled={disabled}
-                      className="px-4 py-2 rounded-lg bg-white border border-[#E5E0D8] text-[#3A4F3F] disabled:opacity-50"
+                      className="rounded-lg border border-[#E5E0D8] bg-white px-4 py-2 text-[#3A4F3F] disabled:opacity-50"
                     >
                       新增篇章
                     </button>
