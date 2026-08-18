@@ -100,12 +100,24 @@ export default function AiImageImporter({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setMessage('圖片或 PDF 大小不能超過 10MB。');
-      return;
-    }
+    if (file.size > 7 * 1024 * 1024) {
+  setMessage(
+    '圖片或 PDF 大小不能超過 7MB。'
+  );
+  return;
+}
 
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+    const trimmedApiKey =
+  String(apiKey || '').trim();
+
+if (!trimmedApiKey) {
+  setMessage(
+    '找不到 Gemini API Key，請確認根目錄的 .env.local 使用 VITE_GEMINI_API_KEY，並重新啟動 npm run dev。'
+  );
+  return;
+}
 
     if (!apiKey) {
       setMessage('找不到 Gemini API Key，請檢查 .env.local。');
@@ -367,7 +379,9 @@ ${category}
 `;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(
+  trimmedApiKey
+)}`,
         {
           method: 'POST',
           headers: {
@@ -398,17 +412,69 @@ ${category}
         }
       );
 
-      const result = await response.json();
+      const result =
+  await response.json().catch(
+    () => ({})
+  );
 
-      if (!response.ok) {
-  if (response.status === 429) {
+if (!response.ok) {
+  const apiMessage =
+    result?.error?.message ||
+    '';
+
+  if (
+    response.status === 400
+  ) {
     throw new Error(
-      'Gemini 免費額度已用完，請稍後再試。不要連續重複上傳。'
+      `Gemini 請求格式錯誤：${
+        apiMessage ||
+        '請確認圖片、PDF 或模型設定。'
+      }`
+    );
+  }
+
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+    throw new Error(
+      `Gemini API Key 無效或沒有權限：${
+        apiMessage ||
+        '請確認 API Key、API 啟用狀態與限制設定。'
+      }`
+    );
+  }
+
+  if (
+    response.status === 404
+  ) {
+    throw new Error(
+      `找不到 Gemini 模型或 API 端點：${
+        apiMessage ||
+        '請確認模型名稱。'
+      }`
+    );
+  }
+
+  if (
+    response.status === 413
+  ) {
+    throw new Error(
+      '上傳檔案太大，請縮小圖片或 PDF 後再試。'
+    );
+  }
+
+  if (
+    response.status === 429
+  ) {
+    throw new Error(
+      'Gemini 免費額度或請求次數已用完，請稍後再試。不要連續重複上傳。'
     );
   }
 
   throw new Error(
-    result?.error?.message || 'Gemini API 呼叫失敗'
+    apiMessage ||
+      `Gemini API 呼叫失敗，HTTP ${response.status}`
   );
 }
 

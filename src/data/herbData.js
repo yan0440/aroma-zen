@@ -6,6 +6,7 @@ export const herbData = [
     category: "中藥", // 這裡設為「中藥」
     tag: "補血、潤瀉",
     description: "《景岳全書．本草正》：「當歸，其味甘而重，故專能補血；其氣輕而辛，故又能行血。補中有動，行中有補，誠血中之氣藥，亦血中之聖藥也。」",
+    englishName:'Chinese Angelica Root',
     family: '繖形科',      // 科屬
     nature: '甘、辛，溫',// 性味
     meridian: '歸肝、心、脾經',  // 歸經

@@ -167,10 +167,6 @@ function EntryCard({
         <span className="text-[14px] text-[#A39284]">
           點擊查看詳細內容
         </span>
-
-        <span className="text-[16px] font-semibold text-[#6B9080] transition-transform group-hover:translate-x-1">
-          →
-        </span>
       </div>
     </button>
   );
@@ -239,7 +235,7 @@ export default function OtherCategoryView({
               event.target.value
             )
           }
-          placeholder="搜尋名詞、用品或相關說明..."
+          placeholder="搜尋名詞、用品或相關說明"
           className="w-full rounded-2xl border border-[#E6DDD3] bg-white px-4 py-3 text-[15px] text-[#3A4F3F] outline-none transition focus:border-[#3A4F3F]/30"
         />
       </div>

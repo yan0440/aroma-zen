@@ -1365,7 +1365,7 @@ export default function App() {
 
               <input
                 type="text"
-                placeholder="搜尋名稱、英文、經絡或功效標籤..."
+                placeholder="搜尋名稱、英文、經絡或功效標籤"
                 value={searchQuery}
                 onChange={(event) =>
                   setSearchQuery(
