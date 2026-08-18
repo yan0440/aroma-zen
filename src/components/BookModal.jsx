@@ -269,7 +269,7 @@ export default function BookModal({
                     key={rowIndex}
                     className={`border-b border-[#EEE8DF] last:border-b-0 ${
                       rowIndex === 0
-                        ? 'bg-[#3A4F3F] text-white'
+  ? 'bg-[#E4D2BDFF] text-[#3A4F3F]'
                         : 'text-[#45584B] hover:bg-[#FCFAF6]'
                     }`}
                   >
@@ -561,7 +561,7 @@ export default function BookModal({
     }
 
     return (
-      <div className="space-y-3 text-[15px] leading-8 text-[#3A4F3F]">
+      <div className="space-y-3 text-[17px] leading-8 text-[#3A4F3F]">
         {result}
       </div>
     );
