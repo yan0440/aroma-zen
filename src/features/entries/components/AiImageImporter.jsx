@@ -14,7 +14,8 @@ import React, {
   useState,
 } from 'react';
 
-const GEMINI_MODEL = 'gemini-3.5-flash';
+const GEMINI_MODEL =
+  'gemini-3.5-flash-lite';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_IMAGE_SIZE = 7 * 1024 * 1024;
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
