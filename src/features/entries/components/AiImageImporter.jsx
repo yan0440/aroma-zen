@@ -103,7 +103,7 @@ ${category || ''}
 - 外觀描述 → oilDetails.appearance
 - 應用歷史與相關神話 → oilDetails.historyMyth
 - 化學結構 → oilDetails.chemistry
-- 屬性補充 → oilDetails.attribute
+- 屬性 → oilDetails.attribute
 - 注意事項 → oilDetails.caution
 - 心靈療效 → oilDetails.mindEffect
 - 身體療效 → oilDetails.bodyEffect
@@ -194,6 +194,8 @@ ${category || ''}
 14. 功效第一行視為主治，遇到「古典：」與「現代：」則歸類到「古代功效」與「現代功效」。
 15. 如果文件內容不清楚，請填入空字串，不要猜測。
 16. 請確保回傳內容能直接通過 JSON.parse()。
+17.精油的文檔顯示之文字則放在外觀描述；項目內容顯示未知就不特別標記未知
+
 
 單筆資料格式：
 {
