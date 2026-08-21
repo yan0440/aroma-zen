@@ -7,13 +7,12 @@ const getLocationLabel = (location) => {
   const text = String(location || '').trim();
   if (!text) return '';
   const locationRules = [
-    { label: '頭面部', keywords: ['面部', '頭側部'] },
-    { label: '頸肩部', keywords: ['鎖骨', '頸', '脖', '項', '喉', '肩', '頸部'] },
-    { label: '胸腹部', keywords: ['胸', '乳', '心前區', '腹', '臍', '肚', '胸部', '腹部'] },
-    { label: '背腰部', keywords: ['背', '脊', '腰', '骶', '脊柱', '背部', '腰部'] },
-    { label: '上肢部', keywords: ['臂內', '上臂', '前臂', '肘', '手', '腕', '掌', '指', '肩臂'] },
-    { label: '下肢部', keywords: ['髖', '臀', '大腿', '膝', '小腿', '踝', '足', '腳', '趾', '下肢'] },
-    { label: '全身', keywords: ['全身', '身體', '軀幹'] },
+    { label: '頭面頸項部', keywords: ['面部', '頭側部','顏面','面頰部','上唇部','鼻孔','頸外側部'] },
+    { label: '胸腹部', keywords: ['胸部', '腹部','鎖骨', '頸部','肩胛骨','腹股溝','腹中部','腹直肌'] },
+    { label: '背腰部', keywords: ['背部', '腰部'] },
+    { label: '上肢部', keywords: ['臂內', '上臂', '前臂','肩臂','腕掌側','臂外','肱二頭肌','肘橫紋','橈側'] },
+    { label: '下肢部', keywords: ['下肢', '大腿'] },
+    { label: '全身', keywords: ['全身', '身體',] },
   ];
   const matchedRule = locationRules.find((rule) => rule.keywords.some((keyword) => text.includes(keyword)));
   return matchedRule ? matchedRule.label : '';
