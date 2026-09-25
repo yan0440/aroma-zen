@@ -54,7 +54,7 @@ export const LOCATION_RULES = [
       '小腿',
       '足背',
       '足大',
-      '足大',
+      '足內',
     ],
   },
 ];
