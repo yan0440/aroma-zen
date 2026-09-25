@@ -1,6 +1,6 @@
 export const LOCATION_RULES = [
   {
-    label: '頭面頸項部',
+    label: '頭面部',
     keywords: [
       '面部',
       '頭側部',
@@ -54,13 +54,7 @@ export const LOCATION_RULES = [
       '小腿',
       '足背',
       '足大',
-    ],
-  },
-  {
-    label: '全身',
-    keywords: [
-      '全身',
-      '身體',
+      '足大',
     ],
   },
 ];

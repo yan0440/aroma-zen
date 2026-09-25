@@ -108,7 +108,7 @@ export default function LoginPage({
             disabled={isLoading}
             className="rounded-xl bg-[#3A5546] px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoading ? '登入中...' : '登入'}
+            {isLoading ? '登入中' : '登入'}
           </button>
         </div>
       </form>
