@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200;300;400;500;600;700;800;900&family=Chiron+Hei+HK:wght@200;300;400;500;600&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&display=swap');
 
 @import "tailwindcss";
 
@@ -7,6 +7,25 @@
     "Chiron GoRound TC",
     "Microsoft JhengHei",
     sans-serif;
+
+  /* 主頁用：乾淨的黑體 + 優雅的英文斜體 */
+  --font-ui:
+    "Chiron Hei HK",
+    "PingFang TC",
+    "Microsoft JhengHei",
+    sans-serif;
+
+  --font-latin:
+    "Cormorant Garamond",
+    "Times New Roman",
+    serif;
+
+  /* 主頁配色：霧白、深森林綠、鼠尾草綠 */
+  --color-paper: #f5f6f2;
+  --color-ink: #1b2a22;
+  --color-leaf-deep: #24382e;
+  --color-leaf: #6f8f7e;
+  --color-line: #e2e6df;
 }
 
 :root {
@@ -17,6 +36,11 @@
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
 }
 
 html,
@@ -50,4 +74,21 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+/* 主頁頂部：三團柔和的色彩光暈（薰衣草、薄荷、蜜桃） */
+.hero-wash {
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(55% 75% at 88% 6%, #e6ddf3 0%, transparent 62%),
+    radial-gradient(50% 70% at 4% 96%, #d5e8dd 0%, transparent 60%),
+    radial-gradient(45% 60% at 58% 106%, #f7e4d3 0%, transparent 62%);
+}
+
+/* 小小的葉子花紋，往下慢慢淡出 */
+.hero-pattern {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96' fill='none' stroke='%2324382e' stroke-opacity='.16' stroke-width='1' stroke-linecap='round'><g transform='translate(16 34) rotate(-35)'><path d='M0 0C6-6 16-7 24-3C18 3 8 5 0 0Z'/><path d='M1 0L21-2'/></g><g transform='translate(70 80) rotate(145)'><path d='M0 0C6-6 16-7 24-3C18 3 8 5 0 0Z'/><path d='M1 0L21-2'/></g><circle cx='72' cy='22' r='1.5' fill='%2324382e' fill-opacity='.16' stroke='none'/><circle cx='26' cy='80' r='1.5' fill='%2324382e' fill-opacity='.16' stroke='none'/></svg>");
+  background-size: 96px 96px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
 }

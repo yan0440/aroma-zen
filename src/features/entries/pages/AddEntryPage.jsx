@@ -32,7 +32,7 @@ import {
 } from '../utils/addEntryUtils';
 
 import { saveEntry } from '../services/addEntryFirestore';
-
+import './AddEntryPage.css';
 const getFriendlyTransactionError = (error) => {
   const code = String(error?.code || '').toLowerCase();
   const message = String(error?.message || '').toLowerCase();
@@ -249,7 +249,7 @@ export default function AddEntryPage({
   }, []);
 
   return (
-    <div className="flex h-dvh min-h-0 w-screen min-w-0 flex-col overflow-hidden bg-[#FBF9F6]">
+    <div className="entry-editor-page flex h-dvh min-h-0 w-full min-w-0 flex-col overflow-hidden bg-[#FBF9F6]">
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-[#E5E0D8] bg-[#FBF9F6] px-6 py-5 md:px-10">
         <h2 className="text-xl font-black text-[#3A4F3F] md:text-3xl">{isViewOnly ? `檢視：${formData.name || '百科資料'}` : editingItem ? '編輯百科資料' : '新增百科資料'}</h2>
         <div className="flex shrink-0 gap-4">

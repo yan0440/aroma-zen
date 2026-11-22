@@ -1,0 +1,228 @@
+/* 新增／編輯百科頁：共用 App 外觀設定 */
+
+.entry-editor-page {
+  --editor-bg: var(--app-bg, #fdfbf7);
+  --editor-surface: var(--app-surface, #fffdf8);
+  --editor-soft: var(--app-surface-soft, #f0f3eb);
+  --editor-input: var(--app-input, #ffffff);
+  --editor-text: var(--app-text, #283c32);
+  --editor-muted: var(--app-muted, #657565);
+  --editor-border: var(--app-border, #dce2d7);
+  --editor-accent: var(--app-accent, #405e4c);
+
+  --editor-primary-bg: #405e4c;
+  --editor-primary-text: #fffdf8;
+
+  --editor-error-bg: #fbefec;
+  --editor-error-text: #9c544b;
+  --editor-error-border: #e7c6bf;
+
+  background: var(--editor-bg);
+  color: var(--editor-text);
+  color-scheme: light;
+}
+
+:root[data-app-theme='dark'] .entry-editor-page {
+  --editor-primary-bg: #b4cfb4;
+  --editor-primary-text: #17291e;
+
+  --editor-error-bg: #402b2b;
+  --editor-error-text: #edb6ac;
+  --editor-error-border: #6b4541;
+
+  color-scheme: dark;
+}
+
+/* 頁首 */
+
+.entry-editor-page > header {
+  flex-wrap: wrap;
+  border-color: var(--editor-border);
+  background: var(--editor-soft);
+}
+
+.entry-editor-page > header > h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--editor-text);
+}
+
+.entry-editor-page > header > div {
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 標籤與標題 */
+
+.entry-editor-page label {
+  color: var(--editor-muted);
+}
+
+.entry-editor-page [class~='text-[#3A4F3F]'] {
+  color: var(--editor-text);
+}
+
+.entry-editor-page [class~='text-[#A39284]'] {
+  color: var(--editor-muted);
+}
+
+/* 目前頁面使用的固定背景色 */
+
+.entry-editor-page [class~='bg-white'] {
+  background-color: var(--editor-surface);
+}
+
+.entry-editor-page [class~='bg-[#FBF9F6]'] {
+  background-color: var(--editor-soft);
+}
+
+/* 基本屬性區、內容區與欄位邊框 */
+
+.entry-editor-page [class~='border-[#E5E0D8]'],
+.entry-editor-page [class~='border-[#E5E0D8]/50'],
+.entry-editor-page [class~='border-[#E5E0D8]/60'] {
+  border-color: var(--editor-border);
+}
+
+/* 輸入欄位 */
+
+.entry-editor-page input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
+.entry-editor-page textarea,
+.entry-editor-page select {
+  border-color: var(--editor-border);
+  background-color: var(--editor-input);
+  color: var(--editor-text);
+  caret-color: var(--editor-text);
+}
+
+.entry-editor-page input::placeholder,
+.entry-editor-page textarea::placeholder {
+  color: var(--editor-muted);
+  opacity: 0.8;
+}
+
+.entry-editor-page select option {
+  background-color: var(--editor-input);
+  color: var(--editor-text);
+}
+
+/* 輸入焦點 */
+
+.entry-editor-page input:focus-visible,
+.entry-editor-page textarea:focus-visible,
+.entry-editor-page select:focus-visible {
+  border-color: var(--editor-accent);
+  outline: 2px solid var(--editor-accent);
+  outline-offset: 2px;
+  --tw-ring-color: transparent;
+}
+
+/* 儲存中及唯讀欄位 */
+
+.entry-editor-page input:disabled,
+.entry-editor-page textarea:disabled,
+.entry-editor-page select:disabled {
+  background-color: var(--editor-soft);
+  color: var(--editor-muted);
+  cursor: not-allowed;
+  opacity: 1;
+  -webkit-text-fill-color: var(--editor-muted);
+}
+
+/* 瀏覽器自動填入 */
+
+.entry-editor-page input:-webkit-autofill,
+.entry-editor-page input:-webkit-autofill:hover,
+.entry-editor-page input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--editor-text);
+  -webkit-box-shadow:
+    0 0 0 1000px var(--editor-input) inset;
+  caret-color: var(--editor-text);
+}
+
+/* renderField 的唯讀內容 */
+
+.entry-editor-page [class~='text-[#4B5563]'] {
+  color: var(--editor-text);
+}
+
+/* 上下方的儲存按鈕 */
+
+.entry-editor-page button[class~='bg-[#3A4F3F]'] {
+  border: 1px solid var(--editor-primary-bg);
+  background: var(--editor-primary-bg);
+  color: var(--editor-primary-text);
+}
+
+.entry-editor-page button[class~='bg-[#3A4F3F]']:hover:not(:disabled) {
+  background: var(--editor-primary-bg);
+  color: var(--editor-primary-text);
+  box-shadow: 0 0 0 3px rgb(107 144 128 / 18%);
+}
+
+/* 返回／取消按鈕 */
+
+.entry-editor-page button[class~='text-[#A39284]'] {
+  border-radius: 12px;
+  color: var(--editor-muted);
+}
+
+.entry-editor-page button[class~='text-[#A39284]']:hover:not(:disabled) {
+  background: var(--editor-soft);
+  color: var(--editor-text);
+}
+
+/* 按鈕焦點與停用狀態 */
+
+.entry-editor-page button:focus-visible {
+  outline: 2px solid var(--editor-accent);
+  outline-offset: 3px;
+}
+
+.entry-editor-page button:disabled {
+  cursor: not-allowed;
+}
+
+/* 儲存錯誤提示 */
+
+.entry-editor-page [class~='border-red-200'][class~='bg-red-50'] {
+  border-color: var(--editor-error-border);
+  background-color: var(--editor-error-bg);
+  color: var(--editor-error-text);
+}
+
+/* 夜晚模式下，降低面板陰影強度 */
+
+:root[data-app-theme='dark']
+  .entry-editor-page [class~='shadow-xl'],
+:root[data-app-theme='dark']
+  .entry-editor-page [class~='shadow-lg'] {
+  box-shadow: 0 16px 40px -24px rgb(0 0 0 / 65%);
+}
+
+/* 捲動區 */
+
+.entry-editor-page [class~='overflow-y-auto'] {
+  scrollbar-color: var(--editor-border) var(--editor-bg);
+}
+
+/* 手機版頁首 */
+
+@media (max-width: 640px) {
+  .entry-editor-page > header {
+    gap: 16px;
+    padding: 18px 20px;
+  }
+
+  .entry-editor-page > header > div {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .entry-editor-page > header > div > button {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+}

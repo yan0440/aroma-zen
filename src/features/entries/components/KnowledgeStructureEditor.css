@@ -1,0 +1,268 @@
+/* 知識結構編輯器：沿用 App 外觀設定 */
+
+.knowledge-structure-editor {
+  --knowledge-bg: var(--app-bg, #fdfbf7);
+  --knowledge-surface: var(--app-surface, #fffdf8);
+  --knowledge-soft: var(--app-surface-soft, #f0f3eb);
+  --knowledge-input: var(--app-input, #ffffff);
+  --knowledge-text: var(--app-text, #283c32);
+  --knowledge-muted: var(--app-muted, #657565);
+  --knowledge-border: var(--app-border, #dce2d7);
+  --knowledge-accent: var(--app-accent, #405e4c);
+  --knowledge-selected: var(--app-selected, #e3ebdf);
+  --knowledge-selected-text: var(--app-selected-text, #2f4c3b);
+
+  --knowledge-primary-bg: #405e4c;
+  --knowledge-primary-text: #fffdf8;
+
+  --knowledge-danger-bg: #fbefec;
+  --knowledge-danger-text: #9c544b;
+
+  min-width: 0;
+  color: var(--knowledge-text);
+  color-scheme: light;
+}
+
+:root[data-app-theme='dark'] .knowledge-structure-editor {
+  --knowledge-primary-bg: #b4cfb4;
+  --knowledge-primary-text: #17291e;
+
+  --knowledge-danger-bg: #402b2b;
+  --knowledge-danger-text: #edb6ac;
+
+  color-scheme: dark;
+}
+
+/* 主要章節、子章節、表格面板 */
+
+.knowledge-structure-editor [class~='bg-white'],
+.knowledge-structure-editor [class~='bg-[#FFFDF8]'],
+.knowledge-structure-editor [class~='bg-[#FFFDF9]'] {
+  background-color: var(--knowledge-surface);
+}
+
+/* 說明區、文字區塊與副標題區塊 */
+
+.knowledge-structure-editor [class~='bg-[#FBF9F6]'] {
+  background-color: var(--knowledge-soft);
+}
+
+/* 章節層級標籤與表格標頭 */
+
+.knowledge-structure-editor [class~='bg-[#F4EFE7]'] {
+  background-color: var(--knowledge-selected);
+}
+
+/* 邊框 */
+
+.knowledge-structure-editor [class~='border-[#E5E0D8]'],
+.knowledge-structure-editor [class~='border-[#D8C8B8]'],
+.knowledge-structure-editor [class~='border-[#C8A97E]'] {
+  border-color: var(--knowledge-border);
+}
+
+/* 子章節的左側層級線 */
+
+.knowledge-structure-editor [class~='border-l-[#C8A97E]'] {
+  border-left-color: var(--knowledge-accent);
+}
+
+/* 唯讀副標題的左側強調線 */
+
+.knowledge-structure-editor
+  [class~='border-l-4'][class~='border-[#C8A97E]'] {
+  border-left-color: var(--knowledge-accent);
+}
+
+/* 主要標題與唯讀內文 */
+
+.knowledge-structure-editor [class~='text-[#3A4F3F]'],
+.knowledge-structure-editor [class~='text-[#2F4638]'],
+.knowledge-structure-editor [class~='text-[#4B5563]'] {
+  color: var(--knowledge-text);
+}
+
+/* 說明與空白狀態 */
+
+.knowledge-structure-editor [class~='text-[#A39284]'] {
+  color: var(--knowledge-muted);
+}
+
+/* 章節層級標籤 */
+
+.knowledge-structure-editor
+  span[class~='bg-[#F4EFE7]'][class~='text-[#7C8A80]'] {
+  color: var(--knowledge-selected-text);
+}
+
+/* 表格標頭、唯讀表格左欄 */
+
+.knowledge-structure-editor [class~='text-[#4E6654]'] {
+  color: var(--knowledge-selected-text);
+}
+
+/* 強調文字、展開收合與新增按鈕 */
+
+.knowledge-structure-editor [class~='text-[#6B9080]'] {
+  color: var(--knowledge-accent);
+}
+
+/* 欄位標籤 */
+
+.knowledge-structure-editor label {
+  color: var(--knowledge-muted);
+}
+
+/* 輸入欄位 */
+
+.knowledge-structure-editor input,
+.knowledge-structure-editor textarea,
+.knowledge-structure-editor select {
+  border-color: var(--knowledge-border);
+  background-color: var(--knowledge-input);
+  color: var(--knowledge-text);
+  caret-color: var(--knowledge-text);
+}
+
+.knowledge-structure-editor input::placeholder,
+.knowledge-structure-editor textarea::placeholder {
+  color: var(--knowledge-muted);
+  opacity: 0.8;
+}
+
+.knowledge-structure-editor select option {
+  background: var(--knowledge-input);
+  color: var(--knowledge-text);
+}
+
+/* 欄位焦點 */
+
+.knowledge-structure-editor input:focus-visible,
+.knowledge-structure-editor textarea:focus-visible,
+.knowledge-structure-editor select:focus-visible {
+  border-color: var(--knowledge-accent);
+  outline: 2px solid var(--knowledge-accent);
+  outline-offset: 2px;
+  --tw-ring-color: transparent;
+}
+
+/* 停用欄位 */
+
+.knowledge-structure-editor input:disabled,
+.knowledge-structure-editor textarea:disabled,
+.knowledge-structure-editor select:disabled {
+  background: var(--knowledge-soft);
+  color: var(--knowledge-muted);
+  cursor: not-allowed;
+  opacity: 1;
+  -webkit-text-fill-color: var(--knowledge-muted);
+}
+
+/* 自動填入 */
+
+.knowledge-structure-editor input:-webkit-autofill,
+.knowledge-structure-editor input:-webkit-autofill:hover,
+.knowledge-structure-editor input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--knowledge-text);
+  -webkit-box-shadow:
+    0 0 0 1000px var(--knowledge-input) inset;
+  caret-color: var(--knowledge-text);
+}
+
+/* 表格內容 */
+
+.knowledge-structure-editor table {
+  color: var(--knowledge-text);
+}
+
+.knowledge-structure-editor td,
+.knowledge-structure-editor th {
+  border-color: var(--knowledge-border);
+  overflow-wrap: anywhere;
+}
+
+/* 唯讀左欄保留換行 */
+
+.knowledge-structure-editor td[class~='bg-[#F4EFE7]'] {
+  white-space: pre-wrap;
+}
+
+/* 文字區塊與副標題保留既有換行 */
+
+.knowledge-structure-editor [class~='whitespace-pre-wrap'] {
+  color: var(--knowledge-text);
+}
+
+/* 新增文字、副標題、表格與子章節 */
+
+.knowledge-structure-editor
+  button[class~='bg-white'][class~='text-[#6B9080]'] {
+  border-color: var(--knowledge-border);
+  background: var(--knowledge-surface);
+  color: var(--knowledge-accent);
+}
+
+.knowledge-structure-editor
+  button[class~='bg-white'][class~='text-[#6B9080]']:hover:not(:disabled) {
+  border-color: var(--knowledge-accent);
+  background: var(--knowledge-selected);
+  color: var(--knowledge-selected-text);
+}
+
+/* 展開／收合 */
+
+.knowledge-structure-editor
+  button[class~='text-[#6B9080]']:not([class~='bg-white']):hover:not(:disabled) {
+  background: var(--knowledge-selected);
+  color: var(--knowledge-selected-text);
+}
+
+/* 刪除章節、文字、副標題、表格與表格列 */
+
+.knowledge-structure-editor button[class~='text-[#D0766E]'] {
+  color: var(--knowledge-danger-text);
+}
+
+.knowledge-structure-editor
+  button[class~='text-[#D0766E]']:hover:not(:disabled) {
+  background: var(--knowledge-danger-bg);
+  color: var(--knowledge-danger-text);
+}
+
+/* 右下角新增主要章節 */
+
+.knowledge-structure-editor button[class~='bg-[#3A4F3F]'] {
+  border-color: var(--knowledge-primary-bg);
+  background: var(--knowledge-primary-bg);
+  color: var(--knowledge-primary-text);
+  box-shadow: 0 8px 24px -12px rgb(20 33 28 / 45%);
+}
+
+.knowledge-structure-editor
+  button[class~='bg-[#3A4F3F]']:hover:not(:disabled) {
+  border-color: var(--knowledge-primary-bg);
+  background: var(--knowledge-primary-bg);
+  color: var(--knowledge-primary-text);
+  box-shadow:
+    0 0 0 3px rgb(107 144 128 / 18%),
+    0 8px 24px -12px rgb(20 33 28 / 45%);
+}
+
+/* 按鈕鍵盤焦點 */
+
+.knowledge-structure-editor button:focus-visible {
+  outline: 2px solid var(--knowledge-accent);
+  outline-offset: 3px;
+}
+
+.knowledge-structure-editor button:disabled {
+  cursor: not-allowed;
+}
+
+/* 橫向捲軸 */
+
+.knowledge-structure-editor [class~='overflow-x-auto'] {
+  scrollbar-color:
+    var(--knowledge-border)
+    var(--knowledge-surface);
+}

@@ -14,6 +14,8 @@ import React, {
   useState,
 } from 'react';
 
+import './AiImageImporter.css';
+
 const GEMINI_MODEL =
   'gemini-3.5-flash-lite';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -411,7 +413,7 @@ export default function AiImageImporter({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="ai-image-importer flex items-center gap-2">
       <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,application/pdf" className="hidden" onChange={handleFileChange} />
 
       <button type="button" disabled={disabled || isSaving || isReading} onClick={() => fileRef.current?.click()} className="rounded-full bg-[#D7A85D] px-6 py-2 font-bold text-white shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-60">

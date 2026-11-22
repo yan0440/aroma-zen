@@ -1,0 +1,186 @@
+/* AI 匯入器：沿用 App 外觀設定 */
+
+.ai-image-importer {
+  --ai-surface: var(--app-surface, #fffdf8);
+  --ai-soft: var(--app-surface-soft, #f0f3eb);
+  --ai-input: var(--app-input, #ffffff);
+  --ai-text: var(--app-text, #283c32);
+  --ai-muted: var(--app-muted, #657565);
+  --ai-border: var(--app-border, #dce2d7);
+  --ai-accent: var(--app-accent, #405e4c);
+
+  --ai-primary-bg: #405e4c;
+  --ai-primary-text: #fffdf8;
+
+  --ai-success-bg: #edf4eb;
+  --ai-success-text: #35553b;
+  --ai-success-border: #b9cdb6;
+
+  --ai-error-bg: #fbefec;
+  --ai-error-text: #9c544b;
+  --ai-error-border: #e7c6bf;
+
+  color: var(--ai-text);
+  color-scheme: light;
+}
+
+:root[data-app-theme='dark'] .ai-image-importer {
+  --ai-primary-bg: #b4cfb4;
+  --ai-primary-text: #17291e;
+
+  --ai-success-bg: #263e2f;
+  --ai-success-text: #c8dfbf;
+  --ai-success-border: #526f55;
+
+  --ai-error-bg: #402b2b;
+  --ai-error-text: #edb6ac;
+  --ai-error-border: #6b4541;
+
+  color-scheme: dark;
+}
+
+/* AI 讀取按鈕 */
+
+.ai-image-importer > button {
+  border: 1px solid var(--ai-accent);
+  background: var(--ai-soft);
+  color: var(--ai-accent);
+  box-shadow: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.ai-image-importer > button:hover:not(:disabled) {
+  background: var(--ai-primary-bg);
+  color: var(--ai-primary-text);
+}
+
+/* 成功通知 */
+
+.ai-image-importer [class~='bg-[#F0F7F0]'] {
+  border-color: var(--ai-success-border);
+  background: var(--ai-success-bg);
+  color: var(--ai-success-text);
+}
+
+/* 原本的錯誤通知 */
+
+.ai-image-importer [class~='bg-[#FFF4F2]'] {
+  border-color: var(--ai-error-border);
+  background: var(--ai-error-bg);
+  color: var(--ai-error-text);
+}
+
+/* 讀取中訊息使用中性色，不顯示成錯誤色 */
+
+.ai-image-importer:has(> button:disabled)
+  [class~='bg-[#FFF4F2]'] {
+  border-color: var(--ai-border);
+  background: var(--ai-surface);
+  color: var(--ai-text);
+}
+
+/* 資料選擇面板 */
+
+.ai-image-importer > div[class~='bg-white'] {
+  border-color: var(--ai-border);
+  background: var(--ai-surface);
+  color: var(--ai-text);
+}
+
+.ai-image-importer label {
+  color: var(--ai-text);
+}
+
+/* 下拉選單 */
+
+.ai-image-importer select {
+  border-color: var(--ai-border);
+  background: var(--ai-input);
+  color: var(--ai-text);
+}
+
+.ai-image-importer select option {
+  background: var(--ai-input);
+  color: var(--ai-text);
+}
+
+.ai-image-importer select:focus-visible {
+  border-color: var(--ai-accent);
+  outline: 2px solid var(--ai-accent);
+  outline-offset: 2px;
+}
+
+/* 填入目前表單 */
+
+.ai-image-importer button[class~='bg-[#3A4F3F]'] {
+  border: 1px solid var(--ai-primary-bg);
+  background: var(--ai-primary-bg);
+  color: var(--ai-primary-text);
+}
+
+.ai-image-importer
+  button[class~='bg-[#3A4F3F]']:hover:not(:disabled) {
+  box-shadow: 0 0 0 3px rgb(107 144 128 / 18%);
+}
+
+/* 取消 */
+
+.ai-image-importer button[class~='text-[#A39284]'] {
+  border-radius: 12px;
+  color: var(--ai-muted);
+}
+
+.ai-image-importer
+  button[class~='text-[#A39284]']:hover:not(:disabled) {
+  background: var(--ai-soft);
+  color: var(--ai-text);
+}
+
+/* 鍵盤焦點 */
+
+.ai-image-importer button:focus-visible {
+  outline: 2px solid var(--ai-accent);
+  outline-offset: 3px;
+}
+
+.ai-image-importer button:disabled {
+  cursor: not-allowed;
+}
+
+/* 浮動通知與面板 */
+
+.ai-image-importer > div[class~='fixed'] {
+  max-width: calc(100vw - 32px);
+  overflow-wrap: anywhere;
+  box-shadow: 0 18px 50px -24px rgb(0 0 0 / 45%);
+}
+
+/* 資料面板內容過長時可捲動 */
+
+.ai-image-importer > div[class~='bottom-24'] {
+  max-height: calc(100dvh - 128px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 手機版避免超出畫面 */
+
+@media (max-width: 640px) {
+  .ai-image-importer > div[class~='fixed'] {
+    right: 16px;
+    min-width: 0;
+    width: min(320px, calc(100vw - 32px));
+  }
+
+  .ai-image-importer > div[class~='bottom-6'] {
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-image-importer > button {
+    transition: none;
+  }
+}

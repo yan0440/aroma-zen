@@ -1,0 +1,305 @@
+/* 書籍結構編輯器：共用 App 外觀設定 */
+
+.book-structure-editor {
+  --book-bg: var(--app-bg, #fdfbf7);
+  --book-surface: var(--app-surface, #fffdf8);
+  --book-soft: var(--app-surface-soft, #f0f3eb);
+  --book-input: var(--app-input, #ffffff);
+  --book-text: var(--app-text, #283c32);
+  --book-muted: var(--app-muted, #657565);
+  --book-border: var(--app-border, #dce2d7);
+  --book-accent: var(--app-accent, #405e4c);
+  --book-selected: var(--app-selected, #e3ebdf);
+  --book-selected-text: var(--app-selected-text, #2f4c3b);
+
+  --book-primary-bg: #405e4c;
+  --book-primary-text: #fffdf8;
+
+  --book-danger-bg: #fbefec;
+  --book-danger-text: #9c544b;
+
+  background: var(--book-bg);
+  color: var(--book-text);
+  color-scheme: light;
+}
+
+:root[data-app-theme='dark'] .book-structure-editor {
+  --book-primary-bg: #b4cfb4;
+  --book-primary-text: #17291e;
+
+  --book-danger-bg: #402b2b;
+  --book-danger-text: #edb6ac;
+
+  color-scheme: dark;
+}
+
+/* 左側目錄 */
+
+.book-structure-editor > main > aside {
+  border-color: var(--book-border);
+  background: var(--book-soft);
+}
+
+.book-structure-editor > main > aside > div:first-child {
+  border-color: var(--book-border);
+}
+
+/* 右側編輯區 */
+
+.book-structure-editor > main > section {
+  background: var(--book-bg);
+  color: var(--book-text);
+}
+
+/* 面板與固定背景色 */
+
+.book-structure-editor [class~='bg-white'] {
+  background-color: var(--book-surface);
+}
+
+.book-structure-editor [class~='bg-[#FCFBFA]'] {
+  background-color: var(--book-bg);
+}
+
+.book-structure-editor [class~='bg-[#F7F5F0]'] {
+  background-color: var(--book-soft);
+}
+
+.book-structure-editor [class~='border-[#E5E0D8]'],
+.book-structure-editor [class~='border-[#D9D1C7]'] {
+  border-color: var(--book-border);
+}
+
+/* 文字 */
+
+.book-structure-editor [class~='text-[#3A4F3F]'] {
+  color: var(--book-text);
+}
+
+.book-structure-editor [class~='text-[#6B9080]'] {
+  color: var(--book-accent);
+}
+
+.book-structure-editor [class~='text-gray-400'] {
+  color: var(--book-muted);
+}
+
+/* 欄位標籤 */
+
+.book-structure-editor label {
+  color: var(--book-muted);
+}
+
+/* 目錄未選取項目 */
+
+.book-structure-editor aside button[class~='text-left'] {
+  border-color: var(--book-border);
+  background: var(--book-surface);
+  color: var(--book-text);
+}
+
+.book-structure-editor aside button[class~='text-left']:hover {
+  border-color: var(--book-accent);
+  background: var(--book-soft);
+}
+
+/* 目錄選取項目 */
+
+.book-structure-editor
+  aside button[class~='text-left'][class~='bg-[#6B9080]'] {
+  border-color: var(--book-accent);
+  background: var(--book-selected);
+  color: var(--book-selected-text);
+}
+
+.book-structure-editor
+  aside button[class~='text-left'][class~='bg-[#6B9080]']:hover {
+  border-color: var(--book-accent);
+  background: var(--book-selected);
+  color: var(--book-selected-text);
+}
+
+/* 目錄內的篇章／內文小標籤 */
+
+.book-structure-editor
+  aside button[class~='text-left'] [class~='bg-white/20'] {
+  background: var(--book-soft);
+  color: var(--book-muted);
+}
+
+.book-structure-editor
+  aside button[class~='text-left'][class~='bg-[#6B9080]']
+  [class~='bg-white/20'] {
+  background: rgb(64 94 76 / 12%);
+  color: var(--book-selected-text);
+}
+
+/* 左側上方：新增內文 */
+
+.book-structure-editor
+  aside > div:first-child button[class~='bg-[#6B9080]'] {
+  border: 1px solid var(--book-primary-bg);
+  background: var(--book-primary-bg);
+  color: var(--book-primary-text);
+}
+
+.book-structure-editor
+  aside > div:first-child button[class~='bg-[#6B9080]']:hover:not(:disabled) {
+  background: var(--book-primary-bg);
+  color: var(--book-primary-text);
+  box-shadow: 0 0 0 3px rgb(107 144 128 / 18%);
+}
+
+/* 左側上方：新增篇章 */
+
+.book-structure-editor
+  aside > div:first-child button[class~='bg-white']:hover:not(:disabled) {
+  border-color: var(--book-accent);
+  background: var(--book-surface);
+}
+
+/* 展開目錄底部的新增按鈕 */
+
+.book-structure-editor
+  aside button[class~='text-xs'][class~='text-[#6B9080]'] {
+  color: var(--book-accent);
+}
+
+.book-structure-editor
+  aside button[class~='text-xs'][class~='text-[#6B9080]']:hover:not(:disabled) {
+  background: var(--book-selected);
+  color: var(--book-selected-text);
+}
+
+/* 右側編輯區的篇章／內文標籤 */
+
+.book-structure-editor section span[class~='bg-[#E5E0D8]'] {
+  background: var(--book-selected);
+  color: var(--book-selected-text);
+}
+
+/* 名稱、別名、類型與內文 */
+
+.book-structure-editor input,
+.book-structure-editor textarea,
+.book-structure-editor select {
+  border-color: var(--book-border);
+  background-color: var(--book-input);
+  color: var(--book-text);
+  caret-color: var(--book-text);
+}
+
+.book-structure-editor input::placeholder,
+.book-structure-editor textarea::placeholder {
+  color: var(--book-muted);
+  opacity: 0.8;
+}
+
+.book-structure-editor select option {
+  background: var(--book-input);
+  color: var(--book-text);
+}
+
+/* 欄位焦點 */
+
+.book-structure-editor input:focus-visible,
+.book-structure-editor textarea:focus-visible,
+.book-structure-editor select:focus-visible {
+  border-color: var(--book-accent);
+  outline: 2px solid var(--book-accent);
+  outline-offset: 2px;
+  --tw-ring-color: transparent;
+}
+
+/* 唯讀／儲存中 */
+
+.book-structure-editor input:disabled,
+.book-structure-editor textarea:disabled,
+.book-structure-editor select:disabled {
+  background: var(--book-soft);
+  color: var(--book-muted);
+  cursor: not-allowed;
+  opacity: 1;
+  -webkit-text-fill-color: var(--book-muted);
+}
+
+/* 自動填入 */
+
+.book-structure-editor input:-webkit-autofill,
+.book-structure-editor input:-webkit-autofill:hover,
+.book-structure-editor input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--book-text);
+  -webkit-box-shadow:
+    0 0 0 1000px var(--book-input) inset;
+  caret-color: var(--book-text);
+}
+
+/* 插入模板、插入表格 */
+
+.book-structure-editor button[class~='bg-[#E5E0D8]/60'] {
+  border: 1px solid var(--book-border);
+  background: var(--book-soft);
+  color: var(--book-text);
+}
+
+.book-structure-editor
+  button[class~='bg-[#E5E0D8]/60']:hover:not(:disabled) {
+  border-color: var(--book-accent);
+  background: var(--book-selected);
+  color: var(--book-selected-text);
+}
+
+/* 新增同層內文／子目錄 */
+
+.book-structure-editor
+  section button[class~='border-[#D9D1C7]'] {
+  border-color: var(--book-border);
+  background: var(--book-surface);
+  color: var(--book-text);
+}
+
+.book-structure-editor
+  section button[class~='border-[#D9D1C7]']:hover:not(:disabled) {
+  border-color: var(--book-accent);
+  background: var(--book-selected);
+  color: var(--book-selected-text);
+}
+
+/* 刪除 */
+
+.book-structure-editor button[class~='text-red-500'] {
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--book-danger-text);
+}
+
+.book-structure-editor
+  button[class~='text-red-500']:hover:not(:disabled) {
+  background: var(--book-danger-bg);
+  color: var(--book-danger-text);
+}
+
+/* 按鈕焦點與停用狀態 */
+
+.book-structure-editor button:focus-visible,
+.book-structure-editor [role='button']:focus-visible {
+  outline: 2px solid var(--book-accent);
+  outline-offset: 3px;
+}
+
+.book-structure-editor button:disabled {
+  cursor: not-allowed;
+}
+
+/* 夜晚模式面板陰影 */
+
+:root[data-app-theme='dark']
+  .book-structure-editor [class~='shadow-sm'] {
+  box-shadow: 0 8px 24px -18px rgb(0 0 0 / 65%);
+}
+
+/* 僅調整捲軸色彩，不改變位置或捲動行為 */
+
+.book-structure-editor [class~='overflow-y-auto'] {
+  scrollbar-color: var(--book-border) var(--book-bg);
+}

@@ -1,0 +1,140 @@
+.app-update-scope {
+  --update-surface: var(--app-surface, #fffdf8);
+  --update-soft: var(--app-surface-soft, #f0f3eb);
+  --update-text: var(--app-text, #283c32);
+  --update-muted: var(--app-muted, #657565);
+  --update-border: var(--app-border, #dce2d7);
+  --update-accent: var(--app-accent, #405e4c);
+  --update-selected: var(--app-selected, #e3ebdf);
+  --update-selected-text: var(--app-selected-text, #2f4c3b);
+
+  color: var(--update-text);
+}
+
+.app-update-settings {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--update-border);
+}
+
+.app-update-section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.app-update-heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.app-update-muted {
+  color: var(--update-muted);
+}
+
+.app-update-version {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.app-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.app-update-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--update-border);
+  border-radius: 12px;
+  padding: 9px 14px;
+  background: var(--update-surface);
+  color: var(--update-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.app-update-button:hover:not(:disabled) {
+  border-color: var(--update-accent);
+  background: var(--update-soft);
+}
+
+.app-update-button:focus-visible {
+  outline: 2px solid var(--update-accent);
+  outline-offset: 3px;
+}
+
+.app-update-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.app-update-primary,
+.app-update-primary:hover:not(:disabled) {
+  border-color: var(--update-accent);
+  background: var(--update-selected);
+  color: var(--update-selected-text);
+}
+
+.app-update-notes {
+  margin-top: 16px;
+  border: 1px solid var(--update-border);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--update-soft);
+}
+
+.app-update-release-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.app-update-notes ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.app-update-notes li {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.app-update-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.app-update-install {
+  margin-top: 14px;
+}
+
+.app-update-notice {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 500;
+  box-sizing: border-box;
+  width: min(390px, calc(100vw - 40px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid var(--update-border);
+  border-radius: 22px;
+  padding: 22px;
+  background: var(--update-surface);
+  box-shadow: 0 20px 60px -24px rgb(0 0 0 / 45%);
+}

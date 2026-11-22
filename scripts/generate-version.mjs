@@ -30,6 +30,20 @@ const generatedVersionFile = path.join(
   'generatedVersion.js'
 );
 
+/*
+ * 每次發布前修改這裡。
+ * 請只列出這次實際完成並要發布的功能。
+ */
+const releaseNotes = {
+  title: '外觀與編輯體驗更新',
+  changes: [
+    '新增白天、夜晚與跟隨系統設定',
+    '統一開發者專區、登入頁與編輯器配色',
+    '記住開發者專區的列表與圖卡顯示方式',
+    '新增版本檢查與更新內容提示',
+  ],
+};
+
 fs.mkdirSync(publicDirectory, {
   recursive: true,
 });
@@ -51,15 +65,27 @@ const version = [
 
 const appVersion = `v${version}`;
 
-const versionJson = {
+const release = {
   version: appVersion,
+  publishedAt: now.toISOString(),
+  title: releaseNotes.title,
+  changes: releaseNotes.changes,
 };
 
-const generatedVersionJs = `export const APP_VERSION = '${appVersion}';\n`;
+const generatedVersionJs = [
+  `export const APP_VERSION = ${JSON.stringify(appVersion)};`,
+  '',
+  `export const APP_RELEASE = ${JSON.stringify(
+    release,
+    null,
+    2
+  )};`,
+  '',
+].join('\n');
 
 fs.writeFileSync(
   publicVersionFile,
-  JSON.stringify(versionJson, null, 2),
+  JSON.stringify(release, null, 2),
   'utf8'
 );
 

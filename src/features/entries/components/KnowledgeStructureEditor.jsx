@@ -16,6 +16,8 @@ import React, {
   useState,
 } from 'react';
 
+import './KnowledgeStructureEditor.css';
+
 const createId = (prefix = 'knowledge') =>
   `${prefix}_${Date.now()}_${Math.random()
     .toString(36)
@@ -993,7 +995,7 @@ export default function KnowledgeStructureEditor({
   );
 
   return (
-    <div className="space-y-5">
+  <div className="knowledge-structure-editor space-y-5">
       <div className="flex flex-col gap-3 rounded-2xl border border-[#E5E0D8] bg-[#FBF9F6] p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-[20px] font-bold text-[#3A4F3F]">
