@@ -1,10 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css'; // 確保這行有在！
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+import App from './App';
+
+import {
+  AppUpdateProvider,
+} from './components/AppUpdates.jsx';
+
+import './index.css';
+
+ReactDOM.createRoot(
+  document.getElementById('root')
+).render(
   <React.StrictMode>
-    <App />
+    <AppUpdateProvider>
+      <App />
+    </AppUpdateProvider>
   </React.StrictMode>
 );

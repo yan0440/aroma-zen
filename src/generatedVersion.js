@@ -1,8 +1,8 @@
-export const APP_VERSION = "v2026-11-22-17-14-50";
+export const APP_VERSION = "v2026-11-22-17-33-13";
 
 export const APP_RELEASE = {
-  "version": "v2026-11-22-17-14-50",
-  "publishedAt": "2026-11-22T17:14:50.710Z",
+  "version": "v2026-11-22-17-33-13",
+  "publishedAt": "2026-11-22T17:33:13.811Z",
   "title": "外觀與編輯體驗更新",
   "changes": [
     "新增白天、夜晚與跟隨系統設定",
