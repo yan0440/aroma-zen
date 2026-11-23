@@ -435,14 +435,28 @@ function getSummary(item) {
     .find(Boolean) || '尚無摘要';
 }
 
-function getEntryKey(item, index) {
-  return (
+function getEntryKey(item) {
+  const category = getCategory(item);
+  const name = normalizeText(item?.name);
+
+  const documentId = String(
     item?.documentId ||
-    item?.firestoreId ||
-    item?.id ||
-    item?.entryKey ||
-    `${getCategory(item)}-${item?.name || 'entry'}-${index}`
-  );
+      item?.firestoreId ||
+      item?.id ||
+      ''
+  ).trim();
+
+  const entryKey = normalizeText(item?.entryKey);
+
+  return JSON.stringify([
+    category,
+    name,
+    documentId
+      ? `document:${documentId}`
+      : entryKey
+        ? `entry:${entryKey}`
+        : 'local',
+  ]);
 }
 
 function SearchIcon() {
@@ -560,12 +574,23 @@ useEffect(() => {
     };
   }, []);
 
-  const normalizedData = useMemo(
-    () =>
-      (Array.isArray(allData) ? allData : [])
-        .filter((item) => item?.name),
-    [allData]
-  );
+  const normalizedData = useMemo(() => {
+  const uniqueItems = new Map();
+
+  const source = Array.isArray(allData)
+    ? allData
+    : [];
+
+  source.forEach((item) => {
+    if (!item?.name) return;
+
+    const key = getEntryKey(item);
+
+    uniqueItems.set(key, item);
+  });
+
+  return Array.from(uniqueItems.values());
+}, [allData]);
 
   const stats = useMemo(() => {
     const counts = {
@@ -879,12 +904,12 @@ useEffect(() => {
               : 'admin-list space-y-3'
           }
         >
-          {filtered.map((item, index) => {
+          {filtered.map((item) => {
             const category = getCategory(item);
 
             return (
               <article
-                key={getEntryKey(item, index)}
+                key={getEntryKey(item)}
                 className="admin-entry"
               >
                 <div className="admin-entry-inner">
