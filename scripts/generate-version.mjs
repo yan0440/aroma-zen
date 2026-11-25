@@ -35,9 +35,10 @@ const generatedVersionFile = path.join(
  * 請只列出這次實際完成並要發布的功能。
  */
 const releaseNotes = {
-  title: '修正APP穴道類別重複顯示問題',
+  title: '重新設計各分類向UI',
   changes: [
-    '穴道類別重複顯示問題',
+    '更改UI呈現風格',
+    '更改小表格容納字數，調整大小',
   ],
 };
 

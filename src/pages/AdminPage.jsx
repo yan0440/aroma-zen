@@ -5,6 +5,8 @@ import React, {
   useState,
 } from 'react';
 
+import DataCard from '../components/DataCard';
+
 const NAV_ITEMS = [
   { key: 'all', label: '全部' },
   { key: '書籍', label: '書籍' },
@@ -897,91 +899,102 @@ useEffect(() => {
         </div>
 
         <section
-          aria-label={`${activeLabel}清單`}
-          className={
-            viewMode === 'grid'
-              ? 'admin-grid grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
-              : 'admin-list space-y-3'
-          }
-        >
-          {filtered.map((item) => {
-            const category = getCategory(item);
+  aria-label={`${activeLabel}清單`}
+  className={
+    viewMode === 'grid'
+      ? 'admin-grid grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
+      : 'admin-list space-y-3'
+  }
+>
+  {filtered.map((item) => {
+    const category = getCategory(item);
+    const entryKey = getEntryKey(item);
 
-            return (
-              <article
-                key={getEntryKey(item)}
-                className="admin-entry"
+    if (viewMode === 'grid') {
+      return (
+        <DataCard
+          key={entryKey}
+          item={item}
+          onSelectItem={onView}
+        />
+      );
+    }
+
+    return (
+      <article
+        key={entryKey}
+        className="admin-entry"
+      >
+        <div className="admin-entry-inner">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span
+                className="admin-category"
+                data-category={category}
               >
-                <div className="admin-entry-inner">
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span
-                        className="admin-category"
-                        data-category={category}
-                      >
-                        {getCategoryLabel(category)}
-                      </span>
+                {getCategoryLabel(category)}
+              </span>
 
-                      {item?.updatedAt && (
-                        <span className="admin-muted text-[11px]">
-                          已更新
-                        </span>
-                      )}
-                    </div>
+              {item?.updatedAt && (
+                <span className="admin-muted text-[11px]">
+                  已更新
+                </span>
+              )}
+            </div>
 
-                    <h3 className="break-words text-lg font-semibold leading-7">
-                      {item.name || '未命名'}
-                    </h3>
+            <h3 className="break-words text-lg font-semibold leading-7">
+              {item.name || '未命名'}
+            </h3>
 
-                    <p className="admin-muted mt-1 line-clamp-2 break-words text-sm leading-6">
-                      {getSummary(item)}
-                    </p>
-                  </div>
+            <p className="admin-muted mt-1 line-clamp-2 break-words text-sm leading-6">
+              {getSummary(item)}
+            </p>
+          </div>
 
-                  <div className="admin-entry-actions">
-                    <button
-                      type="button"
-                      onClick={() => onView?.(item)}
-                      aria-label={`檢視${item.name}`}
-                      className="admin-button"
-                    >
-                      檢視
-                    </button>
+          <div className="admin-entry-actions">
+            <button
+              type="button"
+              onClick={() => onView?.(item)}
+              aria-label={`檢視${item.name}`}
+              className="admin-button"
+            >
+              檢視
+            </button>
 
-                    <button
-                      type="button"
-                      onClick={() => onCard?.(item)}
-                      aria-label={`預覽${item.name}圖卡`}
-                      className="admin-button"
-                    >
-                      圖卡
-                    </button>
+            <button
+              type="button"
+              onClick={() => onCard?.(item)}
+              aria-label={`預覽${item.name}圖卡`}
+              className="admin-button"
+            >
+              圖卡
+            </button>
 
-                    <button
-                      type="button"
-                      onClick={() => onEdit?.(item)}
-                      aria-label={`編輯${item.name}`}
-                      className="admin-button admin-button-edit"
-                    >
-                      編輯
-                    </button>
+            <button
+              type="button"
+              onClick={() => onEdit?.(item)}
+              aria-label={`編輯${item.name}`}
+              className="admin-button admin-button-edit"
+            >
+              編輯
+            </button>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleDelete(item);
-                      }}
-                      aria-label={`刪除${item.name}`}
-                      className="admin-button admin-button-danger"
-                    >
-                      刪除
-                    </button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </section>
+            <button
+              type="button"
+              onClick={() => {
+                handleDelete(item);
+              }}
+              aria-label={`刪除${item.name}`}
+              className="admin-button admin-button-danger"
+            >
+              刪除
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  })}
+</section>
 
         {filtered.length === 0 && (
           <div

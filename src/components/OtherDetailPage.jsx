@@ -1,25 +1,567 @@
 import React from 'react';
 
+const TITLE_FONT = {
+  fontFamily:
+    '"Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif',
+};
+
+const OTHER_DETAIL_STYLES = `
+  .other-detail {
+    --other-bg: var(--app-bg, #fdfbf7);
+    --other-surface: var(--app-surface, #fffdf8);
+    --other-soft: var(--app-surface-soft, #f0f3eb);
+    --other-text: var(--app-text, #283c32);
+    --other-muted: var(--app-muted, #657565);
+    --other-border: var(--app-border, #dce2d7);
+    --other-accent: var(--app-accent, #405e4c);
+    --other-selected: var(--app-selected, #e3ebdf);
+    --other-selected-text: var(--app-selected-text, #2f4c3b);
+    --other-mark-bg: #efe3c9;
+    --other-mark-text: #4b432c;
+    --other-danger-bg: rgba(127, 29, 29, 0.08);
+    --other-danger-text: #9b2c2c;
+
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--other-bg);
+    color: var(--other-text);
+    color-scheme: light;
+  }
+
+  :root[data-app-theme='dark'] .other-detail {
+    --other-mark-bg: #4a4430;
+    --other-mark-text: #eee0b5;
+    --other-danger-bg: rgba(127, 29, 29, 0.22);
+    --other-danger-text: #fca5a5;
+
+    color-scheme: dark;
+  }
+
+  .other-detail .other-header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--other-border);
+    background: var(--other-surface);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .other-detail .other-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 16px 24px;
+  }
+
+  .other-detail .other-eyebrow {
+    color: var(--other-accent);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    line-height: 1.6;
+  }
+
+  .other-detail .other-header-name {
+    margin-top: 3px;
+    overflow: hidden;
+    color: var(--other-text);
+    font-size: 35px;
+    font-weight: 600;
+    line-height: 1.6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .other-detail .other-back {
+    display: inline-flex;
+    min-height: 42px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--other-border);
+    border-radius: 12px;
+    padding: 9px 14px;
+    background: var(--other-surface);
+    color: var(--other-text);
+    font-size: 13px;
+    line-height: 1.5;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .other-detail .other-back:hover {
+    border-color: var(--other-accent);
+    background: var(--other-soft);
+  }
+
+  .other-detail .other-back:focus-visible {
+    outline: 2px solid var(--other-accent);
+    outline-offset: 3px;
+  }
+
+  .other-detail .other-scroll {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: var(--other-border) var(--other-bg);
+  }
+
+  .other-detail .other-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    padding-bottom: max(48px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .other-detail .other-panel {
+    min-width: 0;
+    border: 1px solid var(--other-border);
+    border-radius: 24px;
+    background: var(--other-surface);
+    box-shadow: 0 14px 36px -30px rgb(20 33 28 / 25%);
+  }
+
+  .other-detail .other-overview {
+    overflow: hidden;
+  }
+
+  .other-detail .other-identity {
+    border-bottom: 1px solid var(--other-border);
+    padding: 28px;
+    background:
+      radial-gradient(
+        ellipse at 100% 0%,
+        rgb(107 144 128 / 10%),
+        transparent 70%
+      ),
+      var(--other-surface);
+  }
+
+  .other-detail .other-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .other-detail .other-tag {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--other-border);
+    border-radius: 7px;
+    padding: 4px 9px;
+    background: var(--other-soft);
+    color: var(--other-muted);
+    font-size: 11px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .other-detail .other-code {
+    border-color: transparent;
+    background: var(--other-selected);
+    color: var(--other-selected-text);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .other-detail .other-name {
+    margin: 0;
+    color: var(--other-text);
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.08em;
+    overflow-wrap: anywhere;
+  }
+
+  .other-detail .other-alias,
+  .other-detail .other-english {
+    margin-top: 8px;
+    color: var(--other-muted);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-style: italic;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  .other-detail .other-overview-body {
+    padding: 24px 28px 28px;
+  }
+
+  .other-detail .other-facts {
+    margin: 0;
+  }
+
+  .other-detail .other-fact {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--other-border);
+    padding: 13px 0;
+  }
+
+  .other-detail .other-fact:first-child {
+    padding-top: 0;
+  }
+
+  .other-detail .other-fact:last-child {
+    border-bottom: 0;
+  }
+
+  .other-detail .other-fact dt {
+    color: var(--other-muted);
+    font-size: 12px;
+    line-height: 1.9;
+    letter-spacing: 0.06em;
+  }
+
+  .other-detail .other-fact dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--other-text);
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  .other-detail .other-summary {
+    margin-top: 0;
+    border-top: 1px solid var(--other-border);
+    padding-top: 24px;
+  }
+
+  .other-detail .other-summary-title {
+    margin: 0 0 12px;
+    color: var(--other-text);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .other-detail .other-summary-text {
+    margin: 0;
+    color: var(--other-muted);
+    font-size: 14px;
+    line-height: 2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .other-detail .other-toc {
+    margin-top: 24px;
+    border: 1px solid var(--other-border);
+    border-radius: 16px;
+    background: var(--other-soft);
+    padding: 18px 20px;
+  }
+
+  .other-detail .other-toc-title {
+    margin: 0 0 12px;
+    color: var(--other-text);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .other-detail .other-toc-select {
+    width: 100%;
+    border: 1px solid var(--other-border);
+    border-radius: 12px;
+    background: var(--other-surface);
+    color: var(--other-text);
+    padding: 11px 14px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .other-detail .other-toc-select:focus-visible {
+    border-color: var(--other-accent);
+    outline: 2px solid var(--other-accent);
+    outline-offset: 2px;
+  }
+
+  .other-detail .other-reading {
+    padding: 8px 32px;
+  }
+
+  .other-detail .other-section {
+    min-width: 0;
+    padding: 28px 0;
+  }
+
+  .other-detail .other-section + .other-section {
+    border-top: 1px solid var(--other-border);
+  }
+
+  .other-detail .other-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    color: var(--other-text);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.7;
+    letter-spacing: 0.08em;
+  }
+
+  .other-detail .other-section-title::before {
+    display: block;
+    width: 4px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--other-accent);
+    content: "";
+  }
+
+  .other-detail .other-body {
+    color: var(--other-muted);
+    font-size: 15px;
+    line-height: 2;
+    overflow-wrap: anywhere;
+  }
+
+  .other-detail .other-line + .other-line {
+    margin-top: 6px;
+  }
+
+  .other-detail .other-blank {
+    height: 10px;
+  }
+
+  .other-detail .other-numbered,
+  .other-detail .other-bullet {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .other-detail .other-number {
+    color: var(--other-text);
+    font-weight: 600;
+  }
+
+  .other-detail .other-bullet-dot {
+    color: var(--other-accent);
+  }
+
+  .other-detail strong {
+    color: var(--other-text);
+    font-weight: 600;
+  }
+
+  .other-detail mark {
+    border-radius: 4px;
+    padding: 1px 4px;
+    background: var(--other-mark-bg);
+    color: var(--other-mark-text);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .other-detail .other-empty {
+    color: var(--other-muted);
+    font-size: 14px;
+    font-style: italic;
+    line-height: 1.9;
+  }
+
+  .other-detail .other-inset {
+    border: 1px solid var(--other-border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    background: var(--other-soft);
+  }
+
+  .other-detail .other-subtitle {
+    margin: 24px 0 12px;
+    padding-left: 14px;
+    border-left: 4px solid var(--other-accent);
+    color: var(--other-text);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.7;
+  }
+
+  .other-detail .other-table-wrap {
+    margin: 18px 0;
+    overflow: hidden;
+    border: 1px solid var(--other-border);
+    border-radius: 16px;
+    background: var(--other-surface);
+  }
+
+  .other-detail .other-table-scroll {
+    overflow-x: auto;
+  }
+
+  .other-detail .other-table {
+    width: 100%;
+    min-width: 480px;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .other-detail .other-table td {
+    border-top: 1px solid var(--other-border);
+    padding: 13px 16px;
+    vertical-align: top;
+    color: var(--other-muted);
+    line-height: 1.9;
+  }
+
+  .other-detail .other-table tr:first-child td {
+    border-top: 0;
+  }
+
+  .other-detail .other-table-label {
+    width: 28%;
+    background: var(--other-soft);
+    color: var(--other-text);
+    font-weight: 600;
+  }
+
+  .other-detail .other-knowledge {
+    border: 1px solid var(--other-border);
+    border-radius: 18px;
+    background: var(--other-surface);
+    padding: 20px;
+  }
+
+  .other-detail .other-knowledge + .other-knowledge {
+    margin-top: 18px;
+  }
+
+  .other-detail .other-knowledge-title {
+    margin: 0 0 12px;
+    color: var(--other-text);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.7;
+  }
+
+  .other-detail .other-knowledge-children {
+    margin-top: 16px;
+    padding-left: 16px;
+    border-left: 1px solid var(--other-border);
+  }
+
+  .other-detail .other-alert {
+    margin-top: 28px;
+    border: 1px solid rgba(155, 44, 44, 0.22);
+    border-radius: 16px;
+    background: var(--other-danger-bg);
+    padding: 18px 20px;
+    color: var(--other-danger-text);
+    font-size: 13px;
+    line-height: 1.9;
+  }
+
+  @media (min-width: 1024px) {
+    .other-detail .other-layout {
+      grid-template-columns: 400px minmax(0, 1fr);
+      gap: 28px;
+      padding-top: 32px;
+    }
+
+    .other-detail .other-overview {
+      position: sticky;
+      top: 28px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .other-detail .other-header-inner {
+      gap: 12px;
+      padding: 14px 16px;
+    }
+
+    .other-detail .other-layout {
+      gap: 18px;
+      padding: 20px 12px 40px;
+    }
+
+    .other-detail .other-identity {
+      padding: 24px;
+    }
+
+    .other-detail .other-overview-body {
+      padding: 22px 16px;
+    }
+
+    .other-detail .other-reading {
+      padding: 4px 22px;
+    }
+
+    .other-detail .other-section {
+      padding: 24px 0;
+    }
+
+    .other-detail .other-inset {
+      padding: 16px;
+    }
+
+    .other-detail .other-name {
+      font-size: 32px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .other-detail .other-back {
+      transition: none;
+    }
+  }
+`;
+
 const getCategoryLabel = (category) =>
   category === '其他'
     ? '名詞材料'
     : category;
 
 const detailFields = [
-  ['alias', '🏷️ 別名'],
-  ['englishName', '🌐 英文名稱'],
-  ['type', '🗂️ 類型'],
-  ['tag', '🔖 核心標籤'],
+  ['alias', '別名'],
+  ['englishName', '英文名稱'],
+  ['type', '類型'],
+  ['tag', '核心標籤'],
 ];
 
-const UI = {
-  text: 'text-[17px] leading-9 text-[#55655B]',
+function asText(value) {
+  if (Array.isArray(value)) {
+    return value.map(asText).filter(Boolean).join('\n');
+  }
 
-  sectionLabel:
-    'mb-4 mt-1 flex items-center gap-3 border-b border-[#E5E0D8] pb-3 text-[18px] font-bold tracking-[0.12em] text-[#4E6654] before:block before:h-6 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
-};
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
 
-const getFieldValue = (item, key) => {
+  return '';
+}
+
+function getFieldValue(item, key) {
   const topLevelValue = item?.[key];
 
   if (
@@ -51,111 +593,123 @@ const getFieldValue = (item, key) => {
   }
 
   return '';
-};
+}
 
-const parseBoldSyntax = (str) => {
-  if (!str) {
-    return null;
-  }
+function renderInline(text) {
+  return asText(text)
+    .split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g)
+    .map((part, index) => {
+      if (!part) return null;
 
-  const parts = String(str).split(
-    /(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g
-  );
+      if (part.startsWith('==') && part.endsWith('==')) {
+        return (
+          <mark key={index}>
+            {part.slice(2, -2)}
+          </mark>
+        );
+      }
 
-  return parts.map((part, index) => {
-    if (!part) {
-      return null;
-    }
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={index}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
 
-    if (
-      part.startsWith('==') &&
-      part.endsWith('==')
-    ) {
-      return (
-        <mark
-          key={index}
-          className="mx-0.5 rounded-md bg-[#F3E1C5] px-1 py-0.5 font-bold text-[#2C3C30] shadow-sm"
-        >
-          {part.slice(2, -2)}
-        </mark>
-      );
-    }
+      if (
+        (part.startsWith('《') && part.endsWith('》')) ||
+        (part.startsWith('【') && part.endsWith('】'))
+      ) {
+        return (
+          <strong key={index}>
+            {part}
+          </strong>
+        );
+      }
 
-    if (
-      part.startsWith('**') &&
-      part.endsWith('**')
-    ) {
-      return (
-        <strong
-          key={index}
-          className="font-bold text-[#1A261C]"
-        >
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
+      return part;
+    });
+}
 
-    if (
-      (part.startsWith('《') &&
-        part.endsWith('》')) ||
-      (part.startsWith('【') &&
-        part.endsWith('】'))
-    ) {
-      return (
-        <strong
-          key={index}
-          className="font-bold text-[#1A261C]"
-        >
-          {part}
-        </strong>
-      );
-    }
+function FormattedText({
+  value,
+  emptyText = '',
+}) {
+  const text = asText(value).replace(/\r\n?/g, '\n');
 
-    return part;
-  });
-};
-
-const renderFormattedText = (text) => {
-  if (
-    text === undefined ||
-    text === null ||
-    String(text).trim() === ''
-  ) {
-    return null;
-  }
-
-  const lines =
-    typeof text === 'string'
-      ? text
-          .split('\n')
-          .filter(
-            (line) => line.trim() !== ''
-          )
-      : [text];
-
-  if (lines.length === 0) {
-    return null;
+  if (!text.trim()) {
+    return emptyText ? (
+      <span className="other-empty">
+        {emptyText}
+      </span>
+    ) : null;
   }
 
   return (
-    <div className={UI.text}>
-      {lines.map((line, index) => (
-        <div
-          key={index}
-          className="mb-1"
-        >
-          {parseBoldSyntax(
-            typeof line === 'string'
-              ? line.trim()
-              : line
-          )}
-        </div>
-      ))}
+    <div className="other-body">
+      {text.split('\n').map((line, index) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          return (
+            <div
+              key={index}
+              className="other-blank"
+              aria-hidden="true"
+            />
+          );
+        }
+
+        const numbered = trimmed.match(
+          /^(\d+[.、．]|[一二三四五六七八九十百]+[、.．])\s*(.*)$/
+        );
+
+        if (numbered) {
+          return (
+            <div
+              key={index}
+              className="other-line other-numbered"
+            >
+              <span className="other-number">
+                {numbered[1]}
+              </span>
+
+              <div>
+                {renderInline(numbered[2])}
+              </div>
+            </div>
+          );
+        }
+
+        if (trimmed.startsWith('●')) {
+          return (
+            <div
+              key={index}
+              className="other-line other-bullet"
+            >
+              <span className="other-bullet-dot">
+                ●
+              </span>
+
+              <div>
+                {renderInline(trimmed.slice(1).trim())}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div key={index} className="other-line">
+            {renderInline(trimmed)}
+          </div>
+        );
+      })}
     </div>
   );
-};
+}
 
-const normalizeSections = (sections) => {
+function normalizeSections(sections) {
   if (!sections) {
     return [];
   }
@@ -164,19 +718,15 @@ const normalizeSections = (sections) => {
     return sections;
   }
 
-  if (
-    typeof sections === 'object'
-  ) {
+  if (typeof sections === 'object') {
     return Object.values(sections);
   }
 
   return [];
-};
+}
 
-const normalizeBlocks = (section) => {
-  if (
-    Array.isArray(section?.blocks)
-  ) {
+function normalizeBlocks(section) {
+  if (Array.isArray(section?.blocks)) {
     return section.blocks;
   }
 
@@ -194,83 +744,68 @@ const normalizeBlocks = (section) => {
   }
 
   return [];
-};
+}
 
-const getSectionTitle = (
-  section,
-  index
-) =>
-  section?.title ||
-  section?.name ||
-  `第 ${index + 1} 節`;
+function getSectionTitle(section, index) {
+  return (
+    section?.title ||
+    section?.name ||
+    `第 ${index + 1} 節`
+  );
+}
 
-const getSectionId = (
-  section,
-  path = []
-) => {
+function getSectionId(section, path = []) {
   if (section?.id) {
     return `knowledge-section-${section.id}`;
   }
 
   return `knowledge-section-${path.join('-')}`;
-};
+}
 
-const buildKnowledgeToc = (
+function buildKnowledgeToc(
   sections,
   parentNumber = '',
   parentPath = []
-) => {
-  const sectionList =
-    normalizeSections(sections);
+) {
+  const sectionList = normalizeSections(sections);
 
-  return sectionList.flatMap(
-    (section, index) => {
-      if (!section) {
-        return [];
-      }
-
-      const currentNumber = parentNumber
-        ? `${parentNumber}.${index + 1}`
-        : `${index + 1}`;
-
-      const currentPath = [
-        ...parentPath,
-        index,
-      ];
-
-      const currentId = getSectionId(
-        section,
-        currentPath
-      );
-
-      const currentItem = {
-        id: currentId,
-        number: currentNumber,
-        title: getSectionTitle(
-          section,
-          index
-        ),
-        level: parentNumber ? 1 : 0,
-      };
-
-      const children = buildKnowledgeToc(
-        section.children,
-        currentNumber,
-        currentPath
-      );
-
-      return [
-        currentItem,
-        ...children,
-      ];
+  return sectionList.flatMap((section, index) => {
+    if (!section) {
+      return [];
     }
-  );
-};
 
-const renderTableBlock = (
-  block,
-  blockIndex
-) => {
+    const currentNumber = parentNumber
+      ? `${parentNumber}.${index + 1}`
+      : `${index + 1}`;
+
+    const currentPath = [...parentPath, index];
+
+    const currentId = getSectionId(
+      section,
+      currentPath
+    );
+
+    const currentItem = {
+      id: currentId,
+      number: currentNumber,
+      title: getSectionTitle(section, index),
+      level: parentNumber ? 1 : 0,
+    };
+
+    const children = buildKnowledgeToc(
+      section.children,
+      currentNumber,
+      currentPath
+    );
+
+    return [
+      currentItem,
+      ...children,
+    ];
+  });
+}
+
+function renderTableBlock(block, blockIndex) {
   const rows = Array.isArray(block?.rows)
     ? block.rows
     : [];
@@ -281,134 +816,102 @@ const renderTableBlock = (
 
   return (
     <div
-      key={
-        block?.id ||
-        `table-${blockIndex}`
-      }
-      className="my-1 overflow-x-auto rounded-xl border border-[#E7DED4] bg-white"
+      key={block?.id || `table-${blockIndex}`}
+      className="other-table-wrap"
     >
-      <table className="w-full min-w-[480px] border-collapse text-[16px] md:min-w-[620px]">
-        <tbody>
-          {rows.map((row, rowIndex) => {
-            const leftValue =
-              row?.left !== undefined &&
-              row?.left !== null
-                ? String(row.left).trim()
-                : '';
+      <div className="other-table-scroll">
+        <table className="other-table">
+          <tbody>
+            {rows.map((row, rowIndex) => {
+              const leftValue = asText(row?.left).trim();
+              const rightValue = asText(row?.right).trim();
 
-            const rightValue =
-              row?.right !== undefined &&
-              row?.right !== null
-                ? String(row.right).trim()
-                : '';
+              if (!leftValue && !rightValue) {
+                return null;
+              }
 
-            if (
-              leftValue === '' &&
-              rightValue === ''
-            ) {
-              return null;
-            }
+              return (
+                <tr
+                  key={
+                    row?.id ||
+                    `table-row-${blockIndex}-${rowIndex}`
+                  }
+                >
+                  <td className="other-table-label">
+                    {leftValue}
+                  </td>
 
-            return (
-              <tr
-                key={
-                  row?.id ||
-                  `table-row-${blockIndex}-${rowIndex}`
-                }
-                className="border-b border-[#E7DED4] last:border-b-0"
-              >
-                <td className="w-[25%] bg-[#F7F5F0] px-4 py-4 align-middle text-[16px] font-bold leading-8 text-[#3A4F3F]">
-                  {leftValue}
-                </td>
-
-                <td className="px-4 py-4 align-top text-[16px] leading-8 text-[#55655B]">
-                  {rightValue
-                    ? renderFormattedText(
-                        rightValue
-                      )
-                    : null}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <td>
+                    <FormattedText value={rightValue} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
-};
+}
 
-const renderKnowledgeBlock = (
-  block,
-  blockIndex
-) => {
+function renderKnowledgeBlock(block, blockIndex) {
   if (!block) {
     return null;
   }
 
-  const blockType =
-    block.type || 'text';
+  const blockType = block.type || 'text';
 
   if (blockType === 'table') {
-    return renderTableBlock(
-      block,
-      blockIndex
-    );
+    return renderTableBlock(block, blockIndex);
   }
 
   if (blockType === 'subtitle') {
-    const subtitle =
+    const subtitle = asText(
       block.text ||
       block.content ||
-      block.description ||
-      '';
+      block.description
+    ).trim();
 
-    if (String(subtitle).trim() === '') {
+    if (!subtitle) {
       return null;
     }
 
     return (
       <h4
-        key={
-          block.id ||
-          `subtitle-${blockIndex}`
-        }
-        className="mb-4 mt-6 border-l-4 border-[#6B9080] pl-4 text-[21px] font-bold leading-tight text-[#2F4638]"
+        key={block.id || `subtitle-${blockIndex}`}
+        className="other-subtitle"
       >
         {subtitle}
       </h4>
     );
   }
 
-  const text =
+  const text = asText(
     block.text ||
     block.content ||
-    block.description ||
-    '';
+    block.description
+  );
 
-  if (String(text).trim() === '') {
+  if (!text.trim()) {
     return null;
   }
 
   return (
     <div
-      key={
-        block.id ||
-        `text-${blockIndex}`
-      }
-      className="mb-4"
+      key={block.id || `text-${blockIndex}`}
+      className="other-line"
     >
-      {renderFormattedText(text)}
+      <FormattedText value={text} />
     </div>
   );
-};
+}
 
-const renderKnowledgeSections = (
+function renderKnowledgeSections(
   sections,
   level = 0,
   parentPath = []
-) => {
-  const sectionList =
-    normalizeSections(sections);
+) {
+  const sectionList = normalizeSections(sections);
 
   if (sectionList.length === 0) {
     return null;
@@ -418,8 +921,8 @@ const renderKnowledgeSections = (
     <div
       className={
         level > 0
-          ? 'ml-4 border-l-2 border-[#E8E0D6] pl-4 md:ml-6 md:pl-6'
-          : 'space-y-5'
+          ? 'other-knowledge-children'
+          : ''
       }
     >
       {sectionList.map((section, index) => {
@@ -427,10 +930,7 @@ const renderKnowledgeSections = (
           return null;
         }
 
-        const currentPath = [
-          ...parentPath,
-          index,
-        ];
+        const currentPath = [...parentPath, index];
 
         const title = getSectionTitle(
           section,
@@ -442,13 +942,10 @@ const renderKnowledgeSections = (
           currentPath
         );
 
-        const blocks =
-          normalizeBlocks(section);
-
-        const children =
-          normalizeSections(
-            section.children
-          );
+        const blocks = normalizeBlocks(section);
+        const children = normalizeSections(
+          section.children
+        );
 
         return (
           <article
@@ -457,20 +954,21 @@ const renderKnowledgeSections = (
               section.id ||
               `${title}-${currentPath.join('-')}`
             }
-            className="scroll-mt-6 rounded-2xl border border-[#E7DED4] bg-[#FDFBF8] p-5"
+            className="other-knowledge"
           >
             <h3
-              className={`mb-4 font-bold leading-tight text-[#2F4638] ${
+              className="other-knowledge-title"
+              style={
                 level === 0
-                  ? 'text-[20px]'
-                  : 'text-[16px]'
-              }`}
+                  ? TITLE_FONT
+                  : undefined
+              }
             >
               {title}
             </h3>
 
             {blocks.length > 0 && (
-              <div className="space-y-4">
+              <div>
                 {blocks.map(
                   (block, blockIndex) =>
                     renderKnowledgeBlock(
@@ -482,7 +980,7 @@ const renderKnowledgeSections = (
             )}
 
             {children.length > 0 && (
-              <div className="mt-5">
+              <div>
                 {renderKnowledgeSections(
                   children,
                   level + 1,
@@ -495,22 +993,19 @@ const renderKnowledgeSections = (
       })}
     </div>
   );
-};
+}
 
 function KnowledgeTableOfContents({
   sections,
 }) {
-  const tocItems = buildKnowledgeToc(
-    sections
-  );
+  const tocItems = buildKnowledgeToc(sections);
 
   if (tocItems.length === 0) {
     return null;
   }
 
   const scrollToSection = (id) => {
-    const element =
-      document.getElementById(id);
+    const element = document.getElementById(id);
 
     if (!element) {
       return;
@@ -523,10 +1018,10 @@ function KnowledgeTableOfContents({
   };
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#E7DED4] bg-[#FBF9F6] p-5">
+    <div className="other-toc">
       <label
         htmlFor="knowledge-section-select"
-        className="mb-3 block text-[18px] font-bold text-[#2F4638]"
+        className="other-toc-title"
       >
         🧭 內容目錄
       </label>
@@ -535,8 +1030,7 @@ function KnowledgeTableOfContents({
         id="knowledge-section-select"
         defaultValue=""
         onChange={(event) => {
-          const selectedId =
-            event.target.value;
+          const selectedId = event.target.value;
 
           if (!selectedId) {
             return;
@@ -546,7 +1040,7 @@ function KnowledgeTableOfContents({
 
           event.target.value = '';
         }}
-        className="w-full rounded-xl border border-[#D8C8B8] bg-white px-4 py-3 text-[16px] leading-7 text-[#3A4F3F] outline-none transition focus:border-[#6B9080] focus:ring-2 focus:ring-[#6B9080]/20"
+        className="other-toc-select"
       >
         <option value="">
           請選擇要閱讀的內容
@@ -586,17 +1080,11 @@ export default function OtherDetailPage({
       label,
       value: getFieldValue(item, key),
     }))
-    .filter(
-      (field) =>
-        field.value !== undefined &&
-        field.value !== null &&
-        String(field.value).trim() !== ''
+    .filter((field) =>
+      asText(field.value).trim()
     );
 
-  const tags = [
-  item.tag,
-  item.alias,
-]
+  const tags = [item.tag, item.alias]
     .filter(Boolean)
     .flatMap((value) =>
       String(value)
@@ -605,91 +1093,108 @@ export default function OtherDetailPage({
         .filter(Boolean)
     );
 
-  const knowledgeSections =item?.knowledgeDetails?.sections ||[];
-  const knowledgeIntroduction =item?.knowledgeDetails?.introduction ||'';
-  const hasKnowledgeSections =normalizeSections(knowledgeSections).length > 0;
-  const hasDescription =item?.description !== undefined &&item?.description !== null &&String(item.description).trim() !== '';
-  const hasNote =item?.note !== undefined &&item?.note !== null &&String(item.note).trim() !== '';
-  const cautionText =item?.caution ||item?.contraindication ||'';
-  const hasCaution =String(cautionText).trim() !== '';
+  const knowledgeSections =
+    item?.knowledgeDetails?.sections || [];
+
+  const knowledgeIntroduction =
+    item?.knowledgeDetails?.introduction || '';
+
+  const hasKnowledgeSections =
+    normalizeSections(knowledgeSections).length > 0;
+
+  const hasDescription = asText(
+    item?.description
+  ).trim();
+
+  const hasNote = asText(item?.note).trim();
+
+  const cautionText = asText(
+    item?.caution || item?.contraindication
+  ).trim();
 
   return (
-    <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
-      <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
-        <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
-              📖
-            </div>
+    <div className="other-detail">
+      <style>{OTHER_DETAIL_STYLES}</style>
 
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
-                Glossary / Material
-              </p>
+      <header className="other-header">
+        <div className="other-header-inner">
+          <div className="min-w-0">
+            <p className="other-eyebrow">
+              本草百科 / GLOSSARY & MATERIAL
+            </p>
 
-              <h1 className="truncate text-[20px] font-black text-[#718678] md:text-[24px]">
-                {item.name}
-              </h1>
-
-              <p className="hidden text-xs text-[#8C725F] sm:block">
-                {getCategoryLabel(item.category)}
-                百科詳細資料
-              </p>
-            </div>
+            <h1 className="other-header-name">
+              {item.name}
+            </h1>
           </div>
 
           <button
             type="button"
             onClick={handleClose}
-            className="shrink-0 rounded-lg border border-[#B2B2A8] bg-[#B2B2A8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5F7568]"
+            className="other-back"
           >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M11 6l-6 6 6 6" />
+            </svg>
+
             {backLabel}
           </button>
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)]">
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 md:px-7 md:py-8 lg:grid-cols-12 lg:gap-8 lg:px-10">
-          <section className="lg:col-span-4">
-            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-8 lg:sticky lg:top-6">
-              <div className="mb-3 flex flex-wrap gap-1.5">
-                <span className="rounded-full bg-[#EAE7E0] px-2 py-0.5 text-xs font-medium text-[#6B7A6E]">
+      <main className="other-scroll">
+        <div className="other-layout">
+          <aside className="other-panel other-overview">
+            <div className="other-identity">
+              <div className="other-tags">
+                <span className="other-tag">
                   {getCategoryLabel(item.category)}
                 </span>
 
                 {item.type && (
-                  <span className="rounded-full bg-[#E5EAE6] px-2 py-0.5 text-xs font-medium text-[#4E6654]">
+                  <span className="other-tag">
                     {item.type}
                   </span>
                 )}
               </div>
 
-              <h2 className="mb-2 text-[30px] font-bold leading-tight text-[#2F4638] md:text-[36px]">
+              <h2
+                className="other-name"
+                style={TITLE_FONT}
+              >
                 {item.name}
               </h2>
 
               {item.alias && (
-                <p className="mb-2 mt-1 font-serif text-[17px] italic text-[#A39284]">
+                <p className="other-alias">
                   {item.alias}
                 </p>
               )}
 
               {item.englishName && (
-                <p className="mb-6 border-b border-[#F0E8DE] pb-4 font-serif text-[16px] italic text-[#A39284]">
+                <p className="other-english">
                   {item.englishName}
                 </p>
               )}
+            </div>
 
-              {!item.alias && !item.englishName && (
-                  <div className="mb-6 border-b border-[#F0E8DE] pb-4" />
-                )}
-
+            <div className="other-overview-body">
               {tags.length > 0 && (
-                <div className="mb-6 flex flex-wrap gap-2">
+                <div className="other-tags">
                   {tags.map((tag, index) => (
                     <span
                       key={`${tag}-${index}`}
-                      className="rounded-full border border-[#E7DED4] bg-[#F9F7F3] px-3 py-1 text-[14px] text-[#6B9080]"
+                      className="other-tag"
                     >
                       {tag}
                     </span>
@@ -698,147 +1203,107 @@ export default function OtherDetailPage({
               )}
 
               {fields.length > 0 && (
-                <div className="overflow-hidden rounded-xl border border-[#EAE4DB] shadow-[0_4px_14px_rgba(63,81,68,0.04)]">
-                  <table className="w-full border-collapse text-[16px]">
-                    <tbody className="divide-y divide-[#EAE4DB] text-[#3A4F3F]">
-                      {fields
-                        .slice(0, 6)
-                        .map((field) => (
-                          <tr
-                            key={field.key}
-                            className="bg-[#FBFBFA]/60"
-                          >
-                            <td className="w-[35%] bg-[#FBFBFA] px-3 py-3 text-[16px] font-bold text-[#3A4F3F]">
-                              {field.label}
-                            </td>
+                <dl className="other-facts">
+                  {fields.map((field) => (
+                    <div
+                      key={field.key}
+                      className="other-fact"
+                    >
+                      <dt>{field.label}</dt>
 
-                            <td className="px-3 py-3">
-                              {renderFormattedText(
-                                field.value
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
+                      <dd>
+                        <FormattedText
+                          value={field.value}
+                        />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               )}
 
               {hasDescription && (
-  <div className="mt-6">
-    <h3 className="mb-3 text-[22px] font-bold text-[#2F4638]">
-      簡介
-    </h3>
+                <section className="other-summary">
+                  <h3 className="other-summary-title">
+                    簡介
+                  </h3>
 
-    <div className="text-[17px] leading-9 text-[#55655B]">
-      {renderFormattedText(
-        item.description
-      )}
-    </div>
-  </div>
-)}
+                  <FormattedText
+                    value={item.description}
+                  />
+                </section>
+              )}
 
-{hasKnowledgeSections && (
-  <div className="mt-6">
-    <KnowledgeTableOfContents
-      sections={knowledgeSections}
-    />
-  </div>
-)}
+              {hasKnowledgeSections && (
+                <KnowledgeTableOfContents
+                  sections={knowledgeSections}
+                />
+              )}
             </div>
-          </section>
+          </aside>
 
-          <section className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10">
-              <div className="space-y-8 text-[#3A4F3F]">
-                {fields.length > 6 && (
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    {fields
-                      .slice(6)
-                      .map((field) => (
-                        <div key={field.key}>
-                          <span className={UI.sectionLabel}>
-                            {field.label}
-                          </span>
+          <div className="other-panel other-reading">
+            {knowledgeIntroduction &&
+              String(knowledgeIntroduction).trim() !== '' && (
+                <section className="other-section">
+                  <h3 className="other-section-title">
+                    📖 詳細介紹
+                  </h3>
 
-                          {renderFormattedText(
-                            field.value
-                          )}
-                        </div>
-                      ))}
+                  <div className="other-inset">
+                    <FormattedText
+                      value={knowledgeIntroduction}
+                    />
                   </div>
+                </section>
+              )}
+
+            {hasKnowledgeSections && (
+              <section className="other-section">
+                <h3 className="other-section-title">
+                  📚 內容架構
+                </h3>
+
+                {renderKnowledgeSections(
+                  knowledgeSections
                 )}
+              </section>
+            )}
 
-                {knowledgeIntroduction &&
-                  String(
-                    knowledgeIntroduction
-                  ).trim() !== '' && (
-                    <section>
-                      <span className={UI.sectionLabel}>
-                        📖 詳細介紹
-                      </span>
+            {hasNote && (
+              <section className="other-section">
+                <h3 className="other-section-title">
+                  💡 補充說明
+                </h3>
 
-                      <div className="rounded-xl bg-[#F7F5F0]/60 p-6 md:p-7">
-                        {renderFormattedText(
-                          knowledgeIntroduction
-                        )}
-                      </div>
-                    </section>
-                  )}
+                <div className="other-inset">
+                  <FormattedText value={item.note} />
+                </div>
+              </section>
+            )}
 
-                {hasKnowledgeSections && (
-                  <section>
-                    <span className={UI.sectionLabel}>
-                      📚 內容架構
-                    </span>
+            {cautionText && (
+              <section className="other-section">
+                <h3 className="other-section-title">
+                  ⚠️ 注意事項
+                </h3>
 
-                    <div className="space-y-5">
-                      {renderKnowledgeSections(
-                        knowledgeSections
-                      )}
-                    </div>
-                  </section>
-                )}
+                <div className="other-inset">
+                  <FormattedText value={cautionText} />
+                </div>
+              </section>
+            )}
 
-                {hasNote && (
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      💡 補充說明
-                    </span>
-
-                    <div className="rounded-xl bg-[#F7F5F0]/60 p-6 text-[17px] leading-9 text-[#55655B] md:p-7">
-                      {renderFormattedText(
-                        item.note
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {hasCaution && (
-                  <div className="rounded-xl bg-red-50/70 p-5">
-                    <span className="mb-2 block text-[16px] font-bold text-red-800">
-                      ⚠️ 注意事項
-                    </span>
-
-                    {renderFormattedText(
-                      cautionText
-                    )}
-                  </div>
-                )}
-
-                {!hasKnowledgeSections &&
-                  !knowledgeIntroduction &&
-                  !hasDescription &&
-                  !hasNote &&
-                  !hasCaution &&
-                  fields.length === 0 && (
-                    <div className="rounded-xl bg-[#F7F5F0]/60 p-5 text-[16px] leading-8 text-[#55655B]">
-                      此項目目前尚未填寫詳細內容。
-                    </div>
-                  )}
-              </div>
-            </div>
-          </section>
+            {!hasKnowledgeSections &&
+              !knowledgeIntroduction &&
+              !hasDescription &&
+              !hasNote &&
+              !cautionText &&
+              fields.length === 0 && (
+                <div className="other-empty">
+                  此項目目前尚未填寫詳細內容。
+                </div>
+              )}
+          </div>
         </div>
       </main>
     </div>

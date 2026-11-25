@@ -1,159 +1,746 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React from 'react';
 
+const TITLE_FONT = {
+  fontFamily:
+    '"Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif',
+};
 
-const parseBoldSyntax = (str) => {
-  if (!str) {
-    return str;
+const OIL_STYLES = `
+  .oil-detail {
+    --oil-bg: var(--app-bg, #fdfbf7);
+    --oil-surface: var(--app-surface, #fffdf8);
+    --oil-soft: var(--app-surface-soft, #f0f3eb);
+    --oil-text: var(--app-text, #283c32);
+    --oil-muted: var(--app-muted, #657565);
+    --oil-border: var(--app-border, #dce2d7);
+    --oil-accent: var(--app-accent, #405e4c);
+    --oil-selected: var(--app-selected, #e3ebdf);
+    --oil-selected-text: var(--app-selected-text, #2f4c3b);
+    --oil-mark-bg: #efe3c9;
+    --oil-mark-text: #4b432c;
+
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--oil-bg);
+    color: var(--oil-text);
+    color-scheme: light;
   }
 
-  const parts = String(str).split(
-    /(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g
+  .oil-detail,
+  .oil-detail *,
+  .oil-detail *::before,
+  .oil-detail *::after {
+    box-sizing: border-box;
+  }
+
+  :root[data-app-theme='dark'] .oil-detail {
+    --oil-mark-bg: #4a4430;
+    --oil-mark-text: #eee0b5;
+
+    color-scheme: dark;
+  }
+
+  .oil-detail .oil-header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--oil-border);
+    background: var(--oil-surface);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .oil-detail .oil-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 16px 24px;
+  }
+
+  .oil-detail .oil-header-text {
+    min-width: 0;
+  }
+
+  .oil-detail .oil-eyebrow {
+    margin: 0;
+    color: var(--oil-accent);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    line-height: 1.6;
+  }
+
+  .oil-detail .oil-header-name {
+    margin: 3px 0 0;
+    overflow: hidden;
+    color: var(--oil-text);
+    font-size: 35px;
+    font-weight: 600;
+    line-height: 1.6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .oil-detail .oil-back {
+    display: inline-flex;
+    min-height: 42px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--oil-border);
+    border-radius: 12px;
+    padding: 9px 14px;
+    background: var(--oil-surface);
+    color: var(--oil-text);
+    font-size: 13px;
+    line-height: 1.5;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .oil-detail .oil-back:hover {
+    border-color: var(--oil-accent);
+    background: var(--oil-soft);
+  }
+
+  .oil-detail .oil-back:focus-visible {
+    outline: 2px solid var(--oil-accent);
+    outline-offset: 3px;
+  }
+
+  .oil-detail .oil-scroll {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: var(--oil-border) var(--oil-bg);
+  }
+
+  .oil-detail .oil-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    padding-bottom: max(48px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .oil-detail .oil-panel {
+    min-width: 0;
+    border: 1px solid var(--oil-border);
+    border-radius: 24px;
+    background: var(--oil-surface);
+    box-shadow: 0 14px 36px -30px rgb(20 33 28 / 25%);
+  }
+
+  .oil-detail .oil-overview {
+    overflow: hidden;
+  }
+
+  .oil-detail .oil-identity {
+    border-bottom: 1px solid var(--oil-border);
+    padding: 28px;
+    background:
+      radial-gradient(
+        ellipse at 100% 0%,
+        rgb(107 144 128 / 10%),
+        transparent 70%
+      ),
+      var(--oil-surface);
+  }
+
+  .oil-detail .oil-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .oil-detail .oil-tag {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--oil-border);
+    border-radius: 7px;
+    padding: 4px 9px;
+    background: var(--oil-soft);
+    color: var(--oil-muted);
+    font-size: 11px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .oil-detail .oil-name {
+    margin: 0;
+    color: var(--oil-text);
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.08em;
+    overflow-wrap: anywhere;
+  }
+
+  .oil-detail .oil-english {
+    margin: 8px 0 0;
+    color: var(--oil-muted);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-style: italic;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  .oil-detail .oil-overview-body {
+    padding: 24px 28px 28px;
+  }
+
+  .oil-detail .oil-facts {
+    margin: 0;
+  }
+
+  .oil-detail .oil-fact {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--oil-border);
+    padding: 13px 0;
+  }
+
+  .oil-detail .oil-fact:first-child {
+    padding-top: 0;
+  }
+
+  .oil-detail .oil-fact:last-child {
+    border-bottom: 0;
+  }
+
+  .oil-detail .oil-fact dt {
+    align-self: center;
+    margin: 0;
+    color: var(--oil-muted);
+    font-size: 12px;
+    line-height: 1.9;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .oil-detail .oil-fact dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--oil-text);
+    font-size: 15px;
+    line-height: 2;
+  }
+
+  .oil-detail .oil-summary {
+    margin-top: 0;
+    border-top: 1px solid var(--oil-border);
+    padding-top: 24px;
+  }
+
+  .oil-detail .oil-summary-title {
+    margin: 0 0 12px;
+    color: var(--oil-text);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .oil-detail .oil-summary-text {
+    margin: 0;
+    color: var(--oil-muted);
+    font-size: 14px;
+    line-height: 2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .oil-detail .oil-reading {
+    padding: 8px 32px;
+  }
+
+  .oil-detail .oil-section {
+    min-width: 0;
+    padding: 28px 0;
+  }
+
+  .oil-detail .oil-section + .oil-section,
+  .oil-detail .oil-section + .oil-effects,
+  .oil-detail .oil-effects + .oil-section,
+  .oil-detail .oil-effects + .oil-effects {
+    border-top: 1px solid var(--oil-border);
+  }
+
+  .oil-detail .oil-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    color: var(--oil-text);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.7;
+    letter-spacing: 0.08em;
+  }
+
+  .oil-detail .oil-section-title::before {
+    display: block;
+    width: 4px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--oil-accent);
+    content: "";
+  }
+
+  .oil-detail .oil-body {
+    color: var(--oil-muted);
+    font-size: 15px;
+    line-height: 2;
+    overflow-wrap: anywhere;
+  }
+
+  .oil-detail .oil-line + .oil-line {
+    margin-top: 6px;
+  }
+
+  .oil-detail .oil-blank {
+    height: 10px;
+  }
+
+  .oil-detail .oil-numbered,
+  .oil-detail .oil-bullet {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .oil-detail .oil-number {
+    color: var(--oil-text);
+    font-weight: 600;
+  }
+
+  .oil-detail .oil-bullet-dot {
+    color: var(--oil-accent);
+  }
+
+  .oil-detail strong {
+    color: var(--oil-text);
+    font-weight: 600;
+  }
+
+  .oil-detail mark {
+    border-radius: 4px;
+    padding: 1px 4px;
+    background: var(--oil-mark-bg);
+    color: var(--oil-mark-text);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .oil-detail .oil-empty {
+    color: var(--oil-muted);
+    font-size: 14px;
+    font-style: italic;
+    line-height: 1.9;
+  }
+
+  .oil-detail .oil-inset {
+    border: 1px solid var(--oil-border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    background: var(--oil-soft);
+  }
+
+  .oil-detail .oil-effects {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .oil-detail .oil-effects .oil-section {
+    border-top: 0;
+  }
+
+  .oil-detail .oil-effects .oil-section + .oil-section {
+    border-top: 1px solid var(--oil-border);
+  }
+
+  @media (min-width: 768px) {
+    .oil-detail .oil-effects {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+    }
+
+    .oil-detail .oil-effects .oil-section + .oil-section {
+      border-top: 0;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .oil-detail .oil-layout {
+      grid-template-columns: 400px minmax(0, 1fr);
+      gap: 28px;
+      padding-top: 32px;
+    }
+
+    .oil-detail .oil-overview {
+      position: sticky;
+      top: 28px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .oil-detail .oil-header-inner {
+      gap: 12px;
+      padding: 14px 16px;
+    }
+
+    .oil-detail .oil-layout {
+      gap: 18px;
+      padding: 20px 12px 40px;
+    }
+
+    .oil-detail .oil-identity {
+      padding: 24px;
+    }
+
+    .oil-detail .oil-overview-body {
+      padding: 22px 16px;
+    }
+
+    .oil-detail .oil-fact {
+      gap: 10px;
+    }
+
+    .oil-detail .oil-reading {
+      padding: 4px 22px;
+    }
+
+    .oil-detail .oil-section {
+      padding: 24px 0;
+    }
+
+    .oil-detail .oil-inset {
+      padding: 16px;
+    }
+
+    .oil-detail .oil-name {
+      font-size: 32px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .oil-detail .oil-back {
+      transition: none;
+    }
+  }
+`;
+
+function asText(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map(asText)
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number'
+  ) {
+    return String(value);
+  }
+
+  return '';
+}
+
+function firstText(...values) {
+  return (
+    values
+      .map(asText)
+      .find((value) => value.trim()) || ''
   );
+}
 
-  return parts.map((part, index) => {
-    if (!part) {
-      return null;
-    }
+function renderInline(text) {
+  return asText(text)
+    .split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g)
+    .map((part, index) => {
+      if (!part) return null;
 
-    if (
-      part.startsWith('==') &&
-      part.endsWith('==')
-    ) {
-      return (
-        <mark
-          key={index}
-          className="mx-0.5 rounded-md bg-[#F3E1C5] px-1 py-0.5 font-bold text-[#2C3C30] shadow-sm"
-        >
-          {part.slice(2, -2)}
-        </mark>
-      );
-    }
+      if (
+        part.startsWith('==') &&
+        part.endsWith('==')
+      ) {
+        return (
+          <mark key={index}>
+            {part.slice(2, -2)}
+          </mark>
+        );
+      }
 
-    if (
-      part.startsWith('**') &&
-      part.endsWith('**')
-    ) {
-      return (
-        <strong
-          key={index}
-          className="font-bold text-[#1A261C]"
-        >
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
+      if (
+        part.startsWith('**') &&
+        part.endsWith('**')
+      ) {
+        return (
+          <strong key={index}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
 
-    if (
-      (part.startsWith('《') &&
-        part.endsWith('》')) ||
-      (part.startsWith('【') &&
-        part.endsWith('】'))
-    ) {
-      return (
-        <strong
-          key={index}
-          className="font-bold text-[#1A261C]"
-        >
-          {part}
-        </strong>
-      );
-    }
+      if (
+        (part.startsWith('《') && part.endsWith('》')) ||
+        (part.startsWith('【') && part.endsWith('】'))
+      ) {
+        return (
+          <strong key={index}>
+            {part}
+          </strong>
+        );
+      }
 
-    return part;
-  });
-};
+      return part;
+    });
+}
 
-
-const UI = {
-  text:
-    'text-[15px] leading-8 text-[#55655B]',
-
-  title:
-    'mb-2 text-3xl font-bold text-[#2F4638] md:text-3xl',
-
-  sectionLabel:
-  'mb-3 mt-4 flex items-center gap-3 border-b border-[#E5E0D8] pb-2 text-base font-bold uppercase tracking-[0.18em] text-[#4E6654] before:block before:h-5 before:w-1 before:shrink-0 before:rounded-full before:bg-[#6B9080]',
-};
-
-
-const AutoHeightTextarea = ({
+function FormattedText({
   value,
-  className = '',
-}) => {
-  const ref = useRef(null);
-  const [height, setHeight] =
-    useState('auto');
+  emptyText = '無記載',
+  emphasizeLabel = false,
+}) {
+  const text = asText(value).replace(/\r\n?/g, '\n');
 
-  useEffect(() => {
-    if (!ref.current) {
-      return;
-    }
-
-    ref.current.style.height = '0px';
-
-    setHeight(
-      `${ref.current.scrollHeight}px`
+  if (!text.trim()) {
+    return (
+      <span className="oil-empty">
+        {emptyText}
+      </span>
     );
-  }, [value]);
+  }
 
   return (
-    <textarea
-      ref={ref}
-      readOnly
-      value={
-        value ||
-        '此項目目前尚未填寫簡介。'
-      }
-      className={`w-full resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-[15px] leading-8 text-[#55655B] outline-none focus:outline-none focus:ring-0 ${className}`}
-      style={{ height }}
-    />
-  );
-};
+    <div className="oil-body">
+      {text.split('\n').map((line, index) => {
+        const trimmed = line.trim();
 
+        if (!trimmed) {
+          return (
+            <div
+              key={index}
+              className="oil-blank"
+              aria-hidden="true"
+            />
+          );
+        }
+
+        const numbered = trimmed.match(
+          /^(\d+[.、．]|[一二三四五六七八九十百]+[、.．])\s*(.*)$/
+        );
+
+        if (numbered) {
+          return (
+            <div
+              key={index}
+              className="oil-line oil-numbered"
+            >
+              <span className="oil-number">
+                {numbered[1]}
+              </span>
+
+              <div>
+                {renderInline(numbered[2])}
+              </div>
+            </div>
+          );
+        }
+
+        if (trimmed.startsWith('●')) {
+          return (
+            <div
+              key={index}
+              className="oil-line oil-bullet"
+            >
+              <span className="oil-bullet-dot">
+                ●
+              </span>
+
+              <div>
+                {renderInline(
+                  trimmed.slice(1).trim()
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        const colonIndex = emphasizeLabel
+          ? trimmed.search(/[：:]/)
+          : -1;
+
+        if (colonIndex > 0) {
+          return (
+            <div key={index} className="oil-line">
+              <strong>
+                {renderInline(
+                  trimmed.slice(0, colonIndex + 1)
+                )}
+              </strong>
+
+              {' '}
+
+              {renderInline(
+                trimmed.slice(colonIndex + 1)
+              )}
+            </div>
+          );
+        }
+
+        return (
+          <div key={index} className="oil-line">
+            {renderInline(trimmed)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DetailSection({
+  title,
+  value,
+  inset = false,
+  emphasizeLabel = false,
+  emptyText = '無記載',
+}) {
+  return (
+    <section className="oil-section">
+      <h3 className="oil-section-title">
+        {title}
+      </h3>
+
+      <div className={inset ? 'oil-inset' : undefined}>
+        <FormattedText
+          value={value}
+          emptyText={emptyText}
+          emphasizeLabel={emphasizeLabel}
+        />
+      </div>
+    </section>
+  );
+}
 
 export default function OilModal({
   item,
   onClose,
   backLabel = '返回列表',
 }) {
-  if (!item) {
-    return null;
-  }
+  if (!item) return null;
 
-  const oilDetails =
-    item.oilDetails ||
-    item.oilTable ||
-    {};
+  const oilTable = item.oilTable || {};
+  const oilDetails = item.oilDetails || {};
 
-  const getOilValue = (key) => {
-    const nestedValue =
-      oilDetails?.[key];
+  const name =
+    firstText(item.name).trim() || '未命名';
 
-    const topLevelValue =
-      item?.[key];
+  const englishName = firstText(
+    item.englishName,
+    item.english,
+    item['英文名'],
+    item['英文名稱']
+  );
 
-    if (
-      nestedValue !== undefined &&
-      nestedValue !== null &&
-      String(nestedValue).trim() !== ''
-    ) {
-      return nestedValue;
-    }
+  const getValue = (...keys) => {
+    for (const key of keys) {
+      const value = firstText(
+        oilDetails[key],
+        oilTable[key],
+        item[key]
+      );
 
-    if (
-      topLevelValue !== undefined &&
-      topLevelValue !== null &&
-      String(topLevelValue).trim() !== ''
-    ) {
-      return topLevelValue;
+      if (value) {
+        return value;
+      }
     }
 
     return '';
   };
+
+  const constitutionTag = getValue('constitutionTag');
+  const chemicalTag = getValue('chemicalTag');
+
+  const description = firstText(
+    item.description,
+    oilDetails.description,
+    oilTable.description
+  );
+
+  const rows = [
+    {
+      label: '別名',
+      value: getValue('alias'),
+    },
+    {
+      label: '植物種類／萃取部位',
+      value: getValue('typePart'),
+    },
+    {
+      label: '萃取方法',
+      value: getValue('method'),
+    },
+    {
+      label: '學名',
+      value: getValue('latin'),
+    },
+    {
+      label: '科名',
+      value: getValue('family'),
+    },
+    {
+      label: '性味',
+      value: getValue('nature'),
+    },
+    {
+      label: '五行',
+      value: getValue('property'),
+    },
+    {
+      label: '歸經',
+      value: getValue('meridian'),
+    },
+    {
+      label: '主治',
+      value: getValue('indications'),
+    },
+    {
+      label: '音符',
+      value: getValue('noteAnalogy'),
+    },
+    {
+      label: '星球',
+      value: getValue('planet'),
+    },
+    {
+      label: '產地',
+      value: getValue('origin'),
+    },
+  ];
 
   const handleClose = () => {
     if (typeof onClose === 'function') {
@@ -161,388 +748,196 @@ export default function OilModal({
     }
   };
 
-  const renderFormattedText = (text) => {
-    if (!text) {
   return (
-    <div className={UI.text}>
-      <div className="mb-3">
-        <span className="italic text-gray-400">
-          無記載
-        </span>
-      </div>
-    </div>
-  );
-}
+    <div className="oil-detail">
+      <style>{OIL_STYLES}</style>
 
-    const lines =
-      typeof text === 'string'
-        ? text
-            .split('\n')
-            .filter(
-              (line) => line.trim() !== ''
-            )
-        : [text];
+      <header className="oil-header">
+        <div className="oil-header-inner">
+          <div className="oil-header-text">
+            <p className="oil-eyebrow">
+              本草百科 / ESSENTIAL OIL
+            </p>
 
-    return (
-      <div className={UI.text}>
-        {lines.map((line, index) => {
-          const trimmed =
-            typeof line === 'string'
-              ? line.trim()
-              : line;
-
-          const isNumbered =
-            typeof trimmed === 'string' &&
-            /^(?:\d+\.|[一二三四五六七八九十]+[、.])/.test(
-              trimmed
-            );
-
-          const isIndented =
-            typeof trimmed === 'string' &&
-            trimmed.startsWith('●');
-
-          if (isNumbered) {
-            const splitIndex =
-              trimmed.search(/[.、]/) + 1;
-
-            return (
-              <div
-                key={index}
-                className="mb-1 grid grid-cols-[auto_1fr] gap-x-2"
-              >
-                <span className="shrink-0 font-bold text-[#2F4638]">
-                  {trimmed.substring(
-                    0,
-                    splitIndex
-                  )}
-                </span>
-
-                <span>
-                  {parseBoldSyntax(
-                    trimmed
-                      .substring(splitIndex)
-                      .trim()
-                  )}
-                </span>
-              </div>
-            );
-          }
-
-          if (isIndented) {
-            return (
-              <div
-                key={index}
-                className="mb-1 grid grid-cols-[1rem_1fr] gap-x-2"
-              >
-                <span className="text-[#A39284]">
-                  ●
-                </span>
-
-                <span>
-                  {parseBoldSyntax(
-                    trimmed
-                      .replace('●', '')
-                      .trim()
-                  )}
-                </span>
-              </div>
-            );
-          }
-
-          return (
-            <div
-              key={index}
-              className="mb-1"
-            >
-              {parseBoldSyntax(trimmed)}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-
-  const rows = [
-    {label: '🏷️ 別名',val: getOilValue('alias'),},
-    {label: '🌿 植物種類／萃取部位',val: getOilValue('typePart'),},
-    {label: '🧪 萃取方法',val: getOilValue('method'),},
-    {label: '🧬 學名',val: getOilValue('latin'),},
-    {label: '🌳 科名',val: getOilValue('family'),},
-    {label: '👅 性味',val: getOilValue('nature'),},
-    {label: '☯️ 五行',val: getOilValue('property'),},
-    {label: '🎯 歸經',val: getOilValue('meridian'),},
-    {label: '🩹 主治',val: getOilValue('indications'),},
-    {label: '🎵 音符',val: getOilValue('noteAnalogy'),},
-    {label: '🪐 星球',val: getOilValue('planet'),},
-    {label: '🌍 產地',val: getOilValue('origin'),},
-  ];
-
-
-  const effects = [
-    {title: '心靈療效',value: getOilValue('mindEffect'),icon: '🧠',},
-    {title: '身體療效',value: getOilValue('bodyEffect'),icon: '🧍',},
-    {title: '皮膚療效',value: getOilValue('skinEffect'),icon: '💪',},
-  ];
-
-
-  return (
-    <div className="fixed inset-0 z-[200] flex h-screen w-full flex-col overflow-hidden bg-[#F4EFE7] text-[#3A4F3F]">
-      <header className="shrink-0 border-b border-[#D8C8B8] bg-[#FFFCF8] shadow-[0_4px_18px_rgba(96,116,102,0.12)]">
-        <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8 lg:px-10">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl leading-none md:text-3xl">
-              🧴
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6B9080]">
-                Essential Oil
-              </p>
-
-              <h1 className="truncate text-lg font-black text-[#718678] md:text-xl">
-                {item.name}
-              </h1>
-
-              <p className="hidden text-xs text-[#8C725F] sm:block">
-                精油百科詳細資料
-              </p>
-            </div>
+            <h1 className="oil-header-name">
+              {name}
+            </h1>
           </div>
 
           <button
             type="button"
             onClick={handleClose}
-            className="shrink-0 rounded-lg border border-[#B2B2A8] bg-[#B2B2A8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#5F7568]"
+            className="oil-back"
           >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M11 6l-6 6 6 6" />
+            </svg>
+
             {backLabel}
           </button>
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)]">
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-4 py-6 md:px-7 md:py-8 lg:grid-cols-12 lg:gap-8 lg:px-10">
-          <section className="lg:col-span-4">
-            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-8 lg:sticky lg:top-6">
-              <div className="mb-3 flex flex-wrap gap-1.5">
-                <span className="rounded-full bg-[#EAE7E0] px-2 py-0.5 text-xs font-medium text-[#6B7A6E]">
-                  {item.constitutionTag ||
-                    getOilValue('constitutionTag') ||
-                    '無'}
-                  體質
+      <main className="oil-scroll">
+        <div className="oil-layout">
+          <aside className="oil-panel oil-overview">
+            <div className="oil-identity">
+              <div className="oil-tags">
+                <span className="oil-tag">
+                  {item.category || '精油'}
                 </span>
 
-                <span className="rounded-full bg-[#E5EAE6] px-2 py-0.5 text-xs font-medium text-[#4E6654]">
-                  {item.chemicalTag ||
-                    getOilValue('chemicalTag') ||
-                    '無'}
-                  屬性
-                </span>
+                {constitutionTag && (
+                  <span className="oil-tag">
+                    {constitutionTag} 體質
+                  </span>
+                )}
+
+                {chemicalTag && (
+                  <span className="oil-tag">
+                    {chemicalTag} 屬性
+                  </span>
+                )}
               </div>
 
-              <h2 className={UI.title}>
-                {item.name}
+              <h2
+                className="oil-name"
+                style={TITLE_FONT}
+              >
+                {name}
               </h2>
 
-              <p className="mb-6 mt-1 border-b border-[#F0E8DE] pb-4 font-serif text-base italic text-[#A39284]">
-                {item.englishName}
-              </p>
+              {englishName && (
+                <p className="oil-english">
+                  {englishName}
+                </p>
+              )}
+            </div>
 
-              <div className="overflow-hidden rounded-xl border border-[#EAE4DB] shadow-[0_4px_14px_rgba(63,81,68,0.04)]">
-                <table className="w-full border-collapse text-[14px]">
-                  <tbody className="divide-y divide-[#EAE4DB] text-[#3A4F3F]">
-                    {rows.map((row, index) => (
-                      <tr
-                        key={index}
-                        className="bg-[#FBFBFA]/60"
-                      >
-                        <td className="w-[35%] bg-[#FBFBFA] px-3 py-2 font-bold text-[#3A4F3F]">
-                          {row.label}
-                        </td>
+            <div className="oil-overview-body">
+              <dl className="oil-facts">
+                {rows.map((row) => (
+                  <div
+                    key={row.label}
+                    className="oil-fact"
+                  >
+                    <dt>{row.label}</dt>
 
-                        <td className="px-3 py-2">
-                          {renderFormattedText(
-                            row.val
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    <dd>
+                      <FormattedText value={row.value} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
 
-              <div className="mt-6">
-                <h3 className="mb-2 text-xl font-bold text-[#2F4638]">
+              <section className="oil-summary">
+                <h3 className="oil-summary-title">
                   簡介
                 </h3>
 
-                <AutoHeightTextarea
-                  value={
-                    item.description ||
-                    getOilValue('description')
-                  }
-                />
-              </div>
+                <p className="oil-summary-text">
+                  {description ||
+                    '此項目目前尚未填寫簡介。'}
+                </p>
+              </section>
             </div>
-          </section>
+          </aside>
 
-          <section className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-white/70 bg-white/75 p-6 shadow-[0_10px_30px_rgba(63,81,68,0.07)] backdrop-blur-md md:p-10">
-              <div className="space-y-8 text-[#3A4F3F]">
-                <div className="grid grid-cols-1 gap-8">
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🔍 氣味
-                    </span>
+          <div className="oil-panel oil-reading">
+            <DetailSection
+              title="氣味"
+              value={getValue('scent')}
+            />
 
-                    {renderFormattedText(
-                      getOilValue('scent')
-                    )}
-                  </div>
+            <DetailSection
+              title="外觀"
+              value={getValue('appearance')}
+            />
 
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      ✨ 外觀
-                    </span>
+            <DetailSection
+              title="應用歷史與相關神話"
+              value={getValue('historyMyth')}
+              inset
+            />
 
-                    {renderFormattedText(
-                      getOilValue('appearance')
-                    )}
-                  </div>
-                </div>
+            <div className="oil-effects">
+              <DetailSection
+                title="化學結構"
+                value={getValue('chemistry')}
+              />
 
-                <div>
-                  <span className={`${UI.sectionLabel} text-base tracking-normal`}>
-                    📜 應用歷史與相關神話
-                  </span>
-
-                  <div className="rounded-xl bg-[#F7F5F0]/60 p-5">
-                    {renderFormattedText(
-                      getOilValue('historyMyth')
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🔬 化學結構
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('chemistry')
-                    )}
-                  </div>
-
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      ⚖️ 屬性補充
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('attribute')
-                    )}
-                  </div>
-                </div>
-
-                {getOilValue('caution') && (
-                  <div className="rounded-xl bg-red-50/70 p-5">
-                    <span className="mb-2 block text-sm font-bold text-red-800">
-                      ⚠️ 注意事項
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('caution')
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <span className={`${UI.sectionLabel} text-base tracking-normal`}>
-                    🩺 深度療效
-                  </span>
-
-                  <div className="space-y-4">
-                    {effects.map((effect, index) => (
-                      <div
-                        key={index}
-                        className="flex gap-4 border-b border-[#F7F5F0] pb-4 last:border-0 last:pb-0"
-                      >
-                        <div className="w-24 shrink-0 pt-1">
-                          <div className="flex items-center gap-2 text-sm font-bold text-[#4E6654]">
-                            <span>
-                              {effect.icon}
-                            </span>
-
-                            {effect.title}
-                          </div>
-                        </div>
-
-                        <div className="flex-grow text-[14px] leading-7 text-[#55655B]">
-                          {renderFormattedText(
-                            effect.value
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🧬 體質適用
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('constitution')
-                    )}
-                  </div>
-
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🔗 適合調和的精油
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('blendingOils')
-                    )}
-                  </div>
-
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🧪 精油配方
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('formulas')
-                    )}
-                  </div>
-
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🧴 按摩基底油
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('carrierOils') ||
-                      getOilValue('carrierOil')
-                    )}
-                  </div>
-
-                  <div>
-                    <span className={UI.sectionLabel}>
-                      🚀 使用方法
-                    </span>
-
-                    {renderFormattedText(
-                      getOilValue('usage')
-                    )}
-                  </div>
-                </div>
-              </div>
+              <DetailSection
+                title="屬性補充"
+                value={getValue('attribute')}
+              />
             </div>
-          </section>
+
+            {getValue('caution') && (
+              <DetailSection
+                title="⚠️ 注意事項"
+                value={getValue('caution')}
+                inset
+              />
+            )}
+
+            <div className="oil-effects">
+              <DetailSection
+                title="心靈療效"
+                value={getValue('mindEffect')}
+              />
+
+              <DetailSection
+                title="身體療效"
+                value={getValue('bodyEffect')}
+              />
+            </div>
+
+            <DetailSection
+              title="皮膚療效"
+              value={getValue('skinEffect')}
+            />
+
+            <DetailSection
+              title="體質適用"
+              value={getValue('constitution')}
+              inset
+            />
+
+            <DetailSection
+              title="適合調和的精油"
+              value={getValue('blendingOils')}
+            />
+
+            <DetailSection
+              title="精油配方"
+              value={getValue('formulas')}
+              inset
+            />
+
+            <DetailSection
+              title="按摩基底油"
+              value={getValue(
+                'carrierOils',
+                'carrierOil'
+              )}
+            />
+
+            <DetailSection
+              title="使用方法"
+              value={getValue('usage')}
+              inset
+            />
+          </div>
         </div>
       </main>
     </div>

@@ -8,6 +8,261 @@ const TITLE_FONT = {
     '"Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif',
 };
 
+const DATA_CARD_STYLES = `
+  .app-data-card {
+    --card-bg: var(--app-surface, #fffdf8);
+    --card-soft: var(--app-surface-soft, #f0f3eb);
+    --card-text: var(--app-text, #283c32);
+    --card-muted: var(--app-muted, #657565);
+    --card-border: var(--app-border, #dce2d7);
+    --card-accent: var(--app-accent, #405e4c);
+    --card-selected: var(--app-selected, #e3ebdf);
+    --card-selected-text: var(--app-selected-text, #2f4c3b);
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    height: 100%;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    background: var(--card-bg);
+    box-shadow: 0 14px 36px -30px rgb(20 33 28 / 25%);
+    cursor: pointer;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .app-data-card:hover {
+    border-color: var(--card-accent);
+    box-shadow: 0 18px 42px -28px rgb(20 33 28 / 32%);
+    transform: translateY(-2px);
+  }
+
+  .app-data-card:focus-visible {
+    outline: 2px solid var(--card-accent);
+    outline-offset: 4px;
+  }
+
+  .app-data-card .card-decoration {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 0;
+    height: 128px;
+    pointer-events: none;
+    background: linear-gradient(
+      150deg,
+      var(--card-selected) 0%,
+      transparent 75%
+    );
+    opacity: 0.55;
+  }
+
+  .app-data-card .card-sprig {
+    position: absolute;
+    top: 40px;
+    right: -12px;
+    z-index: 0;
+    width: 80px;
+    height: 112px;
+    transform: rotate(12deg);
+    color: var(--card-accent);
+    opacity: 0.1;
+    pointer-events: none;
+  }
+
+  .app-data-card .card-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 22px 22px 18px;
+  }
+
+  .app-data-card .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+
+  .app-data-card .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .app-data-card .card-tag {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    border: 1px solid var(--card-border);
+    border-radius: 7px;
+    padding: 4px 9px;
+    background: var(--card-soft);
+    color: var(--card-muted);
+    font-size: 11px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .app-data-card .card-code {
+    border-color: transparent;
+    background: var(--card-accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .app-data-card .card-category {
+    flex-shrink: 0;
+    padding-top: 4px;
+    color: var(--card-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .app-data-card .card-title {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--card-text);
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+  }
+
+  .app-data-card .card-english {
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+    color: var(--card-muted);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    font-style: italic;
+    line-height: 1.8;
+  }
+
+  .app-data-card .card-meta {
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+    color: var(--card-muted);
+    font-size: 13px;
+    line-height: 1.9;
+  }
+
+  .app-data-card .card-meta-label {
+    margin-right: 8px;
+    color: var(--card-accent);
+    font-weight: 600;
+  }
+
+  .app-data-card .card-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    color: var(--card-muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .app-data-card .card-location::before {
+    content: "";
+    display: block;
+    width: 12px;
+    height: 1px;
+    flex-shrink: 0;
+    background: var(--card-border);
+  }
+
+  .app-data-card .card-footer {
+    margin-top: auto;
+    padding-top: 22px;
+  }
+
+  .app-data-card .card-footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-top: 1px solid var(--card-border);
+    padding-top: 14px;
+  }
+
+  .app-data-card .card-action {
+    color: var(--card-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    transition: color 180ms ease;
+  }
+
+  .app-data-card:hover .card-action {
+    color: var(--card-text);
+  }
+
+  .app-data-card .card-arrow {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    color: var(--card-accent);
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .app-data-card:hover .card-arrow {
+    border-color: var(--card-accent);
+    background: var(--card-accent);
+    color: #fff;
+  }
+
+  .app-data-card .card-arrow svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 180ms ease;
+  }
+
+  .app-data-card:hover .card-arrow svg {
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 640px) {
+    .app-data-card .card-content {
+      padding: 18px 18px 16px;
+    }
+
+    .app-data-card .card-title {
+      font-size: 23px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-data-card,
+    .app-data-card .card-arrow,
+    .app-data-card .card-arrow svg,
+    .app-data-card .card-action {
+      transition: none;
+    }
+  }
+`;
+
 const getCategoryType = (category) => {
   const value = String(category || '').trim();
 
@@ -189,126 +444,75 @@ const DataCard = memo(function DataCard({
       onKeyDown={handleKeyDown}
       aria-label={`查看${item.name || '未命名'}的詳細內容`}
       style={cardStyle}
-      className="
-        group relative isolate flex h-full min-w-0
-        cursor-pointer flex-col overflow-hidden
-        rounded-[20px] border border-[#E2E2D8]
-        bg-[#FFFDF8]
-        shadow-[0_2px_5px_rgba(40,60,50,0.025),0_12px_28px_-22px_rgba(40,60,50,0.18)]
-        transition-[border-color,box-shadow] duration-300
-        hover:border-[#B8C2B5]
-        hover:shadow-[0_3px_8px_rgba(40,60,50,0.04),0_18px_38px_-24px_rgba(40,60,50,0.26)]
-        focus-visible:outline focus-visible:outline-2
-        focus-visible:outline-offset-4
-        focus-visible:outline-[#527565]
-        motion-reduce:transition-none
-      "
+      className="app-data-card"
     >
-      <div
-        aria-hidden="true"
-        className="
-          pointer-events-none absolute inset-x-0 top-0
-          z-0 h-32
-          bg-[linear-gradient(150deg,var(--cat-tint)_0%,transparent_75%)]
-          opacity-35
-        "
-      />
+      <style>{DATA_CARD_STYLES}</style>
 
       <div
         aria-hidden="true"
-        className="
-          pointer-events-none absolute inset-x-7 top-0
-          z-0 h-px
-          bg-gradient-to-r from-transparent
-          via-white to-transparent
-        "
+        className="card-decoration"
       />
 
       <Sprig
         aria-hidden="true"
-        className="
-          pointer-events-none absolute -right-3 top-10
-          z-0 h-28 w-20 rotate-12
-          text-[color:var(--cat-deep)] opacity-[0.12]
-        "
+        className="card-sprig"
       />
 
-      <div className="relative z-10 flex flex-1 flex-col px-6 pb-5 pt-6 md:px-7 md:pt-7">
-        <div className="mb-1 flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              {tags.map((tag, index) => (
-                <span
-                  key={`tag-${index}-${tag}`}
-                  className="
-                    inline-flex max-w-full items-center
-                    rounded-md border border-[#DCE2D7]
-                    bg-[#FFFDF8]/80 px-2.5 py-1
-                    text-[11px] font-medium leading-5
-                    tracking-[0.04em] text-[#536A5C]
-                  "
-                >
-                  <span className="break-words">
-                    {tag}
-                  </span>
-                </span>
-              ))}
+      <div className="card-content">
+        <div className="card-top">
+          <div className="card-tags">
+            {tags.map((tag, index) => (
+              <span
+                key={`tag-${index}-${tag}`}
+                className="card-tag"
+              >
+                {tag}
+              </span>
+            ))}
 
-              {acupunctureCode && (
-                <span
-                  className="
-                    inline-flex shrink-0 items-center justify-center
-                    rounded-md border border-[#405E4C]
-                    bg-[#324D3D] px-2.5 py-1
-                    font-sans text-[13px] font-semibold
-                    leading-5 tracking-[0.06em] text-[#FFFDF8]
-                    shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]
-                  "
-                >
-                  <span className="sr-only">
-                    國際代碼：
-                  </span>
-                  {acupunctureCode}
+            {acupunctureCode && (
+              <span className="card-tag card-code">
+                <span className="sr-only">
+                  國際代碼：
                 </span>
-              )}
 
-              {tags.length === 0 && !acupunctureCode && (
-                <span className="text-[11px] font-medium tracking-[0.16em] text-[#777D72]">
+                {acupunctureCode}
+              </span>
+            )}
+
+            {tags.length === 0 &&
+              !acupunctureCode && (
+                <span className="card-tag">
                   本草與芳香
                 </span>
               )}
-            </div>
           </div>
 
           {categoryLabel && (
-            <span className="shrink-0 pt-1 text-[10px] font-medium tracking-[0.18em] text-[#777D72]">
+            <span className="card-category">
               {categoryLabel}
             </span>
           )}
         </div>
 
-        <div className="relative pr-8">
+        <div>
           <h3
+            className="card-title"
             style={TITLE_FONT}
-            className="
-              break-words text-[25px] font-semibold
-              leading-[1.5] tracking-[0.06em]
-              text-[#283C32] md:text-[27px]
-            "
           >
             {item.name || '未命名'}
           </h3>
 
           {isOil && (
-            <div className="mt-2 space-y-4">
+            <div>
               {englishName && (
-                <div className="break-words font-latin text-[18px] italic leading-7 tracking-[0.015em] text-[#627B69]">
+                <div className="card-english">
                   {englishName}
                 </div>
               )}
 
               {indications && (
-                <div className="line-clamp-3 whitespace-pre-wrap break-words text-[14px] leading-[1.9] tracking-[0.025em] text-[#596358]">
+                <div className="card-meta">
                   {indications}
                 </div>
               )}
@@ -316,38 +520,35 @@ const DataCard = memo(function DataCard({
           )}
 
           {isAcupuncture && (
-            <div className="mt-2 space-y-3">
+            <div>
               {englishName && (
-                <div className="break-words font-latin text-[18px] italic leading-7 tracking-[0.015em] text-[#627B69]">
+                <div className="card-english">
                   {englishName}
                 </div>
               )}
 
               {locationLabel && (
-                <div className="flex items-center gap-2 text-[13px] leading-6 tracking-[0.06em] text-[#596358]">
-                  <span
-                    aria-hidden="true"
-                    className="h-px w-3 shrink-0 bg-[#A4AF9D]"
-                  />
-                  <span>{locationLabel}</span>
+                <div className="card-location">
+                  {locationLabel}
                 </div>
               )}
             </div>
           )}
 
           {isChineseMedicine && (
-            <div className="mt-2 space-y-3">
+            <div>
               {englishName && (
-                <div className="break-words font-latin text-[18px] italic leading-7 tracking-[0.015em] text-[#627B69]">
+                <div className="card-english">
                   {englishName}
                 </div>
               )}
 
               {meridian && (
-                <div className="break-words text-[13px] leading-7 tracking-[0.04em] text-[#596358]">
-                  <span className="mr-2 text-[#777D72]">
+                <div className="card-meta">
+                  <span className="card-meta-label">
                     歸經
                   </span>
+
                   {meridian}
                 </div>
               )}
@@ -358,42 +559,24 @@ const DataCard = memo(function DataCard({
             !isAcupuncture &&
             !isChineseMedicine &&
             subtitle && (
-              <div className="mt-2 break-words font-latin text-[17px] italic leading-7 text-[#627B69]">
+              <div className="card-english">
                 {subtitle}
               </div>
             )}
         </div>
 
-        <div className="mt-auto pt-7">
-          <div className="flex items-center justify-between gap-4 border-t border-[#E6E7DD] pt-4">
-            <span className="text-[11px] font-medium tracking-[0.16em] text-[#697667] transition-colors duration-300 group-hover:text-[#283C32]">
+        <div className="card-footer">
+          <div className="card-footer-inner">
+            <span className="card-action">
               查看詳情
             </span>
 
             <span
               aria-hidden="true"
-              className="
-                grid h-8 w-8 shrink-0 place-items-center
-                rounded-full border border-[#DDE2D6]
-                bg-transparent text-[#627B69]
-                transition-colors duration-300
-                group-hover:border-[#527565]
-                group-hover:bg-[#527565]
-                group-hover:text-[#FFFDF8]
-                group-focus-visible:border-[#527565]
-                group-focus-visible:bg-[#527565]
-                group-focus-visible:text-[#FFFDF8]
-                motion-reduce:transition-none
-              "
+              className="card-arrow"
             >
               <svg
                 viewBox="0 0 20 20"
-                className="
-                  h-4 w-4 transition-transform duration-300
-                  group-hover:translate-x-0.5
-                  motion-reduce:transform-none
-                  motion-reduce:transition-none
-                "
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.4"
