@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 const TITLE_FONT = {
   fontFamily:
@@ -18,8 +18,9 @@ const OTHER_DETAIL_STYLES = `
     --other-selected-text: var(--app-selected-text, #2f4c3b);
     --other-mark-bg: #efe3c9;
     --other-mark-text: #4b432c;
-    --other-danger-bg: rgba(127, 29, 29, 0.08);
-    --other-danger-text: #9b2c2c;
+    --other-danger-bg: #fbefec;
+    --other-danger-text: #9c544b;
+    --other-danger-border: #e7c6bf;
 
     position: fixed;
     inset: 0;
@@ -35,13 +36,24 @@ const OTHER_DETAIL_STYLES = `
     color-scheme: light;
   }
 
+  .other-detail,
+  .other-detail *,
+  .other-detail *::before,
+  .other-detail *::after {
+    box-sizing: border-box;
+  }
+
   :root[data-app-theme='dark'] .other-detail {
     --other-mark-bg: #4a4430;
     --other-mark-text: #eee0b5;
-    --other-danger-bg: rgba(127, 29, 29, 0.22);
-    --other-danger-text: #fca5a5;
-
+    --other-danger-bg: #402b2b;
+    --other-danger-text: #edb6ac;
+    --other-danger-border: #6b4541;
     color-scheme: dark;
+  }
+
+  .other-detail button {
+    font: inherit;
   }
 
   .other-detail .other-header {
@@ -55,28 +67,33 @@ const OTHER_DETAIL_STYLES = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 20px;
     width: 100%;
     max-width: 1360px;
     margin: 0 auto;
     padding: 16px 24px;
   }
 
+  .other-detail .other-header-text {
+    min-width: 0;
+  }
+
   .other-detail .other-eyebrow {
+    margin: 0;
     color: var(--other-accent);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.18em;
-    line-height: 1.6;
+    line-height: 1.8;
   }
 
   .other-detail .other-header-name {
-    margin-top: 3px;
+    margin: 4px 0 0;
     overflow: hidden;
     color: var(--other-text);
     font-size: 35px;
     font-weight: 600;
-    line-height: 1.6;
+    line-height: 1.4;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -94,7 +111,6 @@ const OTHER_DETAIL_STYLES = `
     background: var(--other-surface);
     color: var(--other-text);
     font-size: 13px;
-    line-height: 1.5;
     cursor: pointer;
     transition:
       background-color 160ms ease,
@@ -106,7 +122,7 @@ const OTHER_DETAIL_STYLES = `
     background: var(--other-soft);
   }
 
-  .other-detail .other-back:focus-visible {
+  .other-detail button:focus-visible {
     outline: 2px solid var(--other-accent);
     outline-offset: 3px;
   }
@@ -158,13 +174,13 @@ const OTHER_DETAIL_STYLES = `
   .other-detail .other-tags {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: 8px;
     margin-bottom: 16px;
   }
 
   .other-detail .other-tag {
     display: inline-flex;
+    max-width: 100%;
     align-items: center;
     border: 1px solid var(--other-border);
     border-radius: 7px;
@@ -174,15 +190,6 @@ const OTHER_DETAIL_STYLES = `
     font-size: 11px;
     line-height: 1.6;
     overflow-wrap: anywhere;
-  }
-
-  .other-detail .other-code {
-    border-color: transparent;
-    background: var(--other-selected);
-    color: var(--other-selected-text);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
   }
 
   .other-detail .other-name {
@@ -195,9 +202,8 @@ const OTHER_DETAIL_STYLES = `
     overflow-wrap: anywhere;
   }
 
-  .other-detail .other-alias,
   .other-detail .other-english {
-    margin-top: 8px;
+    margin: 8px 0 0;
     color: var(--other-muted);
     font-family: Georgia, "Times New Roman", serif;
     font-size: 18px;
@@ -216,7 +222,7 @@ const OTHER_DETAIL_STYLES = `
 
   .other-detail .other-fact {
     display: grid;
-    grid-template-columns: 108px minmax(0, 1fr);
+    grid-template-columns: 76px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid var(--other-border);
@@ -241,65 +247,100 @@ const OTHER_DETAIL_STYLES = `
   .other-detail .other-fact dd {
     min-width: 0;
     margin: 0;
-    color: var(--other-text);
-    font-size: 14px;
-    line-height: 1.9;
   }
 
   .other-detail .other-summary {
     margin-top: 0;
-    border-top: 1px solid var(--other-border);
     padding-top: 24px;
   }
 
-  .other-detail .other-summary-title {
+  .other-detail .other-facts + .other-summary {
+    border-top: 1px solid var(--other-border);
+  }
+
+  .other-detail .other-summary:first-child {
+    padding-top: 0;
+  }
+
+  .other-detail .other-small-title {
     margin: 0 0 12px;
     color: var(--other-text);
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.08em;
-  }
-
-  .other-detail .other-summary-text {
-    margin: 0;
-    color: var(--other-muted);
-    font-size: 14px;
-    line-height: 2;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    line-height: 1.8;
   }
 
   .other-detail .other-toc {
     margin-top: 24px;
-    border: 1px solid var(--other-border);
-    border-radius: 16px;
-    background: var(--other-soft);
-    padding: 18px 20px;
+    border-top: 1px solid var(--other-border);
+    padding-top: 24px;
   }
 
-  .other-detail .other-toc-title {
-    margin: 0 0 12px;
-    color: var(--other-text);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+  .other-detail .other-toc-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
   }
 
-  .other-detail .other-toc-select {
+  .other-detail .other-toc-head .other-small-title {
+    margin: 0;
+  }
+
+  .other-detail .other-toc-count {
+    color: var(--other-muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .other-detail .other-toc-list {
+    display: flex;
+    max-height: 320px;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    padding: 3px;
+    scrollbar-color: var(--other-border) transparent;
+  }
+
+  .other-detail .other-toc-link {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
     width: 100%;
-    border: 1px solid var(--other-border);
-    border-radius: 12px;
-    background: var(--other-surface);
-    color: var(--other-text);
-    padding: 11px 14px;
-    font-size: 14px;
-    outline: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 9px 10px;
+    background: transparent;
+    color: var(--other-muted);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease;
   }
 
-  .other-detail .other-toc-select:focus-visible {
-    border-color: var(--other-accent);
-    outline: 2px solid var(--other-accent);
-    outline-offset: 2px;
+  .other-detail .other-toc-link:hover {
+    border-color: var(--other-border);
+    background: var(--other-soft);
+    color: var(--other-text);
+  }
+
+  .other-detail .other-toc-number {
+    flex-shrink: 0;
+    color: var(--other-accent);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.9;
+  }
+
+  .other-detail .other-toc-label {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
   }
 
   .other-detail .other-reading {
@@ -319,7 +360,7 @@ const OTHER_DETAIL_STYLES = `
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 0 0 16px;
+    margin: 0 0 18px;
     color: var(--other-text);
     font-size: 16px;
     font-weight: 600;
@@ -382,13 +423,6 @@ const OTHER_DETAIL_STYLES = `
     -webkit-box-decoration-break: clone;
   }
 
-  .other-detail .other-empty {
-    color: var(--other-muted);
-    font-size: 14px;
-    font-style: italic;
-    line-height: 1.9;
-  }
-
   .other-detail .other-inset {
     border: 1px solid var(--other-border);
     border-radius: 16px;
@@ -396,18 +430,71 @@ const OTHER_DETAIL_STYLES = `
     background: var(--other-soft);
   }
 
-  .other-detail .other-subtitle {
-    margin: 24px 0 12px;
-    padding-left: 14px;
-    border-left: 4px solid var(--other-accent);
+  .other-detail .other-knowledge {
+    min-width: 0;
+    scroll-margin-top: 24px;
+  }
+
+  .other-detail .other-knowledge + .other-knowledge {
+    margin-top: 30px;
+    border-top: 1px solid var(--other-border);
+    padding-top: 28px;
+  }
+
+  .other-detail .other-knowledge-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .other-detail .other-section-number {
+    flex-shrink: 0;
+    color: var(--other-accent);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .other-detail .other-knowledge-title {
+    min-width: 0;
+    margin: 0;
     color: var(--other-text);
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     line-height: 1.7;
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+  }
+
+  .other-detail .other-knowledge-children {
+    margin-top: 24px;
+    border-left: 1px solid var(--other-border);
+    padding-left: 20px;
+  }
+
+  .other-detail .other-knowledge-children .other-knowledge-title {
+    font-size: 17px;
+    letter-spacing: 0.02em;
+  }
+
+  .other-detail .other-block + .other-block {
+    margin-top: 18px;
+  }
+
+  .other-detail .other-subtitle {
+    margin: 0;
+    border-left: 3px solid var(--other-accent);
+    padding-left: 12px;
+    color: var(--other-text);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.8;
   }
 
   .other-detail .other-table-wrap {
-    margin: 18px 0;
+    max-width: 100%;
     overflow: hidden;
     border: 1px solid var(--other-border);
     border-radius: 16px;
@@ -422,63 +509,59 @@ const OTHER_DETAIL_STYLES = `
     width: 100%;
     min-width: 480px;
     border-collapse: collapse;
-    font-size: 14px;
     text-align: left;
   }
 
-  .other-detail .other-table td {
+  .other-detail .other-table td,
+  .other-detail .other-table th {
     border-top: 1px solid var(--other-border);
-    padding: 13px 16px;
-    vertical-align: top;
-    color: var(--other-muted);
-    line-height: 1.9;
+    padding: 14px 16px;
+    vertical-align: middle;
   }
 
-  .other-detail .other-table tr:first-child td {
+  .other-detail .other-table tr:first-child td,
+  .other-detail .other-table tr:first-child th {
     border-top: 0;
   }
 
-  .other-detail .other-table-label {
+  .other-detail .other-table th {
     width: 28%;
+    border-right: 1px solid var(--other-border);
     background: var(--other-soft);
     color: var(--other-text);
+    font-size: 14px;
     font-weight: 600;
-  }
-
-  .other-detail .other-knowledge {
-    border: 1px solid var(--other-border);
-    border-radius: 18px;
-    background: var(--other-surface);
-    padding: 20px;
-  }
-
-  .other-detail .other-knowledge + .other-knowledge {
-    margin-top: 18px;
-  }
-
-  .other-detail .other-knowledge-title {
-    margin: 0 0 12px;
-    color: var(--other-text);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.7;
-  }
-
-  .other-detail .other-knowledge-children {
-    margin-top: 16px;
-    padding-left: 16px;
-    border-left: 1px solid var(--other-border);
+    line-height: 1.9;
+    text-align: left;
+    overflow-wrap: anywhere;
   }
 
   .other-detail .other-alert {
-    margin-top: 28px;
-    border: 1px solid rgba(155, 44, 44, 0.22);
+    border: 1px solid var(--other-danger-border);
     border-radius: 16px;
-    background: var(--other-danger-bg);
     padding: 18px 20px;
+    background: var(--other-danger-bg);
+  }
+
+  .other-detail .other-alert .other-body,
+  .other-detail .other-alert strong {
     color: var(--other-danger-text);
-    font-size: 13px;
+  }
+
+  .other-detail .other-empty {
+    margin: 0;
+    color: var(--other-muted);
+    font-size: 14px;
     line-height: 1.9;
+  }
+
+  .other-detail .other-empty-state {
+    margin: 24px 0;
+    border: 1px dashed var(--other-border);
+    border-radius: 16px;
+    padding: 36px 20px;
+    background: var(--other-soft);
+    text-align: center;
   }
 
   @media (min-width: 1024px) {
@@ -509,40 +592,49 @@ const OTHER_DETAIL_STYLES = `
       padding: 24px;
     }
 
+    .other-detail .other-name {
+      font-size: 32px;
+    }
+
     .other-detail .other-overview-body {
       padding: 22px 16px;
     }
 
     .other-detail .other-reading {
-      padding: 4px 22px;
+      padding: 4px 20px;
     }
 
     .other-detail .other-section {
       padding: 24px 0;
     }
 
-    .other-detail .other-inset {
+    .other-detail .other-inset,
+    .other-detail .other-alert {
       padding: 16px;
     }
 
-    .other-detail .other-name {
-      font-size: 32px;
+    .other-detail .other-toc-list {
+      max-height: 240px;
+    }
+
+    .other-detail .other-knowledge-children {
+      padding-left: 12px;
+    }
+
+    .other-detail .other-knowledge-title {
+      font-size: 20px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .other-detail .other-back {
+    .other-detail .other-back,
+    .other-detail .other-toc-link {
       transition: none;
     }
   }
 `;
 
-const getCategoryLabel = (category) =>
-  category === '其他'
-    ? '名詞材料'
-    : category;
-
-const detailFields = [
+const DETAIL_FIELDS = [
   ['alias', '別名'],
   ['englishName', '英文名稱'],
   ['type', '類型'],
@@ -554,54 +646,122 @@ function asText(value) {
     return value.map(asText).filter(Boolean).join('\n');
   }
 
-  if (typeof value === 'string' || typeof value === 'number') {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number'
+  ) {
     return String(value);
   }
 
   return '';
 }
 
-function getFieldValue(item, key) {
-  const topLevelValue = item?.[key];
-
-  if (
-    topLevelValue !== undefined &&
-    topLevelValue !== null &&
-    String(topLevelValue).trim() !== ''
-  ) {
-    return topLevelValue;
-  }
-
-  const oilValue = item?.oilDetails?.[key];
-
-  if (
-    oilValue !== undefined &&
-    oilValue !== null &&
-    String(oilValue).trim() !== ''
-  ) {
-    return oilValue;
-  }
-
-  const acuValue = item?.acuDetails?.[key];
-
-  if (
-    acuValue !== undefined &&
-    acuValue !== null &&
-    String(acuValue).trim() !== ''
-  ) {
-    return acuValue;
-  }
-
-  return '';
+function firstText(...values) {
+  return (
+    values
+      .map(asText)
+      .find((value) => value.trim()) || ''
+  );
 }
 
-function renderInline(text) {
-  return asText(text)
+function getCategoryLabel(category) {
+  const value = asText(category).trim();
+
+  return !value || value === '其他'
+    ? '名詞材料'
+    : value;
+}
+
+function getFieldValue(item, key) {
+  return firstText(
+    item?.[key],
+    item?.oilDetails?.[key],
+    item?.acuDetails?.[key]
+  );
+}
+
+function normalizeSections(value) {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (entry) => entry && typeof entry === 'object'
+    );
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.values(value).filter(
+      (entry) => entry && typeof entry === 'object'
+    );
+  }
+
+  return [];
+}
+
+function normalizeBlocks(section) {
+  const blocks = normalizeSections(section?.blocks);
+
+  if (blocks.length > 0) {
+    return blocks;
+  }
+
+  const legacyText = asText(section?.text);
+
+  return legacyText.trim()
+    ? [{ type: 'text', text: legacyText }]
+    : [];
+}
+
+function getSectionTitle(section, index) {
+  return firstText(
+    section?.title,
+    section?.name,
+    `第 ${index + 1} 節`
+  );
+}
+
+function getSectionId(path) {
+  return `other-knowledge-section-${path.join('-')}`;
+}
+
+function buildKnowledgeToc(
+  sections,
+  parentNumber = '',
+  parentPath = []
+) {
+  return normalizeSections(sections).flatMap(
+    (section, index) => {
+      const path = [...parentPath, index];
+
+      const number = parentNumber
+        ? `${parentNumber}.${index + 1}`
+        : `${index + 1}`;
+
+      return [
+        {
+          id: getSectionId(path),
+          number,
+          title: getSectionTitle(section, index),
+          level: parentPath.length,
+        },
+        ...buildKnowledgeToc(
+          section.children,
+          number,
+          path
+        ),
+      ];
+    }
+  );
+}
+
+function renderInline(value) {
+  return asText(value)
     .split(/(\*\*.*?\*\*|==.*?==|《.*?》|【.*?】)/g)
     .map((part, index) => {
       if (!part) return null;
 
-      if (part.startsWith('==') && part.endsWith('==')) {
+      if (
+        part.startsWith('==') &&
+        part.endsWith('==')
+      ) {
         return (
           <mark key={index}>
             {part.slice(2, -2)}
@@ -609,7 +769,10 @@ function renderInline(text) {
         );
       }
 
-      if (part.startsWith('**') && part.endsWith('**')) {
+      if (
+        part.startsWith('**') &&
+        part.endsWith('**')
+      ) {
         return (
           <strong key={index}>
             {part.slice(2, -2)}
@@ -621,30 +784,17 @@ function renderInline(text) {
         (part.startsWith('《') && part.endsWith('》')) ||
         (part.startsWith('【') && part.endsWith('】'))
       ) {
-        return (
-          <strong key={index}>
-            {part}
-          </strong>
-        );
+        return <strong key={index}>{part}</strong>;
       }
 
       return part;
     });
 }
 
-function FormattedText({
-  value,
-  emptyText = '',
-}) {
-  const text = asText(value).replace(/\r\n?/g, '\n');
+function FormattedText({ value }) {
+  const text = asText(value).replace(/\r\n?/g, '\n').trim();
 
-  if (!text.trim()) {
-    return emptyText ? (
-      <span className="other-empty">
-        {emptyText}
-      </span>
-    ) : null;
-  }
+  if (!text) return null;
 
   return (
     <div className="other-body">
@@ -675,9 +825,7 @@ function FormattedText({
                 {numbered[1]}
               </span>
 
-              <div>
-                {renderInline(numbered[2])}
-              </div>
+              <div>{renderInline(numbered[2])}</div>
             </div>
           );
         }
@@ -688,7 +836,10 @@ function FormattedText({
               key={index}
               className="other-line other-bullet"
             >
-              <span className="other-bullet-dot">
+              <span
+                className="other-bullet-dot"
+                aria-hidden="true"
+              >
                 ●
               </span>
 
@@ -709,285 +860,138 @@ function FormattedText({
   );
 }
 
-function normalizeSections(sections) {
-  if (!sections) {
-    return [];
-  }
+function KnowledgeBlock({ block }) {
+  const type = block?.type || 'text';
 
-  if (Array.isArray(sections)) {
-    return sections;
-  }
-
-  if (typeof sections === 'object') {
-    return Object.values(sections);
-  }
-
-  return [];
-}
-
-function normalizeBlocks(section) {
-  if (Array.isArray(section?.blocks)) {
-    return section.blocks;
-  }
-
-  if (
-    section?.text &&
-    String(section.text).trim() !== ''
-  ) {
-    return [
-      {
-        id: `legacy_text_${section.id || 'section'}`,
-        type: 'text',
-        text: section.text,
-      },
-    ];
-  }
-
-  return [];
-}
-
-function getSectionTitle(section, index) {
-  return (
-    section?.title ||
-    section?.name ||
-    `第 ${index + 1} 節`
-  );
-}
-
-function getSectionId(section, path = []) {
-  if (section?.id) {
-    return `knowledge-section-${section.id}`;
-  }
-
-  return `knowledge-section-${path.join('-')}`;
-}
-
-function buildKnowledgeToc(
-  sections,
-  parentNumber = '',
-  parentPath = []
-) {
-  const sectionList = normalizeSections(sections);
-
-  return sectionList.flatMap((section, index) => {
-    if (!section) {
-      return [];
-    }
-
-    const currentNumber = parentNumber
-      ? `${parentNumber}.${index + 1}`
-      : `${index + 1}`;
-
-    const currentPath = [...parentPath, index];
-
-    const currentId = getSectionId(
-      section,
-      currentPath
+  if (type === 'table') {
+    const rows = normalizeSections(block?.rows).filter(
+      (row) =>
+        asText(row.left).trim() ||
+        asText(row.right).trim()
     );
 
-    const currentItem = {
-      id: currentId,
-      number: currentNumber,
-      title: getSectionTitle(section, index),
-      level: parentNumber ? 1 : 0,
-    };
-
-    const children = buildKnowledgeToc(
-      section.children,
-      currentNumber,
-      currentPath
-    );
-
-    return [
-      currentItem,
-      ...children,
-    ];
-  });
-}
-
-function renderTableBlock(block, blockIndex) {
-  const rows = Array.isArray(block?.rows)
-    ? block.rows
-    : [];
-
-  if (rows.length === 0) {
-    return null;
-  }
-
-  return (
-    <div
-      key={block?.id || `table-${blockIndex}`}
-      className="other-table-wrap"
-    >
-      <div className="other-table-scroll">
-        <table className="other-table">
-          <tbody>
-            {rows.map((row, rowIndex) => {
-              const leftValue = asText(row?.left).trim();
-              const rightValue = asText(row?.right).trim();
-
-              if (!leftValue && !rightValue) {
-                return null;
-              }
-
-              return (
-                <tr
-                  key={
-                    row?.id ||
-                    `table-row-${blockIndex}-${rowIndex}`
-                  }
-                >
-                  <td className="other-table-label">
-                    {leftValue}
-                  </td>
-
-                  <td>
-                    <FormattedText value={rightValue} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function renderKnowledgeBlock(block, blockIndex) {
-  if (!block) {
-    return null;
-  }
-
-  const blockType = block.type || 'text';
-
-  if (blockType === 'table') {
-    return renderTableBlock(block, blockIndex);
-  }
-
-  if (blockType === 'subtitle') {
-    const subtitle = asText(
-      block.text ||
-      block.content ||
-      block.description
-    ).trim();
-
-    if (!subtitle) {
-      return null;
-    }
+    if (!rows.length) return null;
 
     return (
-      <h4
-        key={block.id || `subtitle-${blockIndex}`}
-        className="other-subtitle"
-      >
-        {subtitle}
-      </h4>
+      <div className="other-block">
+        <div className="other-table-wrap">
+          <div
+            className="other-table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="內容表格，可橫向捲動"
+          >
+            <table className="other-table">
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={`${row.id || 'row'}-${index}`}>
+                    <th scope="row">
+                      {renderInline(row.left)}
+                    </th>
+
+                    <td>
+                      <FormattedText value={row.right} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     );
   }
 
-  const text = asText(
-    block.text ||
-    block.content ||
-    block.description
+  const text = firstText(
+    block?.text,
+    block?.content,
+    block?.description
   );
 
-  if (!text.trim()) {
-    return null;
+  if (!text.trim()) return null;
+
+  if (type === 'subtitle') {
+    return (
+      <div className="other-block">
+        <h4 className="other-subtitle">
+          {renderInline(text)}
+        </h4>
+      </div>
+    );
   }
 
   return (
-    <div
-      key={block.id || `text-${blockIndex}`}
-      className="other-line"
-    >
+    <div className="other-block">
       <FormattedText value={text} />
     </div>
   );
 }
 
-function renderKnowledgeSections(
+function KnowledgeSections({
   sections,
-  level = 0,
-  parentPath = []
-) {
+  parentPath = [],
+  parentNumber = '',
+}) {
   const sectionList = normalizeSections(sections);
 
-  if (sectionList.length === 0) {
-    return null;
-  }
+  if (!sectionList.length) return null;
 
   return (
     <div
       className={
-        level > 0
+        parentPath.length
           ? 'other-knowledge-children'
-          : ''
+          : undefined
       }
     >
       {sectionList.map((section, index) => {
-        if (!section) {
-          return null;
-        }
+        const path = [...parentPath, index];
 
-        const currentPath = [...parentPath, index];
-
-        const title = getSectionTitle(
-          section,
-          index
-        );
-
-        const sectionId = getSectionId(
-          section,
-          currentPath
-        );
+        const number = parentNumber
+          ? `${parentNumber}.${index + 1}`
+          : `${index + 1}`;
 
         const blocks = normalizeBlocks(section);
+
         const children = normalizeSections(
           section.children
         );
 
         return (
           <article
-            id={sectionId}
-            key={
-              section.id ||
-              `${title}-${currentPath.join('-')}`
-            }
+            key={getSectionId(path)}
+            id={getSectionId(path)}
             className="other-knowledge"
           >
-            <h3
-              className="other-knowledge-title"
-              style={
-                level === 0
-                  ? TITLE_FONT
-                  : undefined
-              }
-            >
-              {title}
-            </h3>
+            <div className="other-knowledge-head">
+              <span className="other-section-number">
+                {number}
+              </span>
 
-            {blocks.length > 0 && (
-              <div>
-                {blocks.map(
-                  (block, blockIndex) =>
-                    renderKnowledgeBlock(
-                      block,
-                      blockIndex
-                    )
-                )}
-              </div>
-            )}
+              <h3
+                className="other-knowledge-title"
+                style={
+                  parentPath.length === 0
+                    ? TITLE_FONT
+                    : undefined
+                }
+              >
+                {getSectionTitle(section, index)}
+              </h3>
+            </div>
 
-            {children.length > 0 && (
-              <div>
-                {renderKnowledgeSections(
-                  children,
-                  level + 1,
-                  currentPath
-                )}
-              </div>
-            )}
+            {blocks.map((block, blockIndex) => (
+              <KnowledgeBlock
+                key={`${block.id || 'block'}-${blockIndex}`}
+                block={block}
+              />
+            ))}
+
+            <KnowledgeSections
+              sections={children}
+              parentPath={path}
+              parentNumber={number}
+            />
           </article>
         );
       })}
@@ -995,67 +999,21 @@ function renderKnowledgeSections(
   );
 }
 
-function KnowledgeTableOfContents({
-  sections,
+function DetailSection({
+  title,
+  children,
+  inset = false,
 }) {
-  const tocItems = buildKnowledgeToc(sections);
-
-  if (tocItems.length === 0) {
-    return null;
-  }
-
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-
-    if (!element) {
-      return;
-    }
-
-    element.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  };
-
   return (
-    <div className="other-toc">
-      <label
-        htmlFor="knowledge-section-select"
-        className="other-toc-title"
-      >
-        🧭 內容目錄
-      </label>
+    <section className="other-section">
+      <h2 className="other-section-title">
+        {title}
+      </h2>
 
-      <select
-        id="knowledge-section-select"
-        defaultValue=""
-        onChange={(event) => {
-          const selectedId = event.target.value;
-
-          if (!selectedId) {
-            return;
-          }
-
-          scrollToSection(selectedId);
-
-          event.target.value = '';
-        }}
-        className="other-toc-select"
-      >
-        <option value="">
-          請選擇要閱讀的內容
-        </option>
-
-        {tocItems.map((item) => (
-          <option
-            key={item.id}
-            value={item.id}
-          >
-            {`${item.number}　${item.title}`}
-          </option>
-        ))}
-      </select>
-    </div>
+      <div className={inset ? 'other-inset' : undefined}>
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -1064,74 +1022,102 @@ export default function OtherDetailPage({
   onClose,
   backLabel = '返回列表',
 }) {
-  if (!item) {
-    return null;
-  }
+  const rootRef = useRef(null);
 
-  const handleClose = () => {
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-  };
+  if (!item) return null;
 
-  const fields = detailFields
+  const name = asText(item.name).trim() || '未命名';
+
+  const englishName = getFieldValue(
+    item,
+    'englishName'
+  ).trim();
+
+  const type = getFieldValue(item, 'type').trim();
+
+  const categoryLabel = getCategoryLabel(
+    item.category
+  );
+
+  const fields = DETAIL_FIELDS
     .map(([key, label]) => ({
       key,
       label,
       value: getFieldValue(item, key),
     }))
-    .filter((field) =>
-      asText(field.value).trim()
-    );
+    .filter((field) => field.value.trim());
 
-  const tags = [item.tag, item.alias]
-    .filter(Boolean)
-    .flatMap((value) =>
-      String(value)
-        .split(/[、,，/／]+/)
-        .map((tag) => tag.trim())
-        .filter(Boolean)
-    );
+  const description = asText(item.description).trim();
 
-  const knowledgeSections =
-    item?.knowledgeDetails?.sections || [];
-
-  const knowledgeIntroduction =
-    item?.knowledgeDetails?.introduction || '';
-
-  const hasKnowledgeSections =
-    normalizeSections(knowledgeSections).length > 0;
-
-  const hasDescription = asText(
-    item?.description
+  const introduction = asText(
+    item.knowledgeDetails?.introduction
   ).trim();
 
-  const hasNote = asText(item?.note).trim();
+  const sections = normalizeSections(
+    item.knowledgeDetails?.sections
+  );
 
-  const cautionText = asText(
-    item?.caution || item?.contraindication
+  const note = asText(item.note).trim();
+
+  const caution = firstText(
+    item.caution,
+    item.contraindication
   ).trim();
+
+  const tocItems = buildKnowledgeToc(sections);
+
+  const hasReadingContent = Boolean(
+    introduction ||
+    sections.length ||
+    note ||
+    caution
+  );
+
+  const scrollToSection = (id) => {
+    const element = rootRef.current
+      ? Array.from(
+          rootRef.current.querySelectorAll(
+            '.other-knowledge[id]'
+          )
+        ).find((node) => node.id === id)
+      : null;
+
+    if (!element) return;
+
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    element.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  };
 
   return (
-    <div className="other-detail">
+    <div className="other-detail" ref={rootRef}>
       <style>{OTHER_DETAIL_STYLES}</style>
 
       <header className="other-header">
         <div className="other-header-inner">
-          <div className="min-w-0">
+          <div className="other-header-text">
             <p className="other-eyebrow">
               本草百科 / GLOSSARY & MATERIAL
             </p>
 
             <h1 className="other-header-name">
-              {item.name}
+              {name}
             </h1>
           </div>
 
           <button
             type="button"
-            onClick={handleClose}
             className="other-back"
+            onClick={() => {
+              if (typeof onClose === 'function') {
+                onClose();
+              }
+            }}
           >
             <svg
               aria-hidden="true"
@@ -1158,12 +1144,12 @@ export default function OtherDetailPage({
             <div className="other-identity">
               <div className="other-tags">
                 <span className="other-tag">
-                  {getCategoryLabel(item.category)}
+                  {categoryLabel}
                 </span>
 
-                {item.type && (
+                {type && type !== categoryLabel && (
                   <span className="other-tag">
-                    {item.type}
+                    {type}
                   </span>
                 )}
               </div>
@@ -1172,36 +1158,17 @@ export default function OtherDetailPage({
                 className="other-name"
                 style={TITLE_FONT}
               >
-                {item.name}
+                {name}
               </h2>
 
-              {item.alias && (
-                <p className="other-alias">
-                  {item.alias}
-                </p>
-              )}
-
-              {item.englishName && (
+              {englishName && (
                 <p className="other-english">
-                  {item.englishName}
+                  {englishName}
                 </p>
               )}
             </div>
 
             <div className="other-overview-body">
-              {tags.length > 0 && (
-                <div className="other-tags">
-                  {tags.map((tag, index) => (
-                    <span
-                      key={`${tag}-${index}`}
-                      className="other-tag"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
               {fields.length > 0 && (
                 <dl className="other-facts">
                   {fields.map((field) => (
@@ -1221,88 +1188,100 @@ export default function OtherDetailPage({
                 </dl>
               )}
 
-              {hasDescription && (
+              {description && (
                 <section className="other-summary">
-                  <h3 className="other-summary-title">
+                  <h3 className="other-small-title">
                     簡介
                   </h3>
 
-                  <FormattedText
-                    value={item.description}
-                  />
+                  <FormattedText value={description} />
                 </section>
               )}
 
-              {hasKnowledgeSections && (
-                <KnowledgeTableOfContents
-                  sections={knowledgeSections}
-                />
+              {tocItems.length > 0 && (
+                <nav
+                  className="other-toc"
+                  aria-label="內容目錄"
+                >
+                  <div className="other-toc-head">
+                    <h3 className="other-small-title">
+                      內容目錄
+                    </h3>
+
+                    <span className="other-toc-count">
+                      {tocItems.length} 個章節
+                    </span>
+                  </div>
+
+                  <div className="other-toc-list">
+                    {tocItems.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className="other-toc-link"
+                        style={{
+                          paddingLeft:
+                            10 + Math.min(entry.level, 4) * 12,
+                        }}
+                        onClick={() =>
+                          scrollToSection(entry.id)
+                        }
+                      >
+                        <span className="other-toc-number">
+                          {entry.number}
+                        </span>
+
+                        <span className="other-toc-label">
+                          {entry.title}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </nav>
               )}
             </div>
           </aside>
 
           <div className="other-panel other-reading">
-            {knowledgeIntroduction &&
-              String(knowledgeIntroduction).trim() !== '' && (
-                <section className="other-section">
-                  <h3 className="other-section-title">
-                    📖 詳細介紹
-                  </h3>
-
-                  <div className="other-inset">
-                    <FormattedText
-                      value={knowledgeIntroduction}
-                    />
-                  </div>
-                </section>
-              )}
-
-            {hasKnowledgeSections && (
-              <section className="other-section">
-                <h3 className="other-section-title">
-                  📚 內容架構
-                </h3>
-
-                {renderKnowledgeSections(
-                  knowledgeSections
-                )}
-              </section>
+            {introduction && (
+              <DetailSection title="詳細介紹" inset>
+                <FormattedText value={introduction} />
+              </DetailSection>
             )}
 
-            {hasNote && (
-              <section className="other-section">
-                <h3 className="other-section-title">
-                  💡 補充說明
-                </h3>
-
-                <div className="other-inset">
-                  <FormattedText value={item.note} />
-                </div>
-              </section>
+            {sections.length > 0 && (
+              <DetailSection title="內容架構">
+                <KnowledgeSections sections={sections} />
+              </DetailSection>
             )}
 
-            {cautionText && (
-              <section className="other-section">
-                <h3 className="other-section-title">
-                  ⚠️ 注意事項
-                </h3>
-
-                <div className="other-inset">
-                  <FormattedText value={cautionText} />
-                </div>
-              </section>
+            {note && (
+              <DetailSection title="補充說明" inset>
+                <FormattedText value={note} />
+              </DetailSection>
             )}
 
-            {!hasKnowledgeSections &&
-              !knowledgeIntroduction &&
-              !hasDescription &&
-              !hasNote &&
-              !cautionText &&
-              fields.length === 0 && (
-                <div className="other-empty">
-                  此項目目前尚未填寫詳細內容。
+            {caution && (
+              <DetailSection title="注意事項">
+                <div className="other-alert">
+                  <FormattedText value={caution} />
                 </div>
-              )}
+              </DetailSection>
+            )}
+
+            {!hasReadingContent && (
+              <div className="other-empty-state">
+                <h2 className="other-small-title">
+                  {description || fields.length
+                    ? '基本資料已列於資料卡'
+                    : '尚無詳細內容'}
+                </h2>
+
+                <p className="other-empty">
+                  此項目目前尚未補充詳細介紹或章節內容。
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>

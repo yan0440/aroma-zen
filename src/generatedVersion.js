@@ -1,11 +1,10 @@
-export const APP_VERSION = "v2026-11-25-16-55-22";
+export const APP_VERSION = "v2026-11-25-17-07-57";
 
 export const APP_RELEASE = {
-  "version": "v2026-11-25-16-55-22",
-  "publishedAt": "2026-11-25T16:55:22.758Z",
-  "title": "重新設計各分類向UI",
+  "version": "v2026-11-25-17-07-57",
+  "publishedAt": "2026-11-25T17:07:57.435Z",
+  "title": "重新設計名詞材料UI",
   "changes": [
-    "更改UI呈現風格",
-    "更改小表格容納字數，調整大小"
+    "更改UI呈現風格"
   ]
 };

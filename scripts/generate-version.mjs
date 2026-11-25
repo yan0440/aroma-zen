@@ -35,10 +35,9 @@ const generatedVersionFile = path.join(
  * 請只列出這次實際完成並要發布的功能。
  */
 const releaseNotes = {
-  title: '重新設計各分類向UI',
+  title: '重新設計名詞材料UI',
   changes: [
     '更改UI呈現風格',
-    '更改小表格容納字數，調整大小',
   ],
 };
 
