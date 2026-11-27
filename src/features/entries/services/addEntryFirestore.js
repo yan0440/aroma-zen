@@ -1,6 +1,10 @@
 import {
+  collection,
   doc,
+  getDoc,
+  getDocs,
   runTransaction,
+  writeBatch,
 } from 'firebase/firestore';
 
 import {
@@ -56,11 +60,6 @@ function removeUndefinedValues(value) {
 }
 
 function buildCleanData(formData) {
-  const cleanChapters =
-    normalizeChapters(
-      formData?.bookDetails?.chapters
-    );
-
   const cleanSections =
     normalizeArray(
       formData?.knowledgeDetails?.sections
@@ -73,7 +72,7 @@ function buildCleanData(formData) {
       ...(formData?.bookDetails || {}),
       author:
         formData?.bookDetails?.author || '',
-      chapters: cleanChapters,
+      chapters: [],
     },
 
     knowledgeDetails: {
@@ -195,6 +194,185 @@ function buildEntryKeyData({
   });
 }
 
+function flattenChapters(
+  nodes,
+  parentId = null,
+  result = []
+) {
+  (nodes || []).forEach((node, index) => {
+    if (!node) return;
+
+    const rawId =
+      node.id ||
+      `${parentId || 'root'}__${index}`;
+
+    const chapterId = String(rawId)
+      .replace(/\//g, '_');
+
+    result.push({
+      id: chapterId,
+      title: node.title || '',
+      type: node.type || 'content',
+      text: node.text || '',
+      parentId,
+      order: index,
+    });
+
+    flattenChapters(
+      node.children || [],
+      chapterId,
+      result
+    );
+  });
+
+  return result;
+}
+
+async function saveBookChapters(
+  documentId,
+  chapters
+) {
+  const chaptersRef = collection(
+    db,
+    'entries',
+    documentId,
+    'chapters'
+  );
+
+  const flatChapters =
+    flattenChapters(chapters);
+
+  const existingSnapshot =
+    await getDocs(chaptersRef);
+
+  const nextIds = new Set(
+    flatChapters.map(
+      (chapter) => chapter.id
+    )
+  );
+
+  const staleRefs =
+    existingSnapshot.docs
+      .filter(
+        (chapterDoc) =>
+          !nextIds.has(chapterDoc.id)
+      )
+      .map((chapterDoc) => chapterDoc.ref);
+
+  const operations = [
+    ...flatChapters.map((chapter) => ({
+      type: 'set',
+      ref: doc(
+        chaptersRef,
+        chapter.id
+      ),
+      data: {
+        title: chapter.title,
+        type: chapter.type,
+        text: chapter.text,
+        parentId: chapter.parentId,
+        order: chapter.order,
+      },
+    })),
+
+    ...staleRefs.map((ref) => ({
+      type: 'delete',
+      ref,
+    })),
+  ];
+
+  for (
+    let index = 0;
+    index < operations.length;
+    index += 450
+  ) {
+    const batch = writeBatch(db);
+
+    operations
+      .slice(index, index + 450)
+      .forEach((operation) => {
+        if (operation.type === 'delete') {
+          batch.delete(operation.ref);
+        } else {
+          batch.set(
+            operation.ref,
+            operation.data
+          );
+        }
+      });
+
+    await batch.commit();
+  }
+}
+
+export async function loadBookChapters(
+  documentId,
+  fallbackChapters = []
+) {
+  if (!documentId) {
+    return normalizeChapters(fallbackChapters);
+  }
+
+  const snapshot = await getDocs(
+    collection(
+      db,
+      'entries',
+      documentId,
+      'chapters'
+    )
+  );
+
+  if (snapshot.empty) {
+    return normalizeChapters(fallbackChapters);
+  }
+
+  const nodes = new Map();
+
+  snapshot.docs.forEach((chapterDoc) => {
+    const data = chapterDoc.data() || {};
+
+    nodes.set(chapterDoc.id, {
+      id: chapterDoc.id,
+      title: data.title || '',
+      type: data.type || 'content',
+      text: data.text || '',
+      parentId: data.parentId || null,
+      order: Number.isFinite(data.order)
+        ? data.order
+        : 0,
+      children: [],
+    });
+  });
+
+  const roots = [];
+
+  nodes.forEach((node) => {
+    const parent = node.parentId
+      ? nodes.get(node.parentId)
+      : null;
+
+    if (parent) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  const sortTree = (list) => {
+    list.sort((a, b) => a.order - b.order);
+
+    list.forEach((node) => {
+      sortTree(node.children);
+      delete node.parentId;
+      delete node.order;
+    });
+
+    return list;
+  };
+
+  return sortTree(roots);
+}
+
 export async function saveEntry({
   formData,
   editingItem,
@@ -277,6 +455,11 @@ export async function saveEntry({
     oldEntryKey
   );
 
+  const cleanChapters =
+    normalizeChapters(
+      formData?.bookDetails?.chapters
+    );
+
   const cleanData = buildCleanData({
     ...formData,
     category,
@@ -284,6 +467,28 @@ export async function saveEntry({
   });
 
   const now = Date.now();
+
+  const isBook = category === '書籍';
+  const wasBook =
+    editingItem?.category === '書籍';
+
+  if (isBook || wasBook) {
+    if (!isEditing) {
+      const existingKey =
+        await getDoc(newKeyRef);
+
+      if (existingKey.exists()) {
+        throw new Error(
+          '已有相同分類與名稱的百科資料'
+        );
+      }
+    }
+
+    await saveBookChapters(
+      documentId,
+      isBook ? cleanChapters : []
+    );
+  }
 
   await runTransaction(
     db,
@@ -417,28 +622,33 @@ export async function saveEntry({
   );
 
   return {
-  ...cleanData,
-
-  id: documentId,
-  documentId,
-  firestoreId: documentId,
-
-  entryKey,
-  category,
-  name,
-
-  sortName: normalizeText(name),
-
-  searchKey: buildSearchKey({
     ...cleanData,
+
+    bookDetails: {
+      ...(cleanData.bookDetails || {}),
+      chapters: cleanChapters,
+    },
+
+    id: documentId,
+    documentId,
+    firestoreId: documentId,
+
+    entryKey,
     category,
     name,
-  }),
 
-  createdAt:
-    editingItem?.createdAt ||
-    now,
+    sortName: normalizeText(name),
 
-  updatedAt: now,
-};
+    searchKey: buildSearchKey({
+      ...cleanData,
+      category,
+      name,
+    }),
+
+    createdAt:
+      editingItem?.createdAt ||
+      now,
+
+    updatedAt: now,
+  };
 }

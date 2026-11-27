@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { getLocationLabel } from '../utils/locationLabel';
+import { getCardContent } from '../utils/cardContent';
 import { getCategoryTheme } from '../config/categories';
 import Sprig from './Sprig';
 
@@ -153,6 +153,14 @@ const DATA_CARD_STYLES = `
     line-height: 1.8;
   }
 
+  .app-data-card .card-alias {
+    margin-top: 6px;
+    overflow-wrap: anywhere;
+    color: var(--card-muted);
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
   .app-data-card .card-meta {
     margin-top: 10px;
     overflow-wrap: anywhere;
@@ -161,29 +169,17 @@ const DATA_CARD_STYLES = `
     line-height: 1.9;
   }
 
+  .app-data-card .card-meta.is-clamp {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
   .app-data-card .card-meta-label {
     margin-right: 8px;
     color: var(--card-accent);
     font-weight: 600;
-  }
-
-  .app-data-card .card-location {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-    color: var(--card-muted);
-    font-size: 13px;
-    line-height: 1.8;
-  }
-
-  .app-data-card .card-location::before {
-    content: "";
-    display: block;
-    width: 12px;
-    height: 1px;
-    flex-shrink: 0;
-    background: var(--card-border);
   }
 
   .app-data-card .card-footer {
@@ -196,6 +192,11 @@ const DATA_CARD_STYLES = `
     align-items: center;
     justify-content: space-between;
     gap: 14px;
+    border-top: 1px solid var(--card-border);
+    padding-top: 14px;
+  }
+
+  .app-data-card .card-footer-actions {
     border-top: 1px solid var(--card-border);
     padding-top: 14px;
   }
@@ -263,153 +264,33 @@ const DATA_CARD_STYLES = `
   }
 `;
 
-const getCategoryType = (category) => {
-  const value = String(category || '').trim();
-
-  return {
-    isOil: value === '精油',
-    isAcupuncture:
-      value === '穴道' ||
-      value === '穴位' ||
-      value === '腧穴',
-    isChineseMedicine:
-      value === '中藥' ||
-      value === '中医' ||
-      value === '藥材' ||
-      value === '药材',
-  };
-};
-
-const firstValue = (item, keys) => {
-  for (const key of keys) {
-    const value = key
-      .split('.')
-      .reduce((current, part) => current?.[part], item);
-
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim() !== ''
-    ) {
-      return value;
-    }
-  }
-
-  return '';
+const THEME_CATEGORY = {
+  oil: '精油',
+  acupoint: '穴道',
+  herb: '中藥',
 };
 
 const DataCard = memo(function DataCard({
   item = {},
   onSelectItem,
+  actions = null,
 }) {
-  const {
-    isOil,
-    isAcupuncture,
-    isChineseMedicine,
-  } = useMemo(
-    () => getCategoryType(item.category),
-    [item.category]
+  const hasActions = Boolean(actions);
+
+  const content = useMemo(
+    () => getCardContent(item),
+    [item]
   );
 
-  const resolvedCategory = isOil
-    ? '精油'
-    : isAcupuncture
-      ? '穴道'
-      : isChineseMedicine
-        ? '中藥'
-        : item.category;
-
-  const theme = getCategoryTheme(resolvedCategory);
+  const theme = getCategoryTheme(
+    THEME_CATEGORY[content.kind] || item.category
+  );
 
   const cardStyle = {
     '--cat-deep': theme?.deep || '#527565',
     '--cat-mid': theme?.mid || '#9AAE9F',
     '--cat-tint': theme?.tint || '#EEF2EA',
   };
-
-  const englishName = String(
-    firstValue(item, [
-      'englishName',
-      'english',
-      '英文名',
-      '英文名稱',
-      'latin',
-    ]) || ''
-  ).trim();
-
-  const indications = String(
-    firstValue(item, [
-      'indications',
-      'effect',
-      '主治',
-      '主治功效',
-      '功效',
-    ]) || ''
-  ).trim();
-
-  const meridian = String(
-    firstValue(item, [
-      'meridian',
-      'acuTable.meridian',
-    ]) || ''
-  ).trim();
-
-  const rawLocation = String(
-    firstValue(item, [
-      'acuDetails.location',
-      'acuTable.location',
-      'location',
-    ]) || ''
-  ).trim();
-
-  const locationLabel = isAcupuncture
-    ? getLocationLabel(rawLocation)
-    : '';
-
-  const acupunctureCode = isAcupuncture
-    ? String(item.acuTable?.code || '').trim()
-    : '';
-
-  const categoryLabel =
-    resolvedCategory === '其他' ||
-    resolvedCategory === '名詞材料'
-      ? '名詞材料'
-      : String(resolvedCategory || '').trim();
-
-  const tags = useMemo(() => {
-    const values = [
-      item.tag,
-      item.type,
-      item.constitutionTag,
-      item.chemicalTag,
-    ];
-
-    if (isAcupuncture) {
-      values.push(
-        item.meridian,
-        item.acuTable?.meridian
-      );
-    }
-
-    return values
-      .flatMap((value) =>
-        Array.isArray(value) ? value : [value]
-      )
-      .map((value) => String(value || '').trim())
-      .filter(Boolean)
-      .filter(
-        (value, index, array) =>
-          array.indexOf(value) === index
-      );
-  }, [
-    item.tag,
-    item.type,
-    item.constitutionTag,
-    item.chemicalTag,
-    item.meridian,
-    item.acuTable?.meridian,
-    isAcupuncture,
-  ]);
 
   const handleClick = useCallback(() => {
     onSelectItem?.(item);
@@ -428,21 +309,17 @@ const DataCard = memo(function DataCard({
     [item, onSelectItem]
   );
 
-  const subtitle = isOil
-    ? englishName
-    : isAcupuncture
-      ? acupunctureCode
-      : item.category === '其他'
-        ? item.type || item.alias || ''
-        : item.alias || '';
-
   return (
     <div
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      aria-label={`查看${item.name || '未命名'}的詳細內容`}
+      role={hasActions ? undefined : 'button'}
+      tabIndex={hasActions ? undefined : 0}
+      onKeyDown={hasActions ? undefined : handleKeyDown}
+      aria-label={
+        hasActions
+          ? undefined
+          : `查看${content.name}的詳細內容`
+      }
       style={cardStyle}
       className="app-data-card"
     >
@@ -461,36 +338,38 @@ const DataCard = memo(function DataCard({
       <div className="card-content">
         <div className="card-top">
           <div className="card-tags">
-            {tags.map((tag, index) => (
-              <span
-                key={`tag-${index}-${tag}`}
-                className="card-tag"
-              >
-                {tag}
-              </span>
-            ))}
+            {content.tags.map((tag) =>
+              tag.variant === 'code' ? (
+                <span
+                  key={`code-${tag.text}`}
+                  className="card-tag card-code"
+                >
+                  <span className="sr-only">
+                    國際代碼：
+                  </span>
 
-            {acupunctureCode && (
-              <span className="card-tag card-code">
-                <span className="sr-only">
-                  國際代碼：
+                  {tag.text}
                 </span>
-
-                {acupunctureCode}
-              </span>
+              ) : (
+                <span
+                  key={`tag-${tag.text}`}
+                  className="card-tag"
+                >
+                  {tag.text}
+                </span>
+              )
             )}
 
-            {tags.length === 0 &&
-              !acupunctureCode && (
-                <span className="card-tag">
-                  本草與芳香
-                </span>
-              )}
+            {content.tags.length === 0 && (
+              <span className="card-tag">
+                本草與芳香
+              </span>
+            )}
           </div>
 
-          {categoryLabel && (
+          {content.categoryLabel && (
             <span className="card-category">
-              {categoryLabel}
+              {content.categoryLabel}
             </span>
           )}
         </div>
@@ -500,93 +379,74 @@ const DataCard = memo(function DataCard({
             className="card-title"
             style={TITLE_FONT}
           >
-            {item.name || '未命名'}
+            {content.name}
           </h3>
 
-          {isOil && (
-            <div>
-              {englishName && (
-                <div className="card-english">
-                  {englishName}
-                </div>
-              )}
+          {content.lines.map((line, index) => {
+            const key = `${line.type}-${index}`;
 
-              {indications && (
-                <div className="card-meta">
-                  {indications}
+            if (line.type === 'english') {
+              return (
+                <div key={key} className="card-english">
+                  {line.text}
                 </div>
-              )}
-            </div>
-          )}
+              );
+            }
 
-          {isAcupuncture && (
-            <div>
-              {englishName && (
-                <div className="card-english">
-                  {englishName}
+            if (line.type === 'plain') {
+              return (
+                <div key={key} className="card-alias">
+                  {line.text}
                 </div>
-              )}
+              );
+            }
 
-              {locationLabel && (
-                <div className="card-location">
-                  {locationLabel}
-                </div>
-              )}
-            </div>
-          )}
-
-          {isChineseMedicine && (
-            <div>
-              {englishName && (
-                <div className="card-english">
-                  {englishName}
-                </div>
-              )}
-
-              {meridian && (
-                <div className="card-meta">
+            return (
+              <div key={key} className="card-meta is-clamp">
+                {line.label && (
                   <span className="card-meta-label">
-                    歸經
+                    {line.label}
                   </span>
+                )}
 
-                  {meridian}
-                </div>
-              )}
-            </div>
-          )}
-
-          {!isOil &&
-            !isAcupuncture &&
-            !isChineseMedicine &&
-            subtitle && (
-              <div className="card-english">
-                {subtitle}
+                {line.text}
               </div>
-            )}
+            );
+          })}
         </div>
 
         <div className="card-footer">
-          <div className="card-footer-inner">
-            <span className="card-action">
-              查看詳情
-            </span>
-
-            <span
-              aria-hidden="true"
-              className="card-arrow"
+          {hasActions ? (
+            <div
+              className="card-footer-actions"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
             >
-              <svg
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              {actions}
+            </div>
+          ) : (
+            <div className="card-footer-inner">
+              <span className="card-action">
+                查看詳情
+              </span>
+
+              <span
+                aria-hidden="true"
+                className="card-arrow"
               >
-                <path d="M4 10h12M11 5l5 5-5 5" />
-              </svg>
-            </span>
-          </div>
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 10h12M11 5l5 5-5 5" />
+                </svg>
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

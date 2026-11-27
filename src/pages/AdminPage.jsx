@@ -250,10 +250,18 @@ const ADMIN_STYLES = `
     gap: 8px;
   }
 
-  .admin-page .admin-grid .admin-entry-actions {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid var(--admin-border);
+  .admin-page .admin-card-actions {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .admin-page .admin-card-actions .admin-button {
+    min-height: 34px;
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 13px;
   }
 
   .admin-page .admin-category {
@@ -543,26 +551,27 @@ export default function AdminPage({
   const [query, setQuery] = useState('');
 
   const [viewMode, setViewMode] = useState(() => {
-  try {
-    const saved = window.localStorage.getItem(
-      'herbal-encyclopedia-admin-view'
-    );
+    try {
+      const saved = window.localStorage.getItem(
+        'herbal-encyclopedia-admin-view'
+      );
 
-    return saved === 'grid' ? 'grid' : 'list';
-  } catch {
-    return 'list';
-  }
-});
-useEffect(() => {
-  try {
-    window.localStorage.setItem(
-      'herbal-encyclopedia-admin-view',
-      viewMode
-    );
-  } catch {
-    // 無法儲存時，仍可在本次頁面使用期間切換。
-  }
-}, [viewMode]);
+      return saved === 'grid' ? 'grid' : 'list';
+    } catch {
+      return 'list';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        'herbal-encyclopedia-admin-view',
+        viewMode
+      );
+    } catch {
+      // 無法儲存時，仍可在本次頁面使用期間切換。
+    }
+  }, [viewMode]);
 
   const [toast, setToast] = useState('');
 
@@ -577,22 +586,22 @@ useEffect(() => {
   }, []);
 
   const normalizedData = useMemo(() => {
-  const uniqueItems = new Map();
+    const uniqueItems = new Map();
 
-  const source = Array.isArray(allData)
-    ? allData
-    : [];
+    const source = Array.isArray(allData)
+      ? allData
+      : [];
 
-  source.forEach((item) => {
-    if (!item?.name) return;
+    source.forEach((item) => {
+      if (!item?.name) return;
 
-    const key = getEntryKey(item);
+      const key = getEntryKey(item);
 
-    uniqueItems.set(key, item);
-  });
+      uniqueItems.set(key, item);
+    });
 
-  return Array.from(uniqueItems.values());
-}, [allData]);
+    return Array.from(uniqueItems.values());
+  }, [allData]);
 
   const stats = useMemo(() => {
     const counts = {
@@ -693,6 +702,51 @@ useEffect(() => {
 
     showToast('刪除功能請由原本流程處理');
   };
+
+  const renderActions = (
+    item,
+    className = 'admin-entry-actions'
+  ) => (
+    <div className={className}>
+      <button
+        type="button"
+        onClick={() => onView?.(item)}
+        aria-label={`檢視${item.name}`}
+        className="admin-button"
+      >
+        檢視
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onCard?.(item)}
+        aria-label={`預覽${item.name}圖卡`}
+        className="admin-button"
+      >
+        圖卡
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onEdit?.(item)}
+        aria-label={`編輯${item.name}`}
+        className="admin-button admin-button-edit"
+      >
+        編輯
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          handleDelete(item);
+        }}
+        aria-label={`刪除${item.name}`}
+        className="admin-button admin-button-danger"
+      >
+        刪除
+      </button>
+    </div>
+  );
 
   return (
     <div className="admin-page">
@@ -899,102 +953,68 @@ useEffect(() => {
         </div>
 
         <section
-  aria-label={`${activeLabel}清單`}
-  className={
-    viewMode === 'grid'
-      ? 'admin-grid grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
-      : 'admin-list space-y-3'
-  }
->
-  {filtered.map((item) => {
-    const category = getCategory(item);
-    const entryKey = getEntryKey(item);
+          aria-label={`${activeLabel}清單`}
+          className={
+            viewMode === 'grid'
+              ? 'admin-grid grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
+              : 'admin-list space-y-3'
+          }
+        >
+          {filtered.map((item) => {
+            const category = getCategory(item);
+            const entryKey = getEntryKey(item);
 
-    if (viewMode === 'grid') {
-      return (
-        <DataCard
-          key={entryKey}
-          item={item}
-          onSelectItem={onView}
-        />
-      );
-    }
+            if (viewMode === 'grid') {
+              return (
+                <DataCard
+                  key={entryKey}
+                  item={item}
+                  onSelectItem={onView}
+                  actions={renderActions(
+                    item,
+                    'admin-card-actions'
+                  )}
+                />
+              );
+            }
 
-    return (
-      <article
-        key={entryKey}
-        className="admin-entry"
-      >
-        <div className="admin-entry-inner">
-          <div className="min-w-0 flex-1">
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <span
-                className="admin-category"
-                data-category={category}
+            return (
+              <article
+                key={entryKey}
+                className="admin-entry"
               >
-                {getCategoryLabel(category)}
-              </span>
+                <div className="admin-entry-inner">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span
+                        className="admin-category"
+                        data-category={category}
+                      >
+                        {getCategoryLabel(category)}
+                      </span>
 
-              {item?.updatedAt && (
-                <span className="admin-muted text-[11px]">
-                  已更新
-                </span>
-              )}
-            </div>
+                      {item?.updatedAt && (
+                        <span className="admin-muted text-[11px]">
+                          已更新
+                        </span>
+                      )}
+                    </div>
 
-            <h3 className="break-words text-lg font-semibold leading-7">
-              {item.name || '未命名'}
-            </h3>
+                    <h3 className="break-words text-lg font-semibold leading-7">
+                      {item.name || '未命名'}
+                    </h3>
 
-            <p className="admin-muted mt-1 line-clamp-2 break-words text-sm leading-6">
-              {getSummary(item)}
-            </p>
-          </div>
+                    <p className="admin-muted mt-1 line-clamp-2 break-words text-sm leading-6">
+                      {getSummary(item)}
+                    </p>
+                  </div>
 
-          <div className="admin-entry-actions">
-            <button
-              type="button"
-              onClick={() => onView?.(item)}
-              aria-label={`檢視${item.name}`}
-              className="admin-button"
-            >
-              檢視
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onCard?.(item)}
-              aria-label={`預覽${item.name}圖卡`}
-              className="admin-button"
-            >
-              圖卡
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onEdit?.(item)}
-              aria-label={`編輯${item.name}`}
-              className="admin-button admin-button-edit"
-            >
-              編輯
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                handleDelete(item);
-              }}
-              aria-label={`刪除${item.name}`}
-              className="admin-button admin-button-danger"
-            >
-              刪除
-            </button>
-          </div>
-        </div>
-      </article>
-    );
-  })}
-</section>
+                  {renderActions(item)}
+                </div>
+              </article>
+            );
+          })}
+        </section>
 
         {filtered.length === 0 && (
           <div

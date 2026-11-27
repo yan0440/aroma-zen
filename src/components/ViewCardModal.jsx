@@ -2,393 +2,342 @@ import React, {
   memo,
   useMemo,
 } from 'react';
+import { getCardContent } from '../utils/cardContent';
 
-const getCategoryLabel = (
-  category
-) =>
-  category === '其他'
-    ? '名詞材料'
-    : category;
+const TITLE_FONT = {
+  fontFamily:
+    '"Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif',
+};
 
-const getLocationLabel = (
-  location
-) => {
-  const text = String(
-    location || ''
-  ).trim();
+const VIEW_CARD_STYLES = `
+  .view-card {
+    --vc-bg-from: #f1ece0;
+    --vc-bg-to: #fffdf8;
+    --vc-border: var(--app-border, #dce2d7);
+    --vc-text: var(--app-text, #283c32);
+    --vc-muted: var(--app-muted, #657565);
+    --vc-chip-bg: var(--app-surface-soft, #f0f3eb);
+    --vc-chip-border: var(--app-border, #dce2d7);
+    --vc-chip-text: var(--app-muted, #657565);
+    --vc-code-bg: var(--app-accent, #405e4c);
+    --vc-code-text: #fff;
+    --vc-line: var(--app-border, #dce2d7);
+    --vc-leaf: rgb(64 94 76 / 28%);
+    --vc-accent: var(--app-accent, #405e4c);
 
-  if (!text) {
-    return '';
-  }
-
-  const locationRules = [
-    {
-      label: '頭面部',
-      keywords: [
-        '頭',
-        '面',
-        '額',
-        '眼',
-        '眉',
-        '鼻',
-        '口',
-        '唇',
-        '齒',
-        '牙',
-        '耳',
-        '顏面',
-      ],
-    },
-    {
-      label: '頸肩部',
-      keywords: [
-        '頸',
-        '脖',
-        '項',
-        '喉',
-        '肩',
-        '頸部',
-      ],
-    },
-    {
-      label: '胸腹部',
-      keywords: [
-        '胸',
-        '乳',
-        '心前區',
-        '腹',
-        '臍',
-        '肚',
-        '胸部',
-        '腹部',
-      ],
-    },
-    {
-      label: '背腰部',
-      keywords: [
-        '背',
-        '脊',
-        '腰',
-        '骶',
-        '脊柱',
-        '背部',
-        '腰部',
-      ],
-    },
-    {
-      label: '上肢部',
-      keywords: [
-        '臂',
-        '上臂',
-        '前臂',
-        '肘',
-        '手',
-        '腕',
-        '掌',
-        '指',
-        '肩臂',
-      ],
-    },
-    {
-      label: '下肢部',
-      keywords: [
-        '髖',
-        '臀',
-        '大腿',
-        '膝',
-        '小腿',
-        '踝',
-        '足',
-        '腳',
-        '趾',
-        '下肢',
-      ],
-    },
-    {
-      label: '全身',
-      keywords: [
-        '全身',
-        '身體',
-        '軀幹',
-      ],
-    },
-  ];
-
-  const matchedRule =
-    locationRules.find((rule) =>
-      rule.keywords.some((keyword) =>
-        text.includes(keyword)
-      )
+    position: relative;
+    width: 100%;
+    max-width: 512px;
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--vc-border);
+    border-radius: 24px;
+    background: linear-gradient(
+      135deg,
+      var(--vc-bg-from) 0%,
+      var(--vc-bg-to) 70%
     );
-
-  return matchedRule
-    ? matchedRule.label
-    : '';
-};
-
-const parseBoldSyntax = (
-  str
-) => {
-  if (
-    typeof str !== 'string'
-  ) {
-    return str;
+    box-shadow: 0 18px 44px -26px rgb(20 33 28 / 45%);
+    color: var(--vc-text);
   }
 
-  const boldKeywords = [
-    '肌肉',
-    '神經',
-    '血管',
-  ];
+  :root[data-app-theme='dark'] .view-card {
+    --vc-bg-from: #5d7565;
+    --vc-bg-to: #223229;
+    --vc-border: rgb(190 220 200 / 35%);
+    --vc-text: #f4f7f1;
+    --vc-muted: #b4c4b8;
+    --vc-chip-bg: #1f2e26;
+    --vc-chip-border: #4a5f52;
+    --vc-chip-text: #d6e2d8;
+    --vc-code-bg: #b7d1b6;
+    --vc-code-text: #1f3326;
+    --vc-line: rgb(190 220 200 / 22%);
+    --vc-leaf: rgb(200 225 205 / 26%);
+    --vc-accent: #b7d1b6;
+  }
 
-  const regex =
-    /(\*\*.*?\*\*|==.*?==|【.*?】|《.*?》|\(.*?\)|肌肉|神經|血管)/g;
+  .view-card,
+  .view-card *,
+  .view-card *::before,
+  .view-card *::after {
+    box-sizing: border-box;
+  }
 
-  return str
-    .split('\n')
-    .map((line, lineIndex) => (
-      <span
-        key={`line-${lineIndex}`}
-        className="mb-1 block"
-      >
-        {line
-          .split(regex)
-          .map((part, index) => {
-            if (!part) {
-              return null;
-            }
+  .view-card .vc-leaf {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    width: 64px;
+    height: 120px;
+    color: var(--vc-leaf);
+    pointer-events: none;
+  }
 
-            if (
-              part.startsWith('==') &&
-              part.endsWith('==')
-            ) {
-              return (
-                <mark
-                  key={`part-${index}`}
-                  className="rounded bg-[#F3E1C5] px-1 font-bold text-[#2F4638]"
-                >
-                  {part.slice(2, -2)}
-                </mark>
-              );
-            }
+  .view-card .vc-body {
+    position: relative;
+    padding: 24px 28px 32px;
+  }
 
-            if (
-              (part.startsWith('**') &&
-                part.endsWith('**')) ||
-              boldKeywords.includes(part)
-            ) {
-              return (
-                <strong
-                  key={`part-${index}`}
-                  className="font-bold text-[#3A4F3F]"
-                >
-                  {part.replace(
-                    /\*\*/g,
-                    ''
-                  )}
-                </strong>
-              );
-            }
+  .view-card .vc-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
 
-            if (
-              /^[【《\(].*[】》\)]$/.test(
-                part
-              )
-            ) {
-              return (
-                <span
-                  key={`part-${index}`}
-                  className="font-bold text-[#3A4F3F]"
-                >
-                  {part}
-                </span>
-              );
-            }
+  .view-card .vc-chips {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
 
-            return part;
-          })}
-      </span>
-    ));
-};
+  .view-card .vc-chip {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    border: 1px solid var(--vc-chip-border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    background: var(--vc-chip-bg);
+    color: var(--vc-chip-text);
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .view-card .vc-chip.is-code {
+    border-color: transparent;
+    background: var(--vc-code-bg);
+    color: var(--vc-code-text);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .view-card .vc-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .view-card .vc-category {
+    color: var(--vc-muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .view-card .vc-close {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--vc-line);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--vc-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .view-card .vc-close:hover {
+    background: var(--vc-chip-bg);
+    color: var(--vc-text);
+  }
+
+  .view-card .vc-close:focus-visible {
+    outline: 2px solid var(--vc-accent);
+    outline-offset: 3px;
+  }
+
+  .view-card .vc-name {
+    margin: 0;
+    color: var(--vc-text);
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    overflow-wrap: anywhere;
+  }
+
+  .view-card .vc-english {
+    margin: 6px 0 0;
+    color: var(--vc-muted);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-style: italic;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  .view-card .vc-plain {
+    margin: 6px 0 0;
+    color: var(--vc-muted);
+    font-size: 16px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  .view-card .vc-note {
+    margin: 14px 0 0;
+    color: var(--vc-muted);
+    font-size: 14px;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .view-card .vc-note-label {
+    margin-right: 8px;
+    color: var(--vc-accent);
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .view-card .vc-body {
+      padding: 20px 20px 28px;
+    }
+
+    .view-card .vc-name {
+      font-size: 34px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .view-card .vc-close {
+      transition: none;
+    }
+  }
+`;
+
+function LeafDecoration() {
+  return (
+    <svg
+      className="vc-leaf"
+      viewBox="0 0 64 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M34 118 C34 80 38 40 50 6" />
+      <path d="M36 98 C22 94 14 84 12 72 C26 74 34 84 36 98Z" />
+      <path d="M37 78 C50 74 58 64 60 52 C46 54 38 64 37 78Z" />
+      <path d="M40 58 C28 54 20 44 18 32 C32 34 40 44 40 58Z" />
+      <path d="M44 38 C56 34 62 24 62 14 C50 16 44 26 44 38Z" />
+    </svg>
+  );
+}
 
 function ViewCardModal({
   item,
   onClose,
 }) {
-  const tags = useMemo(() => {
-    if (!item) {
-      return [];
-    }
+  const content = useMemo(
+    () => (item ? getCardContent(item) : null),
+    [item]
+  );
 
-    return [
-      item.tag ||
-      item.type,
-      item.constitutionTag,
-      item.chemicalTag,
-      item.acuTable?.meridian,
-    ].filter(
-      (value) =>
-        value !== undefined &&
-        value !== null &&
-        String(value).trim() !== ''
-    );
-  }, [item]);
-
-  if (!item) {
+  if (!item || !content) {
     return null;
   }
 
-  const category =
-    String(
-      item.category || ''
-    ).trim();
-
-  const categoryDisplay =
-    getCategoryLabel(category);
-
-  const isAcupuncture =
-    category === '穴道' ||
-    category === '穴位' ||
-    category === '腧穴';
-
-  const isChineseMedicine =
-    category === '中藥' ||
-    category === '中医' ||
-    category === '藥材' ||
-    category === '药材';
-
-  const englishName = String(
-    item.englishName ||
-      item.latin ||
-      ''
-  ).trim();
-
-  const meridian = String(
-    item.meridian ||
-      item.acuTable?.meridian ||
-      ''
-  ).trim();
-
-  const location = String(
-    item.acuDetails?.location ||
-      item.location ||
-      ''
-  ).trim();
-
-  const locationLabel =
-    isAcupuncture
-      ? getLocationLabel(location)
-      : '';
-
-  const detailText =
-    item.description ||
-    item.effect ||
-    item.indications ||
-    '';
-
   return (
     <div
-      className="relative w-full max-w-lg"
+      className="view-card"
       onClick={(event) =>
         event.stopPropagation()
       }
     >
-      <div className="relative max-h-[85vh] overflow-y-auto rounded-[1.75rem] border border-[#E5E0D8] bg-[radial-gradient(circle_at_top,_#FCFBF7_0%,_#F7F2E8_52%,_#F2EBDD_100%)] shadow-[0_12px_35px_rgba(122,106,90,0.08)]">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-5 top-5 z-10 text-lg font-bold text-[#A39284] transition-colors hover:text-[#3A4F3F]"
-          aria-label="關閉圖卡"
-        >
-          ✕
-        </button>
+      <style>{VIEW_CARD_STYLES}</style>
 
-        <div className="p-6 md:p-7">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#F4EFE7] px-3 py-1 text-[13px] font-semibold tracking-wider text-[#3A4F3F]">
-              {categoryDisplay}
-            </span>
+      <LeafDecoration />
 
-            {tags.map((tag, index) => (
+      <div className="vc-body">
+        <div className="vc-top">
+          <div className="vc-chips">
+            {content.tags.map((tag) => (
               <span
-                key={`${tag}-${index}`}
-                className="rounded-full border border-[#E7DED4] bg-white/80 px-3 py-1 text-[13px] font-medium text-[#7C8A80]"
+                key={`${tag.variant}-${tag.text}`}
+                className={`vc-chip ${
+                  tag.variant === 'code' ? 'is-code' : ''
+                }`}
               >
-                {tag}
+                {tag.text}
               </span>
             ))}
           </div>
 
-          <h3 className="text-[28px] font-black leading-tight tracking-tight text-[#2F4638] md:text-[32px]">
-            {item.name}
-          </h3>
-
-
-          {category === '精油' &&
-            englishName && (
-              <p className="mb-4 mt-2 font-serif text-[16px] italic text-[#A39284]">
-                {englishName}
-              </p>
+          <div className="vc-actions">
+            {content.categoryLabel && (
+              <span className="vc-category">
+                {content.categoryLabel}
+              </span>
             )}
 
-          {category === '其他' && (
-            <p className="mb-4 mt-2 font-serif text-[16px] italic text-[#A39284]">
-              {item.alias ||
-                englishName ||
-                ''}
-            </p>
-          )}
-
-          {isAcupuncture && (
-            <div className="mb-5 mt-3 space-y-2">
-              {item.acuTable?.code && (
-                <p className="font-serif text-[16px] italic text-[#A39284]">
-                  
-                  {item.acuTable.code}
-                </p>
-              )}
-            
-            
-              {englishName && (
-                <p className="text-[16px] text-[#6B7280]">
-                  
-                  {englishName}
-                </p>
-              )}
-
-              {locationLabel && (
-                <p className="text-[15px] font-semibold text-[#3A4F3F]">
-                  
-                  {locationLabel}
-                </p>
-              )}
-            </div>
-          )}
-
-          {isChineseMedicine && (
-            <div className="mb-5 mt-3 space-y-2">
-              {englishName && (
-                <p className="text-[15px] text-[#6B7280]">
-                 
-                  {englishName}
-                </p>
-              )}
-
-              {meridian && (
-                <p className="text-[16px] font-semibold text-[#3A4F3F]">
-                  
-                  {meridian}
-                </p>
-              )}
-            </div>
-          )}
-
+            <button
+              type="button"
+              className="vc-close"
+              onClick={onClose}
+              aria-label="關閉圖卡"
+            >
+              ✕
+            </button>
+          </div>
         </div>
+
+        <h3
+          className="vc-name"
+          style={TITLE_FONT}
+        >
+          {content.name}
+        </h3>
+
+        {content.lines.map((line, index) => {
+          const key = `${line.type}-${index}`;
+
+          if (line.type === 'english') {
+            return (
+              <p key={key} className="vc-english">
+                {line.text}
+              </p>
+            );
+          }
+
+          if (line.type === 'plain') {
+            return (
+              <p key={key} className="vc-plain">
+                {line.text}
+              </p>
+            );
+          }
+
+          return (
+            <p key={key} className="vc-note">
+              {line.label && (
+                <span className="vc-note-label">
+                  {line.label}
+                </span>
+              )}
+
+              {line.text}
+            </p>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export default memo(
-  ViewCardModal
-);
+export default memo(ViewCardModal);

@@ -19,8 +19,10 @@ import React, {
 import BookStructureEditor from '../components/BookStructureEditor';
 import KnowledgeStructureEditor from '../components/KnowledgeStructureEditor';
 import AiImageImporter from '../components/AiImageImporter';
-
+import TagListEditor from '../components/TagListEditor';
 import { getDefaultFormData } from '../utils/addEntryDefaults';
+
+
 
 import {
   convertObjectsToArrays,
@@ -31,8 +33,40 @@ import {
   removeFirestoreFields,
 } from '../utils/addEntryUtils';
 
-import { saveEntry } from '../services/addEntryFirestore';
+import { saveEntry, loadBookChapters } from '../services/addEntryFirestore';
 import './AddEntryPage.css';
+
+const splitTagText = (value) =>
+  String(value || '')
+    .split(/[、,，/／;；]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+const buildTagList = (tags, tag) => {
+  const list = Array.isArray(tags)
+    ? tags.map((entry) => String(entry || '').trim()).filter(Boolean)
+    : [];
+
+  return list.length > 0 ? list : splitTagText(tag);
+};
+
+const getFormTags = (data) => {
+  const list = Array.isArray(data?.tags) ? data.tags : [];
+
+  if (list.some((tag) => String(tag || '').trim())) {
+    return list;
+  }
+
+  const fromText = splitTagText(data?.tag);
+
+  if (fromText.length > 0) {
+    return fromText;
+  }
+
+  return list.length > 0 ? list : [''];
+};
+
+
 const getFriendlyTransactionError = (error) => {
   const code = String(error?.code || '').toLowerCase();
   const message = String(error?.message || '').toLowerCase();
@@ -57,6 +91,7 @@ export default function AddEntryPage({
   const [lastNodeId, setLastNodeId] = useState(null);
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingChapters, setIsLoadingChapters] = useState(false);
   const [formData, setFormData] = useState(getDefaultFormData());
   const resolvedCloseLabel = closeLabel || (isViewOnly ? '關閉' : '取消');
 
@@ -87,6 +122,7 @@ export default function AddEntryPage({
       ...defaultData,
       ...normalized,
       category: normalized.category || '精油',
+      tags: buildTagList(normalized.tags, normalized.tag),
       name: normalized.name || '',
       bookDetails: {
         ...defaultData.bookDetails,
@@ -113,6 +149,49 @@ export default function AddEntryPage({
       updatedAt: normalized.updatedAt || '',
     });
     setSaveError('');
+  }, [editingItem]);
+
+  useEffect(() => {
+    if (!editingItem || editingItem.category !== '書籍') {
+      setIsLoadingChapters(false);
+      return undefined;
+    }
+
+    const documentId =
+      editingItem.documentId ||
+      editingItem.firestoreId ||
+      editingItem.id ||
+      '';
+
+    if (!documentId) return undefined;
+
+    let cancelled = false;
+    setIsLoadingChapters(true);
+
+    loadBookChapters(documentId, editingItem?.bookDetails?.chapters)
+      .then((chapters) => {
+        if (cancelled) return;
+
+        setFormData((previous) => ({
+          ...previous,
+          bookDetails: {
+            ...previous.bookDetails,
+            chapters: normalizeChapters(chapters),
+          },
+        }));
+
+        setIsLoadingChapters(false);
+      })
+      .catch((error) => {
+        console.error('讀取章節失敗：', error);
+        if (!cancelled) {
+          setSaveError('讀取章節失敗，請不要儲存，重新整理後再試。');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [editingItem]);
 
   const addNode = useCallback((path = []) => {
@@ -169,6 +248,18 @@ export default function AddEntryPage({
   const inputClass = `w-full rounded-xl border border-[#E5E0D8] bg-white px-4 py-3 outline-none ${isViewOnly ? 'cursor-not-allowed opacity-70' : 'focus:border-[#3A4F3F] focus:ring-2 focus:ring-[#3A4F3F]/10'}`;
   const labelClass = 'mb-2 block text-[13px] font-bold uppercase tracking-widest text-[#A39284]';
   const textareaClass = `${inputClass} min-h-24 resize-y`;
+  const formTags = getFormTags(formData);
+
+  const handleTagsChange = (nextTags) => {
+    setFormData((previous) => ({
+      ...previous,
+      tags: nextTags,
+      tag: nextTags
+        .map((tag) => String(tag || '').trim())
+        .filter(Boolean)
+        .join('、'),
+    }));
+  };
 
   const getValueByPath = useCallback((object, path) => path.split('.').reduce((current, key) => current?.[key], object) ?? '', []);
 
@@ -197,7 +288,12 @@ export default function AddEntryPage({
   }, [formData, getValueByPath, updateValueByPath, isViewOnly, isSaving, inputClass, labelClass, textareaClass]);
 
   const handleSave = useCallback(async () => {
-    if (isSaving || isViewOnly) return;
+        if (isSaving || isViewOnly) return;
+
+    if (isLoadingChapters) {
+      setSaveError('章節載入中或載入失敗，暫時不能儲存。');
+      return;
+    }
     setSaveError('');
     const category = String(formData.category || '').trim();
     const name = String(formData.name || '').trim();
@@ -205,7 +301,21 @@ export default function AddEntryPage({
     if (!category) { setSaveError('請至少填寫分類與名稱！'); return; }
     setIsSaving(true);
     try {
-      const savedEntry = await saveEntry({ formData: { ...formData, category, name }, editingItem, originalDocumentId: originalDocumentIdRef.current, originalEntryKey: originalEntryKeyRef.current });
+            const cleanTags = (Array.isArray(formData.tags) ? formData.tags : [])
+        .map((tag) => String(tag || '').trim())
+        .filter(Boolean);
+
+      const tagFields = ['穴道', '精油'].includes(category)
+        ? {}
+        : { tags: cleanTags, tag: cleanTags.join('、') };
+
+      const savedEntry = await saveEntry({
+        formData: { ...formData, category, name, ...tagFields },
+        editingItem,
+        originalDocumentId: originalDocumentIdRef.current,
+        originalEntryKey: originalEntryKeyRef.current,
+      });
+
       if (typeof onSaved === 'function') onSaved(savedEntry); else onClose();
       window.alert(editingItem ? '✅ 資料已成功更新！' : '✅ 資料已成功儲存！');
     } catch (error) {
@@ -215,7 +325,7 @@ export default function AddEntryPage({
     } finally {
       setIsSaving(false);
     }
-  }, [editingItem, formData, isSaving, isViewOnly, onClose, onSaved]);
+    }, [editingItem, formData, isSaving, isViewOnly, isLoadingChapters, onClose, onSaved]);
 
   const handleAiData = useCallback((aiData) => {
     if (!aiData) return;
@@ -269,7 +379,22 @@ export default function AddEntryPage({
                 {formData.category === '書籍' && <div className="md:col-span-2"><label className={labelClass}>作者 / 編著</label><input disabled={isViewOnly || isSaving} placeholder="輸入作者 / 編著" value={formData.bookDetails.author} className={inputClass} onChange={(event) => setFormData((previous) => ({ ...previous, bookDetails: { ...previous.bookDetails, author: event.target.value } }))} /></div>}
               </div>
               <div className="mb-6 w-full"><label className={labelClass}>簡介描述</label><textarea disabled={isViewOnly || isSaving} placeholder="簡介描述" value={formData.description || ''} className={textareaClass} onChange={(event) => setFormData((previous) => ({ ...previous, description: event.target.value }))} /></div>
-              {!['穴道', '精油'].includes(formData.category) && <div className="mb-6"><label className={labelClass}>核心標籤</label><input disabled={isViewOnly || isSaving} placeholder="例如：解表、清熱" value={formData.tag} className={inputClass} onChange={(event) => setFormData((previous) => ({ ...previous, tag: event.target.value }))} /></div>}
+                            {!['穴道', '精油'].includes(formData.category) && (
+                <div className="mb-6">
+                  <label className={labelClass}>
+                    {formData.category === '方劑' ? '作用標籤' : '核心標籤'}
+                  </label>
+
+                  <TagListEditor
+                    tags={formTags}
+                    onChange={handleTagsChange}
+                    disabled={isViewOnly || isSaving}
+                    readOnly={isViewOnly}
+                    inputClass={inputClass}
+                    placeholder={formData.category === '方劑' ? '例如：扶正解表' : '例如：解表'}
+                  />
+                </div>
+              )}
 
               {formData.category === '書籍' && <div className="min-h-0 h-[calc(100dvh-5rem)] w-full overflow-hidden pl-1 pr-1"><BookStructureEditor formData={formData} setFormData={setFormData} labelClass={labelClass} inputClass={inputClass} addNode={addNode} lastNodeId={lastNodeId} scrollContainerRef={contentRef} disabled={isViewOnly || isSaving} isViewOnly={isViewOnly || isSaving} /></div>}
 

@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { loadBookChapters } from '../features/entries/services/addEntryFirestore';
 
 const LEVEL_TYPES = ['篇', '章', '節', '目', '子目'];
 const CONTENT_TYPE = '內文';
@@ -110,6 +111,15 @@ const BOOK_STYLES = `
   .book-detail .book-back:focus-visible {
     outline: 2px solid var(--book-accent);
     outline-offset: 3px;
+  }
+
+  .book-detail .book-scroll {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-color: var(--book-border) var(--book-bg);
   }
 
   .book-detail .book-layout {
@@ -481,6 +491,12 @@ const BOOK_STYLES = `
       display: flex;
       flex-direction: column;
     }
+
+    .book-detail .book-directory-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
   }
 
   @media (max-width: 640px) {
@@ -746,7 +762,34 @@ export default function BookModal({
     () => new Set()
   );
 
-  const contentRef = useRef(null);
+  const scrollRef = useRef(null);
+
+    const [chapterTree, setChapterTree] = useState(null);
+
+  useEffect(() => {
+    const documentId =
+      item?.documentId || item?.firestoreId || item?.id || '';
+
+    if (!documentId) {
+      setChapterTree(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    loadBookChapters(documentId, item?.bookDetails?.chapters)
+      .then((tree) => {
+        if (!cancelled) setChapterTree(tree);
+      })
+      .catch((error) => {
+        console.error('讀取章節失敗：', error);
+        if (!cancelled) setChapterTree(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [item?.documentId, item?.firestoreId, item?.id]);
 
   if (!item) return null;
 
@@ -778,8 +821,8 @@ export default function BookModal({
     };
   };
 
-  const processedChapters = restoreArray(
-    item.bookDetails?.chapters
+    const processedChapters = restoreArray(
+    chapterTree || item.bookDetails?.chapters
   ).map((node) => deepRestore(node, 0));
 
   const bookDescription = String(
@@ -849,7 +892,7 @@ export default function BookModal({
             setSelectedContent(directoryItem);
 
             requestAnimationFrame(() => {
-              contentRef.current?.scrollTo({
+              scrollRef.current?.scrollTo({
                 top: 0,
                 behavior: 'smooth',
               });
@@ -988,7 +1031,7 @@ export default function BookModal({
         </div>
       </header>
 
-      <main className="book-scroll">
+      <main className="book-scroll" ref={scrollRef}>
         <div className="book-layout">
           <aside className="book-panel book-directory">
             <div className="book-directory-head">
@@ -1018,10 +1061,7 @@ export default function BookModal({
             </div>
           </aside>
 
-          <section
-            ref={contentRef}
-            className="book-panel book-reader"
-          >
+          <section className="book-panel book-reader">
             {selectedContent ? (
               <div>
                 <div className="book-reader-head">
