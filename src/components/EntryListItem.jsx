@@ -1,76 +1,102 @@
 import React from 'react';
 import { getCategoryLabel } from '../config/categories';
-import { asText } from '../utils/entryData';
+import { getCardContent } from '../utils/cardContent';
 
 export default function EntryListItem({
   item,
   onSelectItem,
 }) {
-  const code = asText(item.acuTable?.code);
+  const content = getCardContent(item);
 
-  const englishName = [
-    item.englishName,
-    item.english,
-    item['英文名'],
-    item['英文名稱'],
-    item.latin,
-  ]
-    .map(asText)
-    .find(Boolean);
+  const englishLine = content.lines.find(
+    (line) => line.type === 'english'
+  );
 
-  const description = [
-    item.indications,
-    item.effect,
-    item['主治'],
-    item['主治功效'],
-    item['功效'],
-    item.alias,
-    item.meridian,
-    item.acuTable?.meridian,
-  ]
-    .map(asText)
-    .find(Boolean);
+  const detailLines = content.lines.filter(
+    (line) => line.type !== 'english'
+  );
+
+  const hasTags = content.tags.length > 0;
 
   return (
     <button
       type="button"
       onClick={() => onSelectItem(item)}
-      aria-label={`查看${item.name || '未命名'}的詳細內容`}
+      aria-label={`查看${content.name}的詳細內容`}
       className="appearance-entry-row"
     >
       <div className="min-w-0 flex-1">
-        <div className="mb-1 flex flex-wrap items-center gap-2">
-          <span className="appearance-entry-tag">
-            {getCategoryLabel(item.category)}
-          </span>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          {hasTags ? (
+            content.tags.map((tag) =>
+              tag.variant === 'code' ? (
+                <span
+                  key={`code-${tag.text}`}
+                  className="appearance-entry-code"
+                >
+                  <span className="sr-only">
+                    國際代碼：
+                  </span>
 
-          {code && (
-            <span className="appearance-entry-code">
-              <span className="sr-only">
-                國際代碼：
-              </span>
-              {code}
+                  {tag.text}
+                </span>
+              ) : (
+                <span
+                  key={`tag-${tag.text}`}
+                  className="appearance-entry-tag"
+                >
+                  {tag.text}
+                </span>
+              )
+            )
+          ) : (
+            <span className="appearance-entry-tag">
+              {getCategoryLabel(item.category)}
             </span>
           )}
         </div>
 
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 className="break-words text-lg font-semibold">
-            {item.name || '未命名'}
+            {content.name}
           </h3>
 
-          {englishName && (
+          {englishLine && (
             <span className="appearance-muted break-words text-sm italic">
-              {englishName}
+              {englishLine.text}
             </span>
           )}
         </div>
 
-        {description && (
-          <p className="appearance-muted mt-2 line-clamp-2 break-words text-sm leading-6">
-            {description}
-          </p>
-        )}
+        {detailLines.map((line, index) => {
+          const key = `${line.type}-${index}`;
+
+          if (line.type === 'plain') {
+            return (
+              <p
+                key={key}
+                className="appearance-muted mt-1 break-words text-sm leading-6"
+              >
+                {line.text}
+              </p>
+            );
+          }
+
+          return (
+            <p
+              key={key}
+              className="appearance-muted mt-1 line-clamp-2 break-words text-sm leading-6"
+            >
+              {line.label && (
+                <span className="mr-2 font-semibold">
+                  {line.label}
+                </span>
+              )}
+
+              {line.text}
+            </p>
+          );
+        })}
       </div>
 
       <span
