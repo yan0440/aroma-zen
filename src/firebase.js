@@ -1,6 +1,10 @@
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, isSupported } from 'firebase/analytics';
-import { getAuth } from 'firebase/auth';
+import {
+  getAuth,
+  setPersistence,
+  browserSessionPersistence,
+} from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -26,6 +30,10 @@ export { app };
 
 // 初始化 Firebase Authentication
 export const auth = getAuth(app);
+
+setPersistence(auth, browserSessionPersistence).catch((error) => {
+  console.error('設定登入保存方式失敗：', error);
+});
 
 // 初始化 Firestore 離線持久化快取
 export const db = initializeFirestore(app, {

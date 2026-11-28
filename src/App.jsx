@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
-  useRef,
 } from 'react';
 
 import './styles/appearance.css';
@@ -16,8 +15,6 @@ import {
   doc,
   onSnapshot,
 } from 'firebase/firestore';
-
-import { AppUpdateSettings } from './components/AppUpdates';
 
 import { db } from './firebase';
 import { oilData } from './data/oilData.js';
@@ -34,6 +31,15 @@ import {
 import OtherCategoryView from './components/OtherCategoryView';
 import DataCard from './components/DataCard';
 import Sprig from './components/Sprig';
+import AppearanceSettings from './components/AppearanceSettings';
+import EntryListItem from './components/EntryListItem';
+
+import {
+  EmptyState,
+  PageLoading,
+  SessionNotice,
+  StatusMessage,
+} from './components/AppStatus';
 
 import {
   CATEGORIES,
@@ -41,7 +47,20 @@ import {
   getCategoryTheme,
 } from './config/categories';
 
+import {
+  OTHER_CATEGORY_VALUES,
+  addItemToMap,
+  getBookSearchText,
+  getCreatedTime,
+  getItemIdentity,
+  getSearchText,
+  normalizeCategory,
+} from './utils/entryData';
+
 import { normalizeText } from './utils/text';
+
+import useAppearance from './hooks/useAppearance';
+import useAdminAuth from './hooks/useAdminAuth';
 
 const LoginPage = lazy(
   () => import('./components/LoginPage.jsx')
@@ -89,15 +108,6 @@ const AddEntryPage = lazy(
 
 const PAGE_SIZE = 20;
 
-const OTHER_CATEGORY_VALUES = ['其他', '名詞材料'];
-
-const APPEARANCE_KEY = 'herbal-encyclopedia-appearance';
-
-const DEFAULT_APPEARANCE = {
-  theme: 'system',
-  view: 'grid',
-};
-
 const MODAL_COMPONENTS = {
   精油: OilModal,
   穴道: AcuModal,
@@ -107,667 +117,6 @@ const MODAL_COMPONENTS = {
   其他: OtherDetailPage,
   名詞材料: OtherDetailPage,
 };
-
-const normalizeCategory = (category) => {
-  const value = String(category || '')
-    .trim()
-    .normalize('NFKC');
-
-  return value === '名詞材料' ? '其他' : value;
-};
-
-const normalizeName = (name) =>
-  String(name || '')
-    .trim()
-    .normalize('NFKC')
-    .replace(/\s+/g, ' ');
-
-const getItemIdentity = (item) => {
-  if (!item) return '';
-
-  const entryKey = normalizeText(item.entryKey || '');
-
-  if (entryKey) {
-    return `entryKey:${entryKey}`;
-  }
-
-  const category = normalizeCategory(item.category);
-  const name = normalizeName(item.name);
-
-  if (category && name) {
-    return `category:${category}__name:${normalizeText(name)}`;
-  }
-
-  return `document:${String(
-    item.documentId ||
-      item.firestoreId ||
-      item.id ||
-      ''
-  )}`;
-};
-
-const getCreatedTime = (item) => {
-  const value = item?.createdAt;
-
-  if (typeof value === 'number') return value;
-
-  if (value && typeof value.toMillis === 'function') {
-    return value.toMillis();
-  }
-
-  if (value && typeof value.toDate === 'function') {
-    return value.toDate().getTime();
-  }
-
-  if (value instanceof Date) {
-    return value.getTime();
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Date.parse(value);
-
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-
-    const numericValue = Number(value);
-
-    if (Number.isFinite(numericValue)) {
-      return numericValue;
-    }
-  }
-
-  return 0;
-};
-
-const mergeNonEmpty = (base = {}, incoming = {}) => {
-  const result = { ...(base || {}) };
-
-  Object.entries(incoming || {}).forEach(([key, value]) => {
-    if (
-      value !== undefined &&
-      value !== null &&
-      !(typeof value === 'string' && !value.trim())
-    ) {
-      result[key] = value;
-    }
-  });
-
-  return result;
-};
-
-const mergeArrayValue = (baseValue, incomingValue) => {
-  if (Array.isArray(incomingValue)) {
-    return incomingValue;
-  }
-
-  if (incomingValue && typeof incomingValue === 'object') {
-    return Object.keys(incomingValue)
-      .sort((a, b) => Number(a) - Number(b))
-      .map((key) => incomingValue[key]);
-  }
-
-  if (Array.isArray(baseValue)) {
-    return baseValue;
-  }
-
-  if (baseValue && typeof baseValue === 'object') {
-    return Object.keys(baseValue)
-      .sort((a, b) => Number(a) - Number(b))
-      .map((key) => baseValue[key]);
-  }
-
-  return [];
-};
-
-const normalizeItem = (item) => {
-  if (!item) return null;
-
-  const category = normalizeCategory(item.category);
-  const name = normalizeName(item.name);
-
-  return category && name
-    ? {
-        ...item,
-        name,
-        category,
-      }
-    : null;
-};
-
-const mergeItems = (base, incoming) => {
-  const b = normalizeItem(base);
-  const i = normalizeItem(incoming);
-
-  if (!b) return i;
-  if (!i) return b;
-
-  return {
-    ...mergeNonEmpty(b, i),
-    name: i.name || b.name,
-    category: i.category || b.category,
-    id: i.id || b.id,
-    documentId: i.documentId || b.documentId,
-    firestoreId: i.firestoreId || b.firestoreId,
-    entryKey: i.entryKey || b.entryKey,
-
-    oilDetails: mergeNonEmpty(
-      b.oilDetails,
-      i.oilDetails
-    ),
-
-    acuTable: mergeNonEmpty(
-      b.acuTable,
-      i.acuTable
-    ),
-
-    acuDetails: mergeNonEmpty(
-      b.acuDetails,
-      i.acuDetails
-    ),
-
-    bookDetails: {
-      ...(b.bookDetails || {}),
-      ...(i.bookDetails || {}),
-      chapters: mergeArrayValue(
-        b.bookDetails?.chapters,
-        i.bookDetails?.chapters
-      ),
-    },
-
-    knowledgeDetails: {
-      ...(b.knowledgeDetails || {}),
-      ...(i.knowledgeDetails || {}),
-      sections: mergeArrayValue(
-        b.knowledgeDetails?.sections,
-        i.knowledgeDetails?.sections
-      ),
-    },
-  };
-};
-
-const addItemToMap = (map, item, source) => {
-  const normalized = normalizeItem(item);
-
-  if (!normalized) return;
-
-  const key = getItemIdentity(normalized);
-
-  if (!key) return;
-
-  const old = map.get(key);
-
-  map.set(
-    key,
-    old
-      ? mergeItems(old, {
-          ...normalized,
-          _source: source,
-        })
-      : {
-          ...normalized,
-          _source: source,
-        }
-  );
-};
-
-const collectSearchText = (value) => {
-  if (value === undefined || value === null) return '';
-
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number'
-  ) {
-    return String(value);
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .map(collectSearchText)
-      .filter(Boolean)
-      .join(' ');
-  }
-
-  if (typeof value === 'object') {
-    return Object.values(value)
-      .map(collectSearchText)
-      .filter(Boolean)
-      .join(' ');
-  }
-
-  return '';
-};
-
-const getBookSearchText = (item) =>
-  normalizeText(
-    [
-      item?.name,
-      item?.alias,
-      item?.bookDetails?.author,
-      collectSearchText(item?.bookDetails?.chapters),
-    ]
-      .filter(Boolean)
-      .join(' ')
-  );
-
-const getSearchText = (item) =>
-  normalizeText(collectSearchText(item));
-
-const asText = (value) => {
-  if (Array.isArray(value)) {
-    return value
-      .map(asText)
-      .filter(Boolean)
-      .join('、');
-  }
-
-  return typeof value === 'string' ||
-    typeof value === 'number'
-    ? String(value).trim()
-    : '';
-};
-
-function readAppearance() {
-  if (typeof window === 'undefined') {
-    return { ...DEFAULT_APPEARANCE };
-  }
-
-  try {
-    const saved = JSON.parse(
-      window.localStorage.getItem(APPEARANCE_KEY) || '{}'
-    );
-
-    return {
-      theme: ['light', 'dark', 'system'].includes(saved?.theme)
-        ? saved.theme
-        : DEFAULT_APPEARANCE.theme,
-
-      view: ['grid', 'list'].includes(saved?.view)
-        ? saved.view
-        : DEFAULT_APPEARANCE.view,
-    };
-  } catch {
-    return { ...DEFAULT_APPEARANCE };
-  }
-}
-
-function useAppearance() {
-  const [appearance, setAppearance] = useState(readAppearance);
-
-  const [systemDark, setSystemDark] = useState(() => {
-    if (
-      typeof window === 'undefined' ||
-      typeof window.matchMedia !== 'function'
-    ) {
-      return false;
-    }
-
-    return window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches;
-  });
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') {
-      return undefined;
-    }
-
-    const media = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    );
-
-    const handleChange = (event) => {
-      setSystemDark(event.matches);
-    };
-
-    setSystemDark(media.matches);
-
-    if (typeof media.addEventListener === 'function') {
-      media.addEventListener('change', handleChange);
-
-      return () => {
-        media.removeEventListener('change', handleChange);
-      };
-    }
-
-    media.addListener(handleChange);
-
-    return () => {
-      media.removeListener(handleChange);
-    };
-  }, []);
-
-  const resolvedTheme =
-    appearance.theme === 'system'
-      ? systemDark
-        ? 'dark'
-        : 'light'
-      : appearance.theme;
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        APPEARANCE_KEY,
-        JSON.stringify(appearance)
-      );
-    } catch {
-      // 無法儲存時，仍保留本次使用期間的設定。
-    }
-  }, [appearance]);
-
-  useEffect(() => {
-    document.documentElement.dataset.appTheme = resolvedTheme;
-  }, [resolvedTheme]);
-
-  const updateAppearance = useCallback((key, value) => {
-    const allowedValues = {
-      theme: ['light', 'dark', 'system'],
-      view: ['grid', 'list'],
-    };
-
-    if (!allowedValues[key]?.includes(value)) {
-      return;
-    }
-
-    setAppearance((previous) => ({
-      ...previous,
-      [key]: value,
-    }));
-  }, []);
-
-  return {
-    appearance,
-    resolvedTheme,
-    updateAppearance,
-  };
-}
-
-function PageLoading() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{
-        backgroundColor: 'var(--app-bg, #fdfbf7)',
-        color: 'var(--app-muted, #657565)',
-      }}
-    >
-      正在載入頁面...
-    </div>
-  );
-}
-
-function StatusMessage({ isOnline, dataError }) {
-  if (dataError) {
-    return (
-      <div
-        role="alert"
-        className="fixed left-1/2 top-4 z-[300] w-[92%] max-w-xl -translate-x-1/2 rounded-xl bg-red-600 px-4 py-3 text-center text-[15px] text-white shadow-lg"
-      >
-        {dataError}
-      </div>
-    );
-  }
-
-  if (!isOnline) {
-    return (
-      <div
-        role="status"
-        className="fixed bottom-4 left-1/2 z-[300] w-max max-w-[92%] -translate-x-1/2 rounded-full bg-[#D4A373] px-4 py-2 text-center text-[15px] text-white shadow-lg"
-      >
-        目前離線，正在使用已儲存的百科資料
-      </div>
-    );
-  }
-
-  return null;
-}
-
-function EmptyState({ isLoading, query }) {
-  let message = '這個分類還沒有資料。';
-
-  if (isLoading) {
-    message = '正在讀取資料...';
-  } else if (query) {
-    message =
-      `找不到符合「${query}」的資料。` +
-      '試試更短的關鍵字，或換一個分類。';
-  }
-
-  return (
-    <div
-      className="rounded-[22px] px-6 py-20 text-center text-[16px] leading-7"
-      style={{
-        backgroundColor: 'var(--app-surface)',
-        color: 'var(--app-muted)',
-      }}
-    >
-      {message}
-    </div>
-  );
-}
-
-function AppearanceSettings({
-  open,
-  onClose,
-  appearance,
-  onChange,
-}) {
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-
-    if (!dialog) return;
-
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  const groups = [
-    {
-      key: 'theme',
-      title: '外觀模式',
-      options: [
-        { value: 'light', label: '白天' },
-        { value: 'dark', label: '夜晚' },
-        { value: 'system', label: '跟隨系統' },
-      ],
-    },
-    {
-      key: 'view',
-      title: '顯示方式',
-      options: [
-        { value: 'grid', label: '圖卡' },
-        { value: 'list', label: '列表' },
-      ],
-    },
-  ];
-
-  return (
-    <dialog
-      ref={dialogRef}
-      id="appearance-settings"
-      className="appearance-dialog"
-      aria-labelledby="appearance-settings-title"
-      aria-describedby="appearance-settings-description"
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-      onClose={onClose}
-      onClick={(event) => {
-        if (event.target !== event.currentTarget) return;
-
-        const bounds =
-          event.currentTarget.getBoundingClientRect();
-
-        const outside =
-          event.clientX < bounds.left ||
-          event.clientX > bounds.right ||
-          event.clientY < bounds.top ||
-          event.clientY > bounds.bottom;
-
-        if (outside) {
-          onClose();
-        }
-      }}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2
-            id="appearance-settings-title"
-            className="text-xl font-semibold"
-          >
-            設定
-          </h2>
-
-          <p
-            id="appearance-settings-description"
-            className="appearance-muted mt-2 text-sm leading-6"
-          >
-            變更會立即套用，並記住於此瀏覽器。
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="appearance-button shrink-0 px-3 py-2 text-sm"
-          onClick={onClose}
-          autoFocus
-        >
-          關閉
-        </button>
-      </div>
-
-      <div className="mt-7 space-y-7">
-        {groups.map((group) => (
-          <fieldset key={group.key}>
-            <legend className="mb-3 text-sm font-medium">
-              {group.title}
-            </legend>
-
-            <div className="flex flex-wrap gap-2">
-              {group.options.map((option) => (
-                <label
-                  key={option.value}
-                  className="appearance-choice"
-                >
-                  <input
-                    type="radio"
-                    name={`appearance-${group.key}`}
-                    value={option.value}
-                    checked={
-                      appearance[group.key] === option.value
-                    }
-                    onChange={() => {
-                      onChange(group.key, option.value);
-                    }}
-                  />
-
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ))}
-      </div>
-            <AppUpdateSettings />
-    </dialog>
-  );
-}
-
-function EntryListItem({ item, onSelectItem }) {
-  const code = asText(item.acuTable?.code);
-
-  const englishName = [
-    item.englishName,
-    item.english,
-    item['英文名'],
-    item['英文名稱'],
-    item.latin,
-  ]
-    .map(asText)
-    .find(Boolean);
-
-  const description = [
-    item.indications,
-    item.effect,
-    item['主治'],
-    item['主治功效'],
-    item['功效'],
-    item.alias,
-    item.meridian,
-    item.acuTable?.meridian,
-  ]
-    .map(asText)
-    .find(Boolean);
-
-  return (
-    <button
-      type="button"
-      onClick={() => onSelectItem(item)}
-      aria-label={`查看${item.name || '未命名'}的詳細內容`}
-      className="appearance-entry-row"
-    >
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex flex-wrap items-center gap-2">
-          <span className="appearance-entry-tag">
-            {getCategoryLabel(item.category)}
-          </span>
-
-          {code && (
-            <span className="appearance-entry-code">
-              <span className="sr-only">
-                國際代碼：
-              </span>
-              {code}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h3 className="break-words text-lg font-semibold">
-            {item.name || '未命名'}
-          </h3>
-
-          {englishName && (
-            <span className="appearance-muted break-words text-sm italic">
-              {englishName}
-            </span>
-          )}
-        </div>
-
-        {description && (
-          <p className="appearance-muted mt-2 line-clamp-2 break-words text-sm leading-6">
-            {description}
-          </p>
-        )}
-      </div>
-
-      <span
-        aria-hidden="true"
-        className="appearance-muted shrink-0 text-xl"
-      >
-        →
-      </span>
-    </button>
-  );
-}
 
 export default function App() {
   const {
@@ -795,13 +144,8 @@ export default function App() {
 
   const [activeItem, setActiveItem] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
-
-  const [
-    isAdminAuthenticated,
-    setIsAdminAuthenticated,
-  ] = useState(false);
-
   const [adminAction, setAdminAction] = useState(null);
+  const [sessionNotice, setSessionNotice] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const [isOnline, setIsOnline] = useState(
@@ -820,6 +164,37 @@ export default function App() {
 
   const [lastDocument, setLastDocument] =
     useState(null);
+
+  const handleIdleLogout = useCallback(() => {
+    setAdminAction(null);
+    setActiveItem(null);
+    setIsAdminMode(false);
+    setSessionNotice('閒置超過五分鐘，已自動登出。');
+  }, []);
+
+  const {
+    isAdminAuthenticated,
+    authReady,
+    logout,
+  } = useAdminAuth({ onIdleLogout: handleIdleLogout });
+
+  useEffect(() => {
+    if (authReady && !isAdminAuthenticated) {
+      setAdminAction((previous) =>
+        previous ? null : previous
+      );
+    }
+  }, [authReady, isAdminAuthenticated]);
+
+  useEffect(() => {
+    if (!sessionNotice) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setSessionNotice('');
+    }, 6000);
+
+    return () => window.clearTimeout(timer);
+  }, [sessionNotice]);
 
   const staticData = useMemo(
     () => [
@@ -848,18 +223,12 @@ export default function App() {
 
         if (signal?.cancelled) return;
 
-        setLastDocument(
-          result?.lastDocument || null
-        );
-
+        setLastDocument(result?.lastDocument || null);
         setHasMore(Boolean(result?.hasMore));
       } catch (error) {
         if (signal?.cancelled) return;
 
-        console.error(
-          'Firestore 第一頁讀取錯誤：',
-          error
-        );
+        console.error('Firestore 第一頁讀取錯誤：', error);
 
         setDataError(
           `百科資料讀取失敗：${
@@ -915,20 +284,14 @@ export default function App() {
         return Array.from(map.values());
       });
 
-      setLastDocument(
-        result?.lastDocument || lastDocument
-      );
-
+      setLastDocument(result?.lastDocument || lastDocument);
       setHasMore(Boolean(result?.hasMore));
 
       setVisibleCount(
         (previous) => previous + PAGE_SIZE
       );
     } catch (error) {
-      console.error(
-        'Firestore 載入更多資料錯誤：',
-        error
-      );
+      console.error('Firestore 載入更多資料錯誤：', error);
 
       setDataError(
         `更多百科資料載入失敗：${
@@ -975,10 +338,7 @@ export default function App() {
         setIsLoading(false);
       },
       (error) => {
-        console.error(
-          '展示區即時同步失敗：',
-          error
-        );
+        console.error('展示區即時同步失敗：', error);
 
         setDataError(
           `展示區資料同步失敗：${
@@ -1025,10 +385,7 @@ export default function App() {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [
-    selectedCategory,
-    debouncedSearchQuery,
-  ]);
+  }, [selectedCategory, debouncedSearchQuery]);
 
   const allData = useMemo(() => {
     const map = new Map();
@@ -1137,14 +494,19 @@ export default function App() {
   const handleEnterAdmin = useCallback(() => {
     setIsSettingsOpen(false);
     setIsAdminMode(true);
-    setIsAdminAuthenticated(false);
   }, []);
 
   const handleLeaveAdmin = useCallback(() => {
     setIsAdminMode(false);
-    setIsAdminAuthenticated(false);
     setAdminAction(null);
   }, []);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    setAdminAction(null);
+    setActiveItem(null);
+    setIsAdminMode(false);
+  }, [logout]);
 
   const handleCategoryChange = useCallback((category) => {
     setSelectedCategory(category);
@@ -1174,60 +536,33 @@ export default function App() {
     visibleCount,
   ]);
 
-  const renderLoadMoreButton = () => {
-    if (!canLoadMore) return null;
+  const openAdminAction = useCallback((type, item) => {
+    if (type !== 'add' && !item) return;
 
-    return (
-      <div className="mt-8 text-center">
-        <button
-          type="button"
-          onClick={handleLoadMore}
-          disabled={isLoadingMore}
-          className="appearance-button rounded-full px-7 py-3 text-[15px] font-medium disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isLoadingMore
-            ? '載入中...'
-            : '載入更多'}
-        </button>
-      </div>
-    );
-  };
-
-  const handleAdminView = useCallback((item) => {
-    if (!item) return;
-
-    setAdminAction({
-      type: 'view',
-      item,
-    });
-
+    setAdminAction({ type, item });
     setActiveItem(null);
     setIsAdminMode(false);
   }, []);
 
-  const handleAdminCard = useCallback((item) => {
-    if (!item) return;
+  const handleAdminView = useCallback(
+    (item) => openAdminAction('view', item),
+    [openAdminAction]
+  );
 
-    setAdminAction({
-      type: 'card',
-      item,
-    });
+  const handleAdminCard = useCallback(
+    (item) => openAdminAction('card', item),
+    [openAdminAction]
+  );
 
-    setActiveItem(null);
-    setIsAdminMode(false);
-  }, []);
+  const handleAdminEdit = useCallback(
+    (item) => openAdminAction('edit', item),
+    [openAdminAction]
+  );
 
-  const handleAdminEdit = useCallback((item) => {
-    if (!item) return;
-
-    setAdminAction({
-      type: 'edit',
-      item,
-    });
-
-    setActiveItem(null);
-    setIsAdminMode(false);
-  }, []);
+  const handleAdminAdd = useCallback(
+    () => openAdminAction('add'),
+    [openAdminAction]
+  );
 
   const handleAdminDelete = useCallback(async (item) => {
     if (!item) return;
@@ -1249,9 +584,7 @@ export default function App() {
     if (!confirmed) return;
 
     try {
-      await deleteDoc(
-        doc(db, 'entries', documentId)
-      );
+      await deleteDoc(doc(db, 'entries', documentId));
 
       window.alert('資料已成功刪除！');
     } catch (error) {
@@ -1267,20 +600,28 @@ export default function App() {
     }
   }, []);
 
-  const handleAdminAdd = useCallback(() => {
-    setAdminAction({
-      type: 'add',
-    });
-
-    setActiveItem(null);
-    setIsAdminMode(false);
-  }, []);
-
   const returnToAdmin = useCallback(() => {
     setActiveItem(null);
     setAdminAction(null);
     setIsAdminMode(true);
   }, []);
+
+  const renderLoadMoreButton = () => {
+    if (!canLoadMore) return null;
+
+    return (
+      <div className="mt-8 text-center">
+        <button
+          type="button"
+          onClick={handleLoadMore}
+          disabled={isLoadingMore}
+          className="appearance-button rounded-full px-7 py-3 text-[15px] font-medium disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoadingMore ? '載入中...' : '載入更多'}
+        </button>
+      </div>
+    );
+  };
 
   if (adminAction?.type === 'view') {
     const viewItem = adminAction.item;
@@ -1289,8 +630,7 @@ export default function App() {
       viewItem?.category
     );
 
-    const ViewComponent =
-      MODAL_COMPONENTS[viewCategory];
+    const ViewComponent = MODAL_COMPONENTS[viewCategory];
 
     if (ViewComponent) {
       return (
@@ -1358,12 +698,16 @@ export default function App() {
     );
   }
 
+  if (isAdminMode && !authReady) {
+    return <PageLoading />;
+  }
+
   if (isAdminMode && !isAdminAuthenticated) {
     return (
       <Suspense fallback={<PageLoading />}>
         <LoginPage
           onLogin={() => {
-            setIsAdminAuthenticated(true);
+            setIsAdminMode(true);
           }}
           onClose={handleLeaveAdmin}
         />
@@ -1387,7 +731,7 @@ export default function App() {
           onCard={handleAdminCard}
           onEdit={handleAdminEdit}
           onDelete={handleAdminDelete}
-          onLogout={handleLeaveAdmin}
+          onLogout={handleLogout}
         />
       </Suspense>
     );
@@ -1398,8 +742,7 @@ export default function App() {
       activeItem.category
     );
 
-    const ModalComponent =
-      MODAL_COMPONENTS[activeCategory];
+    const ModalComponent = MODAL_COMPONENTS[activeCategory];
 
     if (ModalComponent) {
       return (
@@ -1457,11 +800,9 @@ export default function App() {
 
   const trimmedQuery = debouncedSearchQuery.trim();
 
-  const categoryLabel =
-    getCategoryLabel(selectedCategory);
+  const categoryLabel = getCategoryLabel(selectedCategory);
 
-  const selectedTheme =
-    getCategoryTheme(selectedCategory);
+  const selectedTheme = getCategoryTheme(selectedCategory);
 
   return (
     <div
@@ -1479,6 +820,8 @@ export default function App() {
         isOnline={isOnline}
         dataError={dataError}
       />
+
+      <SessionNotice message={sessionNotice} />
 
       <header className="hero-wash relative isolate overflow-hidden">
         <div
@@ -1547,11 +890,7 @@ export default function App() {
                 strokeWidth="1.8"
                 strokeLinecap="round"
               >
-                <circle
-                  cx="11"
-                  cy="11"
-                  r="7"
-                />
+                <circle cx="11" cy="11" r="7" />
                 <path d="M20 20l-3.5-3.5" />
               </svg>
 
@@ -1600,16 +939,12 @@ export default function App() {
       >
         <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 md:px-7">
           {CATEGORIES.map((category) => {
-            const isActive =
-              selectedCategory === category;
+            const isActive = selectedCategory === category;
 
             const count =
-              categoryCounts[
-                normalizeCategory(category)
-              ] || 0;
+              categoryCounts[normalizeCategory(category)] || 0;
 
-            const theme =
-              getCategoryTheme(category);
+            const theme = getCategoryTheme(category);
 
             const activeColor =
               resolvedTheme === 'dark'
@@ -1653,9 +988,7 @@ export default function App() {
                 <span
                   aria-hidden="true"
                   className="h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: indicatorColor,
-                  }}
+                  style={{ backgroundColor: indicatorColor }}
                 />
 
                 {getCategoryLabel(category)}
@@ -1670,9 +1003,7 @@ export default function App() {
                   <span
                     aria-hidden="true"
                     className="absolute inset-x-0 bottom-0 h-[2px]"
-                    style={{
-                      backgroundColor: indicatorColor,
-                    }}
+                    style={{ backgroundColor: indicatorColor }}
                   />
                 )}
               </button>
